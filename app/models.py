@@ -31,6 +31,28 @@ class PersonaIn(CamelModel):
     criteria: str
 
 
+# ── /api/access ──────────────────────────────────────────────────────
+
+AccessStatus = Literal["unknown", "revoked", "exhausted", "valid"]
+
+
+class AccessStatusResponse(CamelModel):
+    status: AccessStatus
+
+
+# ── /api/detect ──────────────────────────────────────────────────────
+
+class DetectRequest(CamelModel):
+    query: str
+    access_code: str
+
+
+class DetectResponse(CamelModel):
+    brand: str
+    industry: str
+    competitors: list[str]
+
+
 # ── /api/prompts ─────────────────────────────────────────────────────
 
 class PromptsRequest(CamelModel):

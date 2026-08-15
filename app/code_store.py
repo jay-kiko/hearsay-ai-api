@@ -9,7 +9,9 @@ service, but it does need real transactions — redeem() is a single
 conditional UPDATE decrementing uses_remaining, atomic without any locking of
 our own, and correct even across multiple worker processes on the same file
 (unlike a hand-rolled read-modify-write over a JSON file, which only
-serializes within one process).
+serializes within one process). revoke() is a soft delete: a revoked code's
+row and redemption history stay put for the audit trail, it's just never
+valid again.
 """
 from __future__ import annotations
 
@@ -23,8 +25,8 @@ import aiosqlite
 from app.models import CamelModel
 
 _ALPHABET = "23456789ABCDEFGHJKMNPQRSTUVWXYZ"  # no 0/O/1/I/L — easy to read out loud
-CodeStatus = Literal["unknown", "exhausted", "valid"]
-CallStatus = Literal["unknown", "exhausted", "rate_limited", "ok"]
+CodeStatus = Literal["unknown", "revoked", "exhausted", "valid"]
+CallStatus = Literal["unknown", "revoked", "exhausted", "rate_limited", "ok"]
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS access_codes (
@@ -32,7 +34,8 @@ CREATE TABLE IF NOT EXISTS access_codes (
     created_at TEXT NOT NULL,
     uses_total INTEGER NOT NULL,
     uses_remaining INTEGER NOT NULL,
-    prompt_calls INTEGER NOT NULL DEFAULT 0
+    prompt_calls INTEGER NOT NULL DEFAULT 0,
+    revoked INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS code_redemptions (
@@ -59,6 +62,7 @@ class CodeRecord(CamelModel):
     uses_total: int
     uses_remaining: int
     prompt_calls: int
+    revoked: bool
 
 
 class CodeStore:
@@ -71,6 +75,12 @@ class CodeStore:
         self._conn = await aiosqlite.connect(self._path)
         await self._conn.execute("PRAGMA journal_mode=WAL")
         await self._conn.executescript(_SCHEMA)
+        try:
+            # Migration for databases created before revocation existed —
+            # CREATE TABLE IF NOT EXISTS above is a no-op on an existing table.
+            await self._conn.execute("ALTER TABLE access_codes ADD COLUMN revoked INTEGER NOT NULL DEFAULT 0")
+        except aiosqlite.OperationalError:
+            pass  # column already present
         await self._conn.commit()
 
     async def close(self) -> None:
@@ -104,21 +114,31 @@ class CodeStore:
 
     async def status(self, code: str) -> CodeStatus:
         async with self._db.execute(
-            "SELECT uses_remaining FROM access_codes WHERE code = ?", (code,)
+            "SELECT uses_remaining, revoked FROM access_codes WHERE code = ?", (code,)
         ) as cursor:
             row = await cursor.fetchone()
         if row is None:
             return "unknown"
-        return "valid" if row[0] > 0 else "exhausted"
+        uses_remaining, revoked = row
+        if revoked:
+            return "revoked"
+        return "valid" if uses_remaining > 0 else "exhausted"
 
     async def redeem(self, code: str, job_id: str) -> bool:
-        """Atomically spends one use. Returns False if unknown or exhausted."""
+        """Atomically spends one use. Returns False if unknown, revoked, or exhausted."""
+        # aiosqlite serializes every call through one connection/one implicit
+        # transaction shared across all concurrent coroutines. A 0-row UPDATE
+        # hasn't changed anything, so there's nothing of *this* call's to
+        # undo — rollback() would be wrong here: it discards the whole shared
+        # transaction, including a concurrent sibling's not-yet-committed
+        # decrement. commit() is the safe no-op: it only ever persists.
         cursor = await self._db.execute(
-            "UPDATE access_codes SET uses_remaining = uses_remaining - 1 WHERE code = ? AND uses_remaining > 0",
+            "UPDATE access_codes SET uses_remaining = uses_remaining - 1 "
+            "WHERE code = ? AND uses_remaining > 0 AND revoked = 0",
             (code,),
         )
         if cursor.rowcount == 0:
-            await self._db.rollback()
+            await self._db.commit()
             return False
         await self._db.execute(
             "INSERT INTO code_redemptions (code, job_id, redeemed_at) VALUES (?, ?, ?)",
@@ -128,14 +148,16 @@ class CodeStore:
         return True
 
     async def register_prompt_call(self, code: str, max_calls: int) -> CallStatus:
-        """Soft throttle on the unconsumed /api/prompts path: capped, not spent."""
+        """Soft throttle on the unconsumed /api/prompts and /api/detect paths: capped, not spent."""
         async with self._db.execute(
-            "SELECT uses_remaining, prompt_calls FROM access_codes WHERE code = ?", (code,)
+            "SELECT uses_remaining, prompt_calls, revoked FROM access_codes WHERE code = ?", (code,)
         ) as cursor:
             row = await cursor.fetchone()
         if row is None:
             return "unknown"
-        uses_remaining, prompt_calls = row
+        uses_remaining, prompt_calls, revoked = row
+        if revoked:
+            return "revoked"
         if uses_remaining <= 0:
             return "exhausted"
         if prompt_calls >= max_calls:
@@ -148,14 +170,28 @@ class CodeStore:
         await self._db.commit()
         return "ok" if cursor.rowcount > 0 else "rate_limited"
 
+    async def revoke(self, code: str) -> bool:
+        """Idempotent: makes a code immediately unusable without erasing its
+        row or redemption history. Returns False only if the code is unknown."""
+        async with self._db.execute("SELECT 1 FROM access_codes WHERE code = ?", (code,)) as cursor:
+            row = await cursor.fetchone()
+        if row is None:
+            return False
+        await self._db.execute("UPDATE access_codes SET revoked = 1 WHERE code = ?", (code,))
+        await self._db.commit()
+        return True
+
     async def list_all(self) -> list[CodeRecord]:
         async with self._db.execute(
-            "SELECT code, created_at, uses_total, uses_remaining, prompt_calls "
+            "SELECT code, created_at, uses_total, uses_remaining, prompt_calls, revoked "
             "FROM access_codes ORDER BY created_at"
         ) as cursor:
             rows = await cursor.fetchall()
         return [
-            CodeRecord(code=r[0], created_at=r[1], uses_total=r[2], uses_remaining=r[3], prompt_calls=r[4])
+            CodeRecord(
+                code=r[0], created_at=r[1], uses_total=r[2], uses_remaining=r[3],
+                prompt_calls=r[4], revoked=bool(r[5]),
+            )
             for r in rows
         ]
 

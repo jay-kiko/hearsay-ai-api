@@ -21,6 +21,8 @@ async def start_analysis(body: AnalysisRequest) -> AnalysisStartResponse:
     status = await code_store.status(body.access_code)
     if status == "unknown":
         raise HTTPException(status_code=404, detail="Access code not found")
+    if status == "revoked":
+        raise HTTPException(status_code=403, detail="This access code has been revoked")
     if status == "exhausted":
         raise HTTPException(status_code=403, detail="This access code has no uses remaining")
 

@@ -36,3 +36,13 @@ async def list_codes(x_admin_secret: str | None = Header(default=None)) -> dict[
     _require_admin(x_admin_secret)
     records = await get_code_store().list_all()
     return {"codes": [r.model_dump(by_alias=True) for r in records]}
+
+
+@router.delete("/codes/{code}")
+async def revoke_code(code: str, x_admin_secret: str | None = Header(default=None)) -> dict[str, bool]:
+    """Soft delete — the row and its redemption history stay for the audit
+    trail, but the code is immediately and permanently unusable."""
+    _require_admin(x_admin_secret)
+    if not await get_code_store().revoke(code):
+        raise HTTPException(status_code=404, detail="Access code not found")
+    return {"revoked": True}
