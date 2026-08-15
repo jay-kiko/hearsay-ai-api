@@ -62,24 +62,34 @@ def _extract_raw_citations(response) -> list[dict[str, str]]:
     for block in getattr(response, "content", []) or []:
         block_type = getattr(block, "type", None)
 
-        # Inline citations attached to generated text.
+        # Inline citations attached to generated text arrive as plain dicts
+        # (e.g. {"url": ..., "title": ...}), not typed objects — getattr()
+        # on a dict always misses and silently returns the fallback, which
+        # is exactly why this used to come back empty no matter how good
+        # the search results were.
         citations = getattr(block, "citations", None) or []
         for citation in citations:
-            url = getattr(citation, "url", None)
-            title = getattr(citation, "title", None)
+            url = _field(citation, "url")
+            title = _field(citation, "title")
             if url:
                 found.append({"url": url, "title": title or url})
 
-        # Raw web_search tool results.
+        # Raw web_search tool results — also plain dicts inside block.content.
         if block_type == "web_search_tool_result":
             content = getattr(block, "content", None) or []
             for result in content:
-                url = getattr(result, "url", None)
-                title = getattr(result, "title", None)
+                url = _field(result, "url")
+                title = _field(result, "title")
                 if url:
                     found.append({"url": url, "title": title or url})
 
     return found
+
+
+def _field(item, key: str):
+    if isinstance(item, dict):
+        return item.get(key)
+    return getattr(item, key, None)
 
 
 def _classify(raw_citations: list[dict[str, str]]) -> Sources:
@@ -136,6 +146,10 @@ async def run_grounding(
             model=settings.anthropic_model,
             system=_SYSTEM,
             user=_query(brand, industry, competitors),
+            # Several search rounds plus extended thinking easily exceed the
+            # 1536 default, truncating mid-synthesis (stop_reason max_tokens)
+            # before all citations are even collected.
+            max_tokens=4096,
         )
     except Exception:
         logger.exception("grounding call failed, returning empty sources")
