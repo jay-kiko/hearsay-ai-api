@@ -21,6 +21,19 @@ logger = logging.getLogger("hearsay.anthropic")
 WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search", "max_uses": 6}
 
 
+def _cacheable_system(system: str) -> list[dict[str, Any]]:
+    """Marks the system prompt as an Anthropic prompt-cache breakpoint.
+
+    Every persona/prompt call within one job reuses the same answer/sentiment
+    system prompt (only the brand name varies), so a job's ~dozens of calls
+    hit this cache repeatedly instead of paying full input-token price each
+    time. Below Anthropic's per-model minimum cacheable length this is simply
+    a no-op — cache_control just doesn't engage — so it's safe to apply
+    unconditionally rather than sizing every system prompt by hand.
+    """
+    return [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
+
+
 async def _with_retry(fn, *, retries: int, label: str):
     attempt = 0
     while True:
@@ -43,7 +56,7 @@ async def call_text(*, api_key: str, model: str, system: str, user: str, max_tok
         response = await client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            system=system,
+            system=_cacheable_system(system),
             messages=[{"role": "user", "content": user}],
         )
         return "".join(block.text for block in response.content if block.type == "text").strip()
@@ -73,7 +86,7 @@ async def call_structured(
         response = await client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            system=system,
+            system=_cacheable_system(system),
             messages=[{"role": "user", "content": user}],
             tools=[{"name": tool_name, "description": tool_description, "input_schema": input_schema}],
             tool_choice={"type": "tool", "name": tool_name},
@@ -98,7 +111,7 @@ async def call_web_search(*, api_key: str, model: str, system: str, user: str, m
         return await client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            system=system,
+            system=_cacheable_system(system),
             messages=[{"role": "user", "content": user}],
             tools=[WEB_SEARCH_TOOL],
         )

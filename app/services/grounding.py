@@ -143,7 +143,9 @@ async def run_grounding(
     try:
         response = await call_web_search(
             api_key=api_key,
-            model=settings.anthropic_model,
+            # Only the raw citations get used downstream (_extract_raw_citations) —
+            # the synthesized prose is never read, so the fast model is enough here.
+            model=settings.anthropic_fast_model,
             system=_SYSTEM,
             user=_query(brand, industry, competitors),
             # Several search rounds plus extended thinking easily exceed the

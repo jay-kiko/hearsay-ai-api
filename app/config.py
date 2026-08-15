@@ -12,7 +12,13 @@ class Settings(BaseSettings):
     # Server-held key — no accounts, so a single Anthropic key funds every
     # request; access is gated by multi-use codes instead (see code_store.py).
     anthropic_api_key: str
+    # Reserved for the one call that's the actual signal being measured — the
+    # buyer-persona "answer" itself (pipeline.py). Every other call (sentiment
+    # classification, prompt/persona generation, detect, grounding) is a
+    # mechanical extraction task and runs on anthropic_fast_model instead —
+    # same quality where it matters, a fraction of the cost everywhere else.
     anthropic_model: str = "claude-sonnet-5"
+    anthropic_fast_model: str = "claude-haiku-4-5-20251001"
     anthropic_max_retries: int = 1
 
     admin_secret: str | None = None

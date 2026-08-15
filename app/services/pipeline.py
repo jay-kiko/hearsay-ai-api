@@ -58,14 +58,16 @@ class _PromptAnalysis:
 
 
 async def _analyze_one_prompt(
-    *, prompt: str, brand: str, competitors: list[str], api_key: str, model: str
+    *, prompt: str, brand: str, competitors: list[str], api_key: str, answer_model: str, fast_model: str
 ) -> _PromptAnalysis:
-    answer_task = call_text(api_key=api_key, model=model, system=_ANSWER_SYSTEM, user=prompt)
+    answer_task = call_text(api_key=api_key, model=answer_model, system=_ANSWER_SYSTEM, user=prompt)
     answer_text = await answer_task
 
+    # Sentiment classification is mechanical extraction, not the signal being
+    # measured — runs on the cheaper fast_model, not the answer model.
     sentiment_result = await call_structured(
         api_key=api_key,
-        model=model,
+        model=fast_model,
         system=_sentiment_system(brand),
         user=answer_text or "(empty response)",
         tool_name=_SENTIMENT_TOOL_NAME,
@@ -125,10 +127,16 @@ async def run_persona(
     api_key: str,
 ) -> PersonaResult:
     settings = get_settings()
-    model = settings.anthropic_model
 
     tasks = [
-        _analyze_one_prompt(prompt=p, brand=brand, competitors=competitors, api_key=api_key, model=model)
+        _analyze_one_prompt(
+            prompt=p,
+            brand=brand,
+            competitors=competitors,
+            api_key=api_key,
+            answer_model=settings.anthropic_model,
+            fast_model=settings.anthropic_fast_model,
+        )
         for p in prompts
     ]
     analyses = await asyncio.gather(*tasks)

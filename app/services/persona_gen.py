@@ -69,7 +69,7 @@ async def generate_personas(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_model,
+        model=settings.anthropic_fast_model,
         system=_SYSTEM,
         user=_user_prompt(industry, competitors, count),
         tool_name=_TOOL_NAME,

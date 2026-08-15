@@ -42,7 +42,7 @@ async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_model,
+        model=settings.anthropic_fast_model,
         system=_SYSTEM,
         user=query,
         tool_name=_TOOL_NAME,
