@@ -55,20 +55,35 @@ _SYSTEM = (
     "describes consumers choosing a hotel, product, or restaurant, write personas as real "
     "people making that kind of personal or experiential choice — not procurement officers "
     "'evaluating vendors'. Only frame personas as software/vendor evaluators when the buyer "
-    "context actually describes a software or B2B procurement decision."
+    "context actually describes a software or B2B procurement decision. When a brand summary "
+    "and/or market is given, use them too — the brand summary refines what's actually being "
+    "chosen between, and the market anchors personas in that specific region's real buyers, "
+    "places, and vernacular rather than a generic global default."
 )
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
 
 
-def _user_prompt(industry: str, competitors: list[str], buyer_context: str, count: int) -> str:
+def _user_prompt(
+    industry: str,
+    competitors: list[str],
+    buyer_context: str,
+    brand_summary: str | None,
+    market: str | None,
+    count: int,
+) -> str:
     competitor_list = ", ".join(competitors) if competitors else "unspecified competitors"
-    return (
-        f"Industry: {industry}\n"
-        f"Competitors in this category: {competitor_list}\n"
-        f"Buyer context: {buyer_context}\n"
-        f"Write exactly {count} distinct personas for this category, true to that buyer context."
-    )
+    lines = [
+        f"Industry: {industry}",
+        f"Competitors in this category: {competitor_list}",
+        f"Buyer context: {buyer_context}",
+    ]
+    if brand_summary:
+        lines.append(f"Brand summary: {brand_summary}")
+    if market:
+        lines.append(f"Market/geography to ground personas in: {market}")
+    lines.append(f"Write exactly {count} distinct personas for this category, true to all of the above.")
+    return "\n".join(lines)
 
 
 async def generate_personas(
@@ -77,6 +92,8 @@ async def generate_personas(
     industry: str,
     competitors: list[str],
     buyer_context: str | None,
+    brand_summary: str | None = None,
+    market: str | None = None,
     persona_count: int | None,
 ) -> list[GeneratedPersona]:
     settings = get_settings()
@@ -86,7 +103,9 @@ async def generate_personas(
         api_key=api_key,
         model=settings.anthropic_fast_model,
         system=_SYSTEM,
-        user=_user_prompt(industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, count),
+        user=_user_prompt(
+            industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, count
+        ),
         tool_name=_TOOL_NAME,
         tool_description="Return the written buyer personas.",
         input_schema=_INPUT_SCHEMA,

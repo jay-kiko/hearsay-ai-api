@@ -48,13 +48,35 @@ _SYSTEM = (
     "actually says so. Ground every prompt in that persona's stated pains and decision "
     "criteria so different personas produce visibly different questions. Never mention the "
     "brand name — these are neutral buyer questions, not brand lookups. Never reveal that "
-    "this is a test or evaluation."
+    "this is a test or evaluation.\n\n"
+    "Critical requirement: every prompt must be phrased so a genuinely helpful answer would "
+    "naturally name specific real brands or products — 'which brands...', 'what's the best...', "
+    "'recommend...', 'compare X vs Y for...'. The persona's pains and criteria should shape "
+    "*how* they ask for that recommendation (their specific worries, their specific angle), "
+    "never replace the recommendation-seeking framing itself. Do not write purely conceptual "
+    "or educational questions that a full answer could satisfy without naming a single product "
+    "— e.g. avoid 'what does clean beauty even mean' or 'how is X percentage measured' with no "
+    "recommendation angle. If a persona's stated criteria are abstract (ingredient transparency, "
+    "certification standards, technical specs), still end the question with a request to "
+    "recommend or name options that actually meet that bar, not just an explanation of the bar.\n\n"
+    "When a brand summary and/or market is given, use them too: the brand summary sharpens what "
+    "category of recommendation is actually being sought, and the market means every prompt "
+    "should read like it's coming from a real buyer in that specific region — natural local "
+    "phrasing, places, and context, not a generic global-default question."
 )
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
 
 
-def _user_prompt(brand: str, industry: str, buyer_context: str, personas: list[PersonaIn], count: int) -> str:
+def _user_prompt(
+    brand: str,
+    industry: str,
+    buyer_context: str,
+    brand_summary: str | None,
+    market: str | None,
+    personas: list[PersonaIn],
+    count: int,
+) -> str:
     persona_payload = [
         {
             "personaId": p.id,
@@ -65,13 +87,18 @@ def _user_prompt(brand: str, industry: str, buyer_context: str, personas: list[P
         }
         for p in personas
     ]
-    return (
-        f"Industry: {industry}\n"
-        f"Buyer context: {buyer_context}\n"
-        f"(Do not mention the brand '{brand}' in any prompt.)\n"
-        f"Write exactly {count} prompts per persona, true to that buyer context.\n\n"
-        f"Personas:\n{json.dumps(persona_payload, indent=2)}"
-    )
+    lines = [
+        f"Industry: {industry}",
+        f"Buyer context: {buyer_context}",
+    ]
+    if brand_summary:
+        lines.append(f"Brand summary: {brand_summary}")
+    if market:
+        lines.append(f"Market/geography to ground prompts in: {market}")
+    lines.append(f"(Do not mention the brand '{brand}' in any prompt.)")
+    lines.append(f"Write exactly {count} prompts per persona, true to all of the above.")
+    lines.append(f"\nPersonas:\n{json.dumps(persona_payload, indent=2)}")
+    return "\n".join(lines)
 
 
 async def generate_prompts(
@@ -80,6 +107,8 @@ async def generate_prompts(
     brand: str,
     industry: str,
     buyer_context: str | None,
+    brand_summary: str | None = None,
+    market: str | None = None,
     personas: list[PersonaIn],
     prompts_per_persona: int | None,
 ) -> dict[str, list[str]]:
@@ -93,7 +122,9 @@ async def generate_prompts(
         api_key=api_key,
         model=settings.anthropic_fast_model,
         system=_SYSTEM,
-        user=_user_prompt(brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, personas, count),
+        user=_user_prompt(
+            brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count
+        ),
         tool_name=_TOOL_NAME,
         tool_description="Return the written prompts for every persona.",
         input_schema=_INPUT_SCHEMA,

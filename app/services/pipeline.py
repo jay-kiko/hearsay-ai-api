@@ -18,11 +18,29 @@ from app.models import PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.scoring import analyze_answer
 
-_ANSWER_SYSTEM = (
-    "You are a knowledgeable industry analyst helping a software buyer research "
-    "options. Answer with specific, real product/vendor names wherever relevant — "
-    "concrete recommendations, not generic advice. Keep the answer to 2-4 sentences."
-)
+_DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
+
+
+def _answer_system(buyer_context: str | None, market: str | None) -> str:
+    # The prompt text is the *only* thing this call sees — no brand, no
+    # industry, no geography. Without buyer_context threaded in, a
+    # regionally-specific question with no explicit country in its own
+    # wording (e.g. "affordable weekly rooms near the hospital district")
+    # silently defaults to US-centric answers, confirmed live for a
+    # Philippines-market brand. buyer_context/market are brand-agnostic by
+    # construction, so surfacing them here never leaks the brand identity or
+    # reveals this is a test — brand_summary is NOT threaded in here on
+    # purpose, since it names the brand directly and this is the one call
+    # that must measure whether the brand comes up organically.
+    parts = [f"Real-world context for who's asking and what they're choosing between: {buyer_context or _DEFAULT_BUYER_CONTEXT}"]
+    if market:
+        parts.append(f"Answer as if for someone in this market: {market} — use real local context where relevant.")
+    return (
+        "You are a knowledgeable analyst helping someone research real options. "
+        + " ".join(parts)
+        + " Answer with specific, real product/brand names wherever relevant — "
+        "concrete recommendations, not generic advice. Keep the answer to 2-4 sentences."
+    )
 
 _SENTIMENT_TOOL_NAME = "classify_brand_sentiment"
 _SENTIMENT_INPUT_SCHEMA = {
@@ -58,9 +76,19 @@ class _PromptAnalysis:
 
 
 async def _analyze_one_prompt(
-    *, prompt: str, brand: str, competitors: list[str], api_key: str, answer_model: str, fast_model: str
+    *,
+    prompt: str,
+    brand: str,
+    competitors: list[str],
+    buyer_context: str | None,
+    market: str | None,
+    api_key: str,
+    answer_model: str,
+    fast_model: str,
 ) -> _PromptAnalysis:
-    answer_task = call_text(api_key=api_key, model=answer_model, system=_ANSWER_SYSTEM, user=prompt)
+    answer_task = call_text(
+        api_key=api_key, model=answer_model, system=_answer_system(buyer_context, market), user=prompt
+    )
     answer_text = await answer_task
 
     # Sentiment classification is mechanical extraction, not the signal being
@@ -81,8 +109,17 @@ async def _analyze_one_prompt(
     mentioned, rank, vis, parts = analyze_answer(
         text=answer_text, brand=brand, competitors=competitors, sentiment=sentiment
     )
-    if not quote and mentioned:
-        quote = answer_text[:180]
+    # `mentioned` is the deterministic regex ground truth (scoring.py); the
+    # sentiment call's own quote can disagree with it — it was told to return
+    # '' when the brand isn't mentioned, but doesn't always comply, and can
+    # hand back a quote about a *competitor* instead. Trust the deterministic
+    # check: no mention means no quote, full stop, regardless of what the
+    # model returned.
+    if mentioned:
+        if not quote:
+            quote = answer_text[:180]
+    else:
+        quote = ""
 
     return _PromptAnalysis(
         prompt=prompt,
@@ -124,6 +161,8 @@ async def run_persona(
     prompts: list[str],
     brand: str,
     competitors: list[str],
+    buyer_context: str | None,
+    market: str | None,
     api_key: str,
 ) -> PersonaResult:
     settings = get_settings()
@@ -133,6 +172,8 @@ async def run_persona(
             prompt=p,
             brand=brand,
             competitors=competitors,
+            buyer_context=buyer_context,
+            market=market,
             api_key=api_key,
             answer_model=settings.anthropic_model,
             fast_model=settings.anthropic_fast_model,

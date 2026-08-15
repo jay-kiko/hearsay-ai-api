@@ -21,13 +21,29 @@ logger = logging.getLogger("hearsay.runner")
 
 
 async def _run_one_persona(
-    *, semaphore: asyncio.Semaphore, job_store: JobStore, job_id: str, persona, prompts, brand, competitors, api_key
+    *,
+    semaphore: asyncio.Semaphore,
+    job_store: JobStore,
+    job_id: str,
+    persona,
+    prompts,
+    brand,
+    competitors,
+    buyer_context,
+    market,
+    api_key,
 ):
     job_store.set_persona_status(job_id, persona.id, "running")
     async with semaphore:
         try:
             result = await run_persona(
-                persona=persona, prompts=prompts, brand=brand, competitors=competitors, api_key=api_key
+                persona=persona,
+                prompts=prompts,
+                brand=brand,
+                competitors=competitors,
+                buyer_context=buyer_context,
+                market=market,
+                api_key=api_key,
             )
             job_store.update_persona(job_id, PersonaEvent(persona_id=persona.id, status="done", result=result))
             return persona.id, result
@@ -53,6 +69,8 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
                 prompts=request.prompts.get(persona.id) or [],
                 brand=request.brand,
                 competitors=request.competitors,
+                buyer_context=request.buyer_context,
+                market=request.market,
                 api_key=anthropic_api_key,
             )
             for persona in request.personas
@@ -74,6 +92,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             brand=request.brand,
             industry=request.industry,
             competitors=request.competitors,
+            market=request.market,
         )
 
         overview = aggregation.build_overview(results)

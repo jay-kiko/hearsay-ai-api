@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from app.config import get_settings
 from app.models import Citation, Community, Publisher, SitelistEntry, Sources
-from app.services.anthropic_client import call_web_search
+from app.services.anthropic_client import call_structured, call_web_search
 
 logger = logging.getLogger("hearsay.grounding")
 
@@ -24,8 +24,29 @@ _SYSTEM = (
     "Use the web_search tool to research how the given brand and its competitors "
     "are actually discussed in their category right now. Search for comparison "
     "articles, review sites, and community discussion (Reddit, forums, Hacker "
-    "News). Then briefly summarize what you found in 2-3 sentences."
+    "News). The brand name may be shared by other, unrelated companies or "
+    "products in a completely different industry — stay focused on results "
+    "genuinely about this brand in this specific category, alongside the named "
+    "competitors, and disregard anything about a different company that happens "
+    "to share the name. Then briefly summarize what you found in 2-3 sentences."
 )
+
+_FILTER_TOOL_NAME = "filter_relevant_domains"
+_FILTER_INPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "relevantDomains": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "The domains from the candidate list that are genuinely about the specific "
+                "brand being researched, in its actual industry — excluding any domain that's "
+                "actually about a different, unrelated company or product sharing the same name."
+            ),
+        }
+    },
+    "required": ["relevantDomains"],
+}
 
 _COMMUNITY_DOMAINS = (
     "reddit.com",
@@ -39,12 +60,15 @@ _COMMUNITY_DOMAINS = (
 )
 
 
-def _query(brand: str, industry: str, competitors: list[str]) -> str:
+def _query(brand: str, industry: str, competitors: list[str], market: str | None) -> str:
     competitor_list = ", ".join(competitors) if competitors else "its main competitors"
+    market_clause = f" Focus specifically on the {market} market." if market else ""
     return (
         f"How is '{brand}' discussed and reviewed within the '{industry}' category, "
-        f"compared to {competitor_list}? Find real articles, review sites, and "
-        f"community threads."
+        f"compared to {competitor_list}?{market_clause} Find real articles, review sites, and "
+        f"community threads. Note: '{brand}' may be a name shared by unrelated products "
+        f"in other industries — only report on results genuinely about this brand in "
+        f"the '{industry}' category."
     )
 
 
@@ -92,6 +116,76 @@ def _field(item, key: str):
     return getattr(item, key, None)
 
 
+async def _filter_relevant(
+    raw_citations: list[dict[str, str]],
+    *,
+    brand: str,
+    industry: str,
+    competitors: list[str],
+    api_key: str,
+    model: str,
+) -> list[dict[str, str]]:
+    """Web search for an ambiguous brand name can surface an unrelated company
+    that happens to share it — confirmed live (a PM software brand's search
+    results included a completely unrelated ADHD-focused app of the same
+    name). One cheap structured pass over the candidate domains, anchored on
+    the actual industry/competitors, before anything gets classified into
+    citations/publishers/communities. Fails open (keeps everything) on any
+    error, rather than let a filtering hiccup silently empty real results.
+    """
+    if not raw_citations:
+        return raw_citations
+
+    domains: dict[str, str] = {}
+    for item in raw_citations:
+        try:
+            domain = urlparse(item["url"]).netloc.replace("www.", "")
+        except (KeyError, ValueError):
+            continue
+        if domain:
+            domains.setdefault(domain, item.get("title", domain))
+
+    if not domains:
+        return raw_citations
+
+    candidate_list = "\n".join(f"- {domain}: {title}" for domain, title in domains.items())
+    competitor_list = ", ".join(competitors) if competitors else "none specified"
+
+    try:
+        result = await call_structured(
+            api_key=api_key,
+            model=model,
+            system=(
+                "You confirm which search-result domains are genuinely about a specific real "
+                "brand, versus an unrelated company or product that happens to share its name. "
+                "Keep a domain only if its title plausibly relates to the given brand in the "
+                "given industry, alongside its named competitors."
+            ),
+            user=(
+                f"Brand: {brand}\nIndustry: {industry}\nCompetitors: {competitor_list}\n\n"
+                f"Candidate domains found while researching this brand:\n{candidate_list}\n\n"
+                f"Which of these are genuinely about '{brand}' in the '{industry}' category?"
+            ),
+            tool_name=_FILTER_TOOL_NAME,
+            tool_description="Return the domains that are genuinely relevant.",
+            input_schema=_FILTER_INPUT_SCHEMA,
+            max_tokens=1024,
+        )
+    except Exception:
+        logger.exception("relevance filter failed, keeping all citations unfiltered")
+        return raw_citations
+
+    keep = {d.strip().lower() for d in result.get("relevantDomains", []) if isinstance(d, str)}
+    if not keep:
+        return raw_citations  # nothing usable came back — fail open, not empty
+
+    return [
+        item
+        for item in raw_citations
+        if urlparse(item.get("url", "")).netloc.replace("www.", "").lower() in keep
+    ]
+
+
 def _classify(raw_citations: list[dict[str, str]]) -> Sources:
     domain_counts: dict[str, int] = defaultdict(int)
     domain_titles: dict[str, str] = {}
@@ -137,7 +231,7 @@ def _build_sitelist(publishers: list[Publisher]) -> list[SitelistEntry]:
 
 
 async def run_grounding(
-    *, api_key: str, brand: str, industry: str, competitors: list[str]
+    *, api_key: str, brand: str, industry: str, competitors: list[str], market: str | None = None
 ) -> tuple[Sources, list[SitelistEntry]]:
     settings = get_settings()
     try:
@@ -147,7 +241,7 @@ async def run_grounding(
             # the synthesized prose is never read, so the fast model is enough here.
             model=settings.anthropic_fast_model,
             system=_SYSTEM,
-            user=_query(brand, industry, competitors),
+            user=_query(brand, industry, competitors, market),
             # Several search rounds plus extended thinking easily exceed the
             # 1536 default, truncating mid-synthesis (stop_reason max_tokens)
             # before all citations are even collected.
@@ -158,6 +252,14 @@ async def run_grounding(
         return Sources(citations=[], publishers=[], communities=[]), []
 
     raw_citations = _extract_raw_citations(response)
+    raw_citations = await _filter_relevant(
+        raw_citations,
+        brand=brand,
+        industry=industry,
+        competitors=competitors,
+        api_key=api_key,
+        model=settings.anthropic_fast_model,
+    )
     sources = _classify(raw_citations)
     sitelist = _build_sitelist(sources.publishers)
     return sources, sitelist

@@ -56,6 +56,26 @@ class DetectResponse(CamelModel):
     # brand, hiring an agency...) so persona/prompt generation stop assuming
     # every brand is B2B software being "evaluated" like a vendor.
     buyer_context: str
+    # Fuller, user-facing paragraph shown for confirm-or-correct before
+    # anything downstream is generated — see the Wizard's "Confirm your
+    # brand details" step. Editable; whatever the user submits back flows
+    # into persona/prompt generation as brandSummary below.
+    brand_summary: str
+
+
+# ── /api/categories ───────────────────────────────────────────────────
+
+class CategoriesRequest(CamelModel):
+    brand: str
+    industry: str
+    competitors: list[str] = Field(default_factory=list)
+    buyer_context: str | None = None
+    brand_summary: str | None = None
+    access_code: str
+
+
+class CategoriesResponse(CamelModel):
+    categories: list[str]
 
 
 # ── /api/generate-personas ───────────────────────────────────────────
@@ -65,6 +85,8 @@ class GeneratePersonasRequest(CamelModel):
     industry: str
     competitors: list[str] = Field(default_factory=list)
     buyer_context: str | None = None
+    brand_summary: str | None = None
+    market: str | None = None
     access_code: str
     persona_count: int | None = None
 
@@ -90,6 +112,8 @@ class PromptsRequest(CamelModel):
     industry: str
     personas: list[PersonaIn]
     buyer_context: str | None = None
+    brand_summary: str | None = None
+    market: str | None = None
     access_code: str
     prompts_per_persona: int | None = None
 
@@ -104,6 +128,9 @@ class AnalysisRequest(CamelModel):
     brand: str
     industry: str
     competitors: list[str] = Field(default_factory=list)
+    buyer_context: str | None = None
+    brand_summary: str | None = None
+    market: str | None = None
     personas: list[PersonaIn]
     prompts: dict[str, list[str]]
     access_code: str
