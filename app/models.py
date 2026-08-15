@@ -51,6 +51,11 @@ class DetectResponse(CamelModel):
     brand: str
     industry: str
     competitors: list[str]
+    # Free text, not a fixed enum — describes what kind of real-world choice
+    # this actually is (buying software, booking a hotel, choosing a snack
+    # brand, hiring an agency...) so persona/prompt generation stop assuming
+    # every brand is B2B software being "evaluated" like a vendor.
+    buyer_context: str
 
 
 # ── /api/generate-personas ───────────────────────────────────────────
@@ -59,6 +64,7 @@ class GeneratePersonasRequest(CamelModel):
     brand: str
     industry: str
     competitors: list[str] = Field(default_factory=list)
+    buyer_context: str | None = None
     access_code: str
     persona_count: int | None = None
 
@@ -83,6 +89,7 @@ class PromptsRequest(CamelModel):
     brand: str
     industry: str
     personas: list[PersonaIn]
+    buyer_context: str | None = None
     access_code: str
     prompts_per_persona: int | None = None
 

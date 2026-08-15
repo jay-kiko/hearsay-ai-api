@@ -32,6 +32,7 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
             api_key=settings.anthropic_api_key,
             brand=body.brand,
             industry=body.industry,
+            buyer_context=body.buyer_context,
             personas=body.personas,
             prompts_per_persona=body.prompts_per_persona,
         )

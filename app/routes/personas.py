@@ -32,6 +32,7 @@ async def create_personas(body: GeneratePersonasRequest) -> GeneratePersonasResp
             api_key=settings.anthropic_api_key,
             industry=body.industry,
             competitors=body.competitors,
+            buyer_context=body.buyer_context,
             persona_count=body.persona_count,
         )
     except AuthenticationError as exc:
