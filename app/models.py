@@ -53,6 +53,30 @@ class DetectResponse(CamelModel):
     competitors: list[str]
 
 
+# ── /api/generate-personas ───────────────────────────────────────────
+
+class GeneratePersonasRequest(CamelModel):
+    brand: str
+    industry: str
+    competitors: list[str] = Field(default_factory=list)
+    access_code: str
+    persona_count: int | None = None
+
+
+class GeneratedPersona(CamelModel):
+    id: str
+    title: str
+    initials: str
+    desc: str
+    role: str
+    pains: str
+    criteria: str
+
+
+class GeneratePersonasResponse(CamelModel):
+    personas: list[GeneratedPersona]
+
+
 # ── /api/prompts ─────────────────────────────────────────────────────
 
 class PromptsRequest(CamelModel):

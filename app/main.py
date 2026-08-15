@@ -12,6 +12,7 @@ from app.routes.access import router as access_router
 from app.routes.admin import router as admin_router
 from app.routes.analysis import router as analysis_router
 from app.routes.detect import router as detect_router
+from app.routes.personas import router as personas_router
 from app.routes.prompts import router as prompts_router
 
 logging.basicConfig(level=logging.INFO)
@@ -42,6 +43,7 @@ app.add_middleware(
 
 app.include_router(access_router)
 app.include_router(detect_router)
+app.include_router(personas_router)
 app.include_router(prompts_router)
 app.include_router(analysis_router)
 app.include_router(admin_router)

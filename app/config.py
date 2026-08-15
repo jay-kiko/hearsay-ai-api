@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     max_prompt_calls_per_code: int = 10
 
     prompts_per_persona: int = 3
+    persona_count: int = 8
     persona_concurrency: int = 4
     job_ttl_seconds: int = 1800
 
