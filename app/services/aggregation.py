@@ -19,8 +19,17 @@ def _mentions_any(result: PersonaResult, match_names: list[str]) -> bool:
     # name (e.g. "PVH (parent of Tommy Hilfiger and Calvin Klein)") — check
     # against every alias, not just the one name, or this silently misses
     # every sub-brand mention the same way the old exact-name check did.
+    #
+    # Also check every exchange, not just result.parts (the single
+    # representative prompt _aggregate() picked for display) — a competitor
+    # named only in one of a persona's other prompts is sitting right there
+    # in result.exchanges[i].parts, but invisible to Share of Voice if only
+    # the representative prompt's parts get inspected. exchanges already
+    # includes the representative prompt's own analysis too, so this is a
+    # strict superset of the old check, never a narrower one.
     candidates = {n.strip().lower() for n in match_names if n.strip()}
-    return any(part.text.strip().lower() in candidates for part in result.parts)
+    all_parts = (part for exchange in result.exchanges for part in exchange.parts)
+    return any(part.text.strip().lower() in candidates for part in all_parts)
 
 
 def build_overview(results: dict[str, PersonaResult]) -> Overview:
