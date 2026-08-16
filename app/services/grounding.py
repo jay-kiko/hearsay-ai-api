@@ -15,7 +15,7 @@ from collections import defaultdict
 from urllib.parse import urlparse
 
 from app.config import get_settings
-from app.models import Citation, Community, Publisher, SitelistEntry, Sources
+from app.models import Citation, Community, Competitor, Publisher, SitelistEntry, Sources
 from app.services.anthropic_client import call_structured, call_web_search
 
 logger = logging.getLogger("hearsay.grounding")
@@ -60,8 +60,8 @@ _COMMUNITY_DOMAINS = (
 )
 
 
-def _query(brand: str, industry: str, competitors: list[str], market: str | None) -> str:
-    competitor_list = ", ".join(competitors) if competitors else "its main competitors"
+def _query(brand: str, industry: str, competitors: list[Competitor], market: str | None) -> str:
+    competitor_list = ", ".join(c.name for c in competitors) if competitors else "its main competitors"
     market_clause = f" Focus specifically on the {market} market." if market else ""
     return (
         f"How is '{brand}' discussed and reviewed within the '{industry}' category, "
@@ -121,7 +121,7 @@ async def _filter_relevant(
     *,
     brand: str,
     industry: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     api_key: str,
     model: str,
 ) -> list[dict[str, str]]:
@@ -149,7 +149,7 @@ async def _filter_relevant(
         return raw_citations
 
     candidate_list = "\n".join(f"- {domain}: {title}" for domain, title in domains.items())
-    competitor_list = ", ".join(competitors) if competitors else "none specified"
+    competitor_list = ", ".join(c.name for c in competitors) if competitors else "none specified"
 
     try:
         result = await call_structured(
@@ -231,7 +231,7 @@ def _build_sitelist(publishers: list[Publisher]) -> list[SitelistEntry]:
 
 
 async def run_grounding(
-    *, api_key: str, brand: str, industry: str, competitors: list[str], market: str | None = None
+    *, api_key: str, brand: str, industry: str, competitors: list[Competitor], market: str | None = None
 ) -> tuple[Sources, list[SitelistEntry]]:
     settings = get_settings()
     try:

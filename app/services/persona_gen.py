@@ -12,7 +12,7 @@ and non-tech brands alike.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import GeneratedPersona
+from app.models import Competitor, GeneratedPersona
 from app.services.anthropic_client import call_structured
 
 _TOOL_NAME = "write_buyer_personas"
@@ -70,13 +70,13 @@ _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or
 
 def _user_prompt(
     industry: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     buyer_context: str,
     brand_summary: str | None,
     market: str | None,
     count: int,
 ) -> str:
-    competitor_list = ", ".join(competitors) if competitors else "unspecified competitors"
+    competitor_list = ", ".join(c.name for c in competitors) if competitors else "unspecified competitors"
     lines = [
         f"Industry: {industry}",
         f"Competitors in this category: {competitor_list}",
@@ -94,7 +94,7 @@ async def generate_personas(
     *,
     api_key: str,
     industry: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     buyer_context: str | None,
     brand_summary: str | None = None,
     market: str | None = None,

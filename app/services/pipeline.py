@@ -17,7 +17,7 @@ from collections import Counter
 from dataclasses import dataclass
 
 from app.config import get_settings
-from app.models import PersonaExchange, PersonaIn, PersonaResult, Sentiment
+from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.scoring import analyze_answer
 
@@ -82,7 +82,7 @@ async def _analyze_one_prompt(
     *,
     prompt: str,
     brand: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     buyer_context: str | None,
     market: str | None,
     api_key: str,
@@ -175,7 +175,7 @@ async def run_persona(
     persona: PersonaIn,
     prompts: list[str],
     brand: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     buyer_context: str | None,
     market: str | None,
     api_key: str,

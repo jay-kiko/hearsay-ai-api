@@ -20,7 +20,7 @@ brand context, not open-ended research, so the fast model is fine here.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import CategorySuggestion
+from app.models import CategorySuggestion, Competitor
 from app.services.anthropic_client import call_structured
 
 _TOOL_NAME = "suggest_product_categories"
@@ -75,8 +75,8 @@ _SYSTEM = (
 )
 
 
-def _user_prompt(brand: str, industry: str, competitors: list[str], buyer_context: str | None, brand_summary: str | None) -> str:
-    competitor_list = ", ".join(competitors) if competitors else "unspecified competitors"
+def _user_prompt(brand: str, industry: str, competitors: list[Competitor], buyer_context: str | None, brand_summary: str | None) -> str:
+    competitor_list = ", ".join(c.name for c in competitors) if competitors else "unspecified competitors"
     lines = [
         f"Brand: {brand}",
         f"Industry: {industry}",
@@ -103,7 +103,7 @@ async def generate_categories(
     api_key: str,
     brand: str,
     industry: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     buyer_context: str | None,
     brand_summary: str | None,
 ) -> list[CategorySuggestion]:

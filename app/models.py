@@ -31,6 +31,19 @@ class PersonaIn(CamelModel):
     criteria: str
 
 
+class Competitor(CamelModel):
+    name: str
+    # Every real-world variant that should count as a mention of this
+    # competitor — the company name itself, common short forms, and any
+    # sub-brands. A holding company like "PVH (parent of Tommy Hilfiger and
+    # Calvin Klein)" needs both "Tommy Hilfiger" and "Calvin Klein" here,
+    # since an AI answer is far more likely to name the sub-brand than the
+    # parent company — matching only the literal display name misses almost
+    # every real mention (confirmed live: zero matches against an answer
+    # that named both sub-brands explicitly).
+    match_names: list[str]
+
+
 # ── /api/access ──────────────────────────────────────────────────────
 
 AccessStatus = Literal["unknown", "revoked", "exhausted", "valid"]
@@ -50,7 +63,7 @@ class DetectRequest(CamelModel):
 class DetectResponse(CamelModel):
     brand: str
     industry: str
-    competitors: list[str]
+    competitors: list[Competitor]
     # Free text, not a fixed enum — describes what kind of real-world choice
     # this actually is (buying software, booking a hotel, choosing a snack
     # brand, hiring an agency...) so persona/prompt generation stop assuming
@@ -68,7 +81,7 @@ class DetectResponse(CamelModel):
 class CategoriesRequest(CamelModel):
     brand: str
     industry: str
-    competitors: list[str] = Field(default_factory=list)
+    competitors: list[Competitor] = Field(default_factory=list)
     buyer_context: str | None = None
     brand_summary: str | None = None
     access_code: str
@@ -93,7 +106,7 @@ class CategoriesResponse(CamelModel):
 class GeneratePersonasRequest(CamelModel):
     brand: str
     industry: str
-    competitors: list[str] = Field(default_factory=list)
+    competitors: list[Competitor] = Field(default_factory=list)
     buyer_context: str | None = None
     brand_summary: str | None = None
     market: str | None = None
@@ -137,7 +150,7 @@ class PromptsResponse(CamelModel):
 class AnalysisRequest(CamelModel):
     brand: str
     industry: str
-    competitors: list[str] = Field(default_factory=list)
+    competitors: list[Competitor] = Field(default_factory=list)
     buyer_context: str | None = None
     brand_summary: str | None = None
     market: str | None = None

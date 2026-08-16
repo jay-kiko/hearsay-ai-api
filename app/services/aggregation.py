@@ -10,12 +10,17 @@ from __future__ import annotations
 
 from collections import Counter
 
-from app.models import Overview, PersonaResult, Product, Sentiment
+from app.models import Competitor, Overview, PersonaResult, Product, Sentiment
 
 
-def _mentions_name(result: PersonaResult, name: str) -> bool:
-    name_lower = name.strip().lower()
-    return any(part.text.strip().lower() == name_lower for part in result.parts)
+def _mentions_any(result: PersonaResult, match_names: list[str]) -> bool:
+    # A highlighted part's text is whatever alias literally matched (e.g.
+    # "Tommy Hilfiger"), not necessarily the competitor's canonical display
+    # name (e.g. "PVH (parent of Tommy Hilfiger and Calvin Klein)") — check
+    # against every alias, not just the one name, or this silently misses
+    # every sub-brand mention the same way the old exact-name check did.
+    candidates = {n.strip().lower() for n in match_names if n.strip()}
+    return any(part.text.strip().lower() in candidates for part in result.parts)
 
 
 def build_overview(results: dict[str, PersonaResult]) -> Overview:
@@ -37,14 +42,21 @@ def build_overview(results: dict[str, PersonaResult]) -> Overview:
     )
 
 
-def build_products(results: dict[str, PersonaResult], brand: str, competitors: list[str]) -> list[Product]:
+def build_products(results: dict[str, PersonaResult], brand: str, competitors: list[Competitor]) -> list[Product]:
     total = len(results) or 1
-    names = [brand, *competitors]
-    counts = {name: sum(1 for r in results.values() if _mentions_name(r, name)) for name in names}
+    # (display name, aliases to check, is_brand) — brand has no aliases of
+    # its own in current scope, just its literal name.
+    entries: list[tuple[str, list[str], bool]] = [(brand, [brand], True)]
+    entries += [(c.name, c.match_names or [c.name], False) for c in competitors]
 
     products = [
-        Product(name=name, count=count, share=round(count / total, 3), is_brand=(name == brand))
-        for name, count in counts.items()
+        Product(
+            name=name,
+            count=(count := sum(1 for r in results.values() if _mentions_any(r, match_names))),
+            share=round(count / total, 3),
+            is_brand=is_brand,
+        )
+        for name, match_names, is_brand in entries
     ]
     products.sort(key=lambda p: (-p.count, p.name))
     return products

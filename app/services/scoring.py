@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from app.models import ResponsePart, Sentiment
+from app.models import Competitor, ResponsePart, Sentiment
 
 _RANK_STEP = 20  # each rank position back costs 20 points, floor 0
 _SENTIMENT_MULTIPLIER = {
@@ -19,12 +19,35 @@ _SENTIMENT_MULTIPLIER = {
     Sentiment.negative: 0.35,
 }
 
+# Stripped before matching so a formal/legal name still matches a plain
+# mention — an AI answer says "Tapestry" or "PVH", essentially never
+# "Tapestry, Inc." or "PVH Corp." verbatim. Matching the exact string as
+# given (the old behavior) missed nearly every real-world mention of a
+# multi-brand or corporate competitor.
+_CORPORATE_SUFFIX_RE = re.compile(
+    r"[,]?\s+(?:Inc|Incorporated|Corp|Corporation|Co|Company|Ltd|Limited|LLC|LLP|"
+    r"Group|Holdings?|plc|PLC|GmbH|AG|S\.?A\.?|N\.?V\.?)\.?\s*$",
+    re.IGNORECASE,
+)
+
+
+def _core_name(name: str) -> str:
+    stripped = _CORPORATE_SUFFIX_RE.sub("", name).strip()
+    return stripped or name
+
 
 def _pattern_for(name: str) -> re.Pattern[str] | None:
-    name = name.strip()
+    name = _core_name(name.strip())
     if not name:
         return None
-    return re.compile(rf"\b{re.escape(name)}\b", re.IGNORECASE)
+    # Escape each word separately and rejoin with \s+ instead of escaping the
+    # whole string in one go — incidental spacing differences (double space,
+    # a line break between words) still match, only the literal words
+    # themselves have to line up exactly.
+    words = [re.escape(w) for w in name.split()]
+    if not words:
+        return None
+    return re.compile(rf"\b{r'\s+'.join(words)}\b", re.IGNORECASE)
 
 
 @dataclass
@@ -35,7 +58,7 @@ class Mention:
     name: str
 
 
-def find_mentions(text: str, brand: str, competitors: list[str]) -> list[Mention]:
+def find_mentions(text: str, brand: str, competitors: list[Competitor]) -> list[Mention]:
     candidates: list[Mention] = []
 
     brand_pattern = _pattern_for(brand)
@@ -44,11 +67,22 @@ def find_mentions(text: str, brand: str, competitors: list[str]) -> list[Mention
             candidates.append(Mention(m.start(), m.end(), "brand", brand))
 
     for competitor in competitors:
-        pattern = _pattern_for(competitor)
-        if not pattern:
-            continue
-        for m in pattern.finditer(text):
-            candidates.append(Mention(m.start(), m.end(), "competitor", competitor))
+        # A holding company is almost always mentioned by a sub-brand's name,
+        # not its own (confirmed live: zero matches for "PVH" against an
+        # answer that named "Tommy Hilfiger" and "Calvin Klein" explicitly)
+        # — try every alias, but record the mention under the canonical
+        # display name so rank/Share-of-Voice count it as one entity.
+        seen_spans: set[tuple[int, int]] = set()
+        for alias in competitor.match_names or [competitor.name]:
+            pattern = _pattern_for(alias)
+            if not pattern:
+                continue
+            for m in pattern.finditer(text):
+                span = (m.start(), m.end())
+                if span in seen_spans:
+                    continue  # two aliases matching the identical span
+                seen_spans.add(span)
+                candidates.append(Mention(m.start(), m.end(), "competitor", competitor.name))
 
     candidates.sort(key=lambda m: m.start)
 
@@ -79,7 +113,7 @@ def build_parts(text: str, mentions: list[Mention]) -> list[ResponsePart]:
     return parts
 
 
-def compute_rank(mentions: list[Mention], brand: str, competitors: list[str]) -> int | None:
+def compute_rank(mentions: list[Mention], brand: str) -> int | None:
     """1-indexed position of the brand among the first mention of each distinct name."""
     seen: list[str] = []
     for mention in mentions:
@@ -103,12 +137,12 @@ def analyze_answer(
     *,
     text: str,
     brand: str,
-    competitors: list[str],
+    competitors: list[Competitor],
     sentiment: Sentiment,
 ) -> tuple[bool, int | None, int, list[ResponsePart]]:
     mentions = find_mentions(text, brand, competitors)
     mentioned = any(m.kind == "brand" for m in mentions)
-    rank = compute_rank(mentions, brand, competitors)
+    rank = compute_rank(mentions, brand)
     vis = compute_visibility_score(mentioned, rank, sentiment)
     parts = build_parts(text, mentions)
     return mentioned, rank, vis, parts

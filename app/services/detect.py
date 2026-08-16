@@ -15,7 +15,7 @@ formats those findings into the response shape.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import DetectResponse
+from app.models import Competitor, DetectResponse
 from app.services.anthropic_client import call_structured, call_web_search
 
 _TOOL_NAME = "detect_brand"
@@ -30,8 +30,32 @@ _INPUT_SCHEMA = {
         },
         "competitors": {
             "type": "array",
-            "items": {"type": "string"},
-            "description": "3-5 real, specific, named competitors in that same category — no generic placeholders.",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": (
+                            "Real, specific competitor name — no generic placeholders. Can include "
+                            "parenthetical context for a holding company, e.g. 'PVH (parent of Tommy "
+                            "Hilfiger and Calvin Klein)'."
+                        ),
+                    },
+                    "matchNames": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Every real-world name variant that should count as a mention of this "
+                            "competitor — the company name itself, common short forms, AND any "
+                            "sub-brands. An AI answer is far more likely to name a sub-brand (e.g. "
+                            "'Tommy Hilfiger') than a parent holding company (e.g. 'PVH') — include "
+                            "both, and every distinct sub-brand, so none of them get missed."
+                        ),
+                    },
+                },
+                "required": ["name", "matchNames"],
+            },
+            "description": "3-5 real, specific competitors in that same category.",
         },
         "buyerContext": {
             "type": "string",
@@ -80,26 +104,55 @@ _EXTRACT_SYSTEM = (
     "results — trust it over any assumption. Identify the brand name and a specific "
     "industry/category label, then name 3-5 real, specific companies from the research that "
     "actually compete in that category — never generic placeholders and never the brand itself. "
-    "Identify what kind of real-world choice this actually is: software/vendor procurement, a "
-    "consumer product purchase, a hospitality/travel booking, a service or agency hire, or "
-    "something else — ground this in the true nature of the brand's industry from the research, "
-    "not a generic 'evaluating tools' frame. Also write a brandSummary: a fuller, factual "
-    "paragraph describing what the brand actually is and does, for a user to review and correct "
-    "before anything else gets generated from it — specific to the research, not boilerplate. If "
-    "the research found nothing useful, fall back to your own best judgment from the original "
-    "query, and say so plainly in the brandSummary rather than inventing confident-sounding detail."
+    "For each competitor, also list every real name variant an AI might use to refer to it — "
+    "the company name, common short forms, and any sub-brands (a holding company is usually "
+    "mentioned by its sub-brand's name, not its own). Identify what kind of real-world choice "
+    "this actually is: software/vendor procurement, a consumer product purchase, a "
+    "hospitality/travel booking, a service or agency hire, or something else — ground this in "
+    "the true nature of the brand's industry from the research, not a generic 'evaluating tools' "
+    "frame. Also write a brandSummary: a fuller, factual paragraph describing what the brand "
+    "actually is and does, for a user to review and correct before anything else gets generated "
+    "from it — specific to the research, not boilerplate. If the research found nothing useful, "
+    "fall back to your own best judgment from the original query, and say so plainly in the "
+    "brandSummary rather than inventing confident-sounding detail."
 )
 
 
-def _normalize_competitors(value: object) -> list[str]:
-    """Tool-forced output isn't a hard type guarantee — competitors has come
-    back as a comma-joined string instead of an array in practice, despite
-    the schema declaring array. Recover a list either way rather than 500."""
-    if isinstance(value, list):
-        return [str(v).strip() for v in value if str(v).strip()]
+def _normalize_competitors(value: object) -> list[Competitor]:
+    """Tool-forced output isn't a hard type guarantee — fields have come back
+    in an unexpected shape in practice despite the schema declaring one.
+    Recover a usable list of Competitors either way rather than 500."""
     if isinstance(value, str):
-        return [part.strip() for part in value.split(",") if part.strip()]
-    return []
+        # Whole competitors field collapsed to a comma-joined string — no
+        # matchNames available at all, fall back to name-only matching.
+        return [Competitor(name=n.strip(), match_names=[n.strip()]) for n in value.split(",") if n.strip()]
+
+    if not isinstance(value, list):
+        return []
+
+    competitors: list[Competitor] = []
+    for entry in value:
+        if isinstance(entry, str):
+            name = entry.strip()
+            if name:
+                competitors.append(Competitor(name=name, match_names=[name]))
+            continue
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name", "")).strip()
+        if not name:
+            continue
+        match_names_raw = entry.get("matchNames", [])
+        if isinstance(match_names_raw, str):
+            match_names = [m.strip() for m in match_names_raw.split(",") if m.strip()]
+        elif isinstance(match_names_raw, list):
+            match_names = [str(m).strip() for m in match_names_raw if str(m).strip()]
+        else:
+            match_names = []
+        if name not in match_names:
+            match_names.append(name)
+        competitors.append(Competitor(name=name, match_names=match_names))
+    return competitors
 
 
 async def _research_brand(*, api_key: str, model: str, query: str) -> str:
