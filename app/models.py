@@ -74,8 +74,18 @@ class CategoriesRequest(CamelModel):
     access_code: str
 
 
+class CategorySuggestion(CamelModel):
+    name: str
+    # Scoped to this specific facet, not a copy of the brand's overall
+    # buyerContext — a brand can genuinely have multiple distinct buyer
+    # types (e.g. Hotel101 sells to both real-estate investors AND
+    # short-stay guests), and selecting one facet must narrow to just its
+    # relevant buyer type, not leak the other one back in downstream.
+    buyer_context: str
+
+
 class CategoriesResponse(CamelModel):
-    categories: list[str]
+    categories: list[CategorySuggestion]
 
 
 # ── /api/generate-personas ───────────────────────────────────────────
@@ -147,6 +157,16 @@ class ResponsePart(CamelModel):
     kind: Literal["brand", "competitor", "normal"]
 
 
+class PersonaExchange(CamelModel):
+    prompt: str
+    mentioned: bool
+    sentiment: Sentiment
+    rank: int | None
+    vis: int
+    quote: str
+    parts: list[ResponsePart]
+
+
 class PersonaResult(CamelModel):
     prompt: str
     mentioned: bool
@@ -155,6 +175,7 @@ class PersonaResult(CamelModel):
     rank: int | None
     quote: str
     parts: list[ResponsePart]
+    exchanges: list[PersonaExchange]  # one entry per prompt asked, in the order they were sent
 
 
 PersonaStatus = Literal["waiting", "running", "done", "error"]

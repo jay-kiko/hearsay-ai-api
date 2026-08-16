@@ -62,7 +62,11 @@ _SYSTEM = (
     "When a brand summary and/or market is given, use them too: the brand summary sharpens what "
     "category of recommendation is actually being sought, and the market means every prompt "
     "should read like it's coming from a real buyer in that specific region — natural local "
-    "phrasing, places, and context, not a generic global-default question."
+    "phrasing, places, and context, not a generic global-default question. If the buyer context "
+    "given actually describes more than one genuinely distinct kind of buyer (e.g. investors AND "
+    "end customers) and the industry given is specifically about only one of them, write prompts "
+    "for that one industry only — a persona's own pains/criteria are the real guide here, don't "
+    "pull in a different buyer type's motivation just because the buyer context mentions it."
 )
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."

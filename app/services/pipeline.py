@@ -4,8 +4,11 @@ For every prompt belonging to a persona: one Claude call for the buyer-style
 answer, one structured Claude call classifying sentiment toward the brand and
 pulling a quote, then deterministic parsing/scoring (app.services.scoring).
 A persona can carry several prompts (see §03) — those per-prompt analyses are
-run concurrently and folded into the single PersonaResult the frontend
-expects, picking the best-ranked prompt as the representative response.
+run concurrently. PersonaResult's top-level fields (prompt/quote/parts/vis/
+rank/sentiment) stay a single representative/aggregated view for backward
+compatibility, but every individual per-prompt analysis is also exposed via
+`exchanges` — the score was always the average across all of them; before
+this, only the winning one was ever visible.
 """
 from __future__ import annotations
 
@@ -14,7 +17,7 @@ from collections import Counter
 from dataclasses import dataclass
 
 from app.config import get_settings
-from app.models import PersonaIn, PersonaResult, Sentiment
+from app.models import PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.scoring import analyze_answer
 
@@ -152,6 +155,18 @@ def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
         rank=best_rank,
         quote=representative.quote,
         parts=representative.parts,
+        exchanges=[
+            PersonaExchange(
+                prompt=a.prompt,
+                mentioned=a.mentioned,
+                sentiment=a.sentiment,
+                rank=a.rank,
+                vis=a.vis,
+                quote=a.quote,
+                parts=a.parts,
+            )
+            for a in analyses
+        ],
     )
 
 

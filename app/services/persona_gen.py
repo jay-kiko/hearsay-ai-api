@@ -58,7 +58,11 @@ _SYSTEM = (
     "context actually describes a software or B2B procurement decision. When a brand summary "
     "and/or market is given, use them too — the brand summary refines what's actually being "
     "chosen between, and the market anchors personas in that specific region's real buyers, "
-    "places, and vernacular rather than a generic global default."
+    "places, and vernacular rather than a generic global default. If the buyer context given "
+    "actually describes more than one genuinely distinct kind of buyer (e.g. investors AND end "
+    "customers, or businesses AND consumers) and the industry given is specifically about only "
+    "one of them, write personas for that one industry only — do not blend the other buyer "
+    "type's motivations into these personas just because the buyer context mentions it."
 )
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
