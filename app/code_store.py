@@ -125,7 +125,20 @@ class CodeStore:
         return "valid" if uses_remaining > 0 else "exhausted"
 
     async def redeem(self, code: str, job_id: str) -> bool:
-        """Atomically spends one use. Returns False if unknown, revoked, or exhausted."""
+        """Atomically spends one use. Returns False if unknown, revoked, or exhausted.
+
+        Also resets prompt_calls to 0 — that counter is the pre-spend throttle
+        shared by /api/detect, /api/categories, /api/prompts, and
+        /api/generate-personas (see register_prompt_call), and it used to be
+        one pool for a code's *entire lifetime*. For a multi-use code that
+        silently starved every use after the first: heavy iteration during
+        one real journey through the Wizard could exhaust the budget before
+        a second, independent use of the same code ever got a chance. Each
+        successful redemption now gets its own fresh pre-spend allowance,
+        matching what a multi-use code was actually meant to allow — the
+        total exposure over a code's life still scales with uses_total,
+        which is a cap the admin already sets deliberately at mint time.
+        """
         # aiosqlite serializes every call through one connection/one implicit
         # transaction shared across all concurrent coroutines. A 0-row UPDATE
         # hasn't changed anything, so there's nothing of *this* call's to
@@ -133,7 +146,7 @@ class CodeStore:
         # transaction, including a concurrent sibling's not-yet-committed
         # decrement. commit() is the safe no-op: it only ever persists.
         cursor = await self._db.execute(
-            "UPDATE access_codes SET uses_remaining = uses_remaining - 1 "
+            "UPDATE access_codes SET uses_remaining = uses_remaining - 1, prompt_calls = 0 "
             "WHERE code = ? AND uses_remaining > 0 AND revoked = 0",
             (code,),
         )
