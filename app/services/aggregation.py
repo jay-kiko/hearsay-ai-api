@@ -37,10 +37,28 @@ def _mentions_any(result: PersonaResult, match_names: list[str]) -> bool:
     return any(part.text.strip().lower() in candidates for part in all_parts)
 
 
+def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]:
+    """Mentioned/total across every individual prompt exchange, not one
+    OR-aggregated boolean per persona (PersonaResult.mentioned) — OR-of-
+    booleans gives a persona with more prompts a higher chance of counting
+    as "mentioned" purely from having more trials, independent of actual
+    visibility. Confirmed as a real, growing bias once multi-category prompt
+    generation made per-persona prompt counts vary instead of being uniform."""
+    all_exchanges = [ex for r in results.values() for ex in r.exchanges]
+    mentioned = sum(1 for ex in all_exchanges if ex.mentioned)
+    return mentioned, len(all_exchanges)
+
+
 def build_overview(results: dict[str, PersonaResult]) -> Overview:
-    total = len(results)
-    mentioned = sum(1 for r in results.values() if r.mentioned)
-    visibility_score = round(sum(r.vis for r in results.values()) / total) if total else 0
+    persona_total = len(results)
+    # Deliberately double-averaged (per-persona, then across personas) rather
+    # than a flat average over every raw prompt — a persona with more
+    # prompts shouldn't dominate the overview average any more than one with
+    # fewer. This is the opposite bias from mentioned/total below, and both
+    # are handled correctly for what each one actually measures.
+    visibility_score = round(sum(r.vis for r in results.values()) / persona_total) if persona_total else 0
+
+    mentioned, total = _prompt_mention_counts(results)
     mention_rate = (mentioned / total) if total else 0.0
 
     sentiment_counts = Counter(r.sentiment for r in results.values())
@@ -92,7 +110,8 @@ def build_score_breakdown(
     mentioned_results = [r for r in results.values() if r.mentioned]
     mentioned_n = len(mentioned_results)
 
-    presence = round(mentioned_n / total * 100)
+    mentioned_prompts, total_prompts = _prompt_mention_counts(results)
+    presence = round(mentioned_prompts / total_prompts * 100) if total_prompts else 0
 
     brand_product = next((p for p in products if p.is_brand), None)
     sov = round((brand_product.share if brand_product else 0.0) * 100)
@@ -122,7 +141,9 @@ def build_score_breakdown(
 
     return [
         ScoreComponent(
-            name="Presence", score=presence, note=f"Mentioned in {mentioned_n} of {total} persona queries"
+            name="Presence",
+            score=presence,
+            note=f"Mentioned in {mentioned_prompts} of {total_prompts} persona queries",
         ),
         ScoreComponent(
             name="Share of Voice", score=sov, note=f"{sov}% of all product mentions"
