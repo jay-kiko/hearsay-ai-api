@@ -12,13 +12,25 @@ import asyncio
 import logging
 from typing import Any
 
-from anthropic import AsyncAnthropic
+from anthropic import AsyncAnthropic, RateLimitError
 
 from app.config import get_settings
 
 logger = logging.getLogger("hearsay.anthropic")
 
 WEB_SEARCH_TOOL = {"type": "web_search_20250305", "name": "web_search", "max_uses": 6}
+
+# A 429 needs to be treated differently from a generic failure: Anthropic's
+# own guidance for "concurrent requests across all models exceeded" is to
+# wait for in-flight requests to clear, not retry immediately — confirmed
+# live, a job with several personas running concurrently (each doing 2 calls
+# at once) hit this org-level ceiling and lost 7 of 8 personas because the
+# generic path only gets `anthropic_max_retries` attempts with a ~1s flat
+# backoff, nowhere near enough to ride out the window. Rate limits get their
+# own, much more patient retry budget instead.
+_RATE_LIMIT_MAX_RETRIES = 5
+_RATE_LIMIT_BASE_DELAY_SECONDS = 5.0
+_RATE_LIMIT_MAX_DELAY_SECONDS = 60.0
 
 
 def _cacheable_system(system: str) -> list[dict[str, Any]]:
@@ -36,9 +48,25 @@ def _cacheable_system(system: str) -> list[dict[str, Any]]:
 
 async def _with_retry(fn, *, retries: int, label: str):
     attempt = 0
+    rate_limit_attempt = 0
     while True:
         try:
             return await fn()
+        except RateLimitError as exc:
+            rate_limit_attempt += 1
+            if rate_limit_attempt > _RATE_LIMIT_MAX_RETRIES:
+                logger.warning(
+                    "%s rate-limited, giving up after %d attempt(s): %s", label, rate_limit_attempt, exc
+                )
+                raise
+            delay = min(
+                _RATE_LIMIT_BASE_DELAY_SECONDS * (2 ** (rate_limit_attempt - 1)), _RATE_LIMIT_MAX_DELAY_SECONDS
+            )
+            logger.info(
+                "%s rate-limited (attempt %d/%d), backing off %.1fs: %s",
+                label, rate_limit_attempt, _RATE_LIMIT_MAX_RETRIES, delay, exc,
+            )
+            await asyncio.sleep(delay)
         except Exception as exc:  # noqa: BLE001 - surfaced to caller after retries exhausted
             attempt += 1
             if attempt > retries:
