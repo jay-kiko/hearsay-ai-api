@@ -75,6 +75,7 @@ _INPUT_SCHEMA = {
         },
         "radarCategories": {
             "type": "array",
+            "minItems": 3,
             "items": {
                 "type": "object",
                 "properties": {
@@ -84,11 +85,15 @@ _INPUT_SCHEMA = {
                 "required": ["name", "score"],
             },
             "description": (
-                "5-6 dimensions that genuinely matter to how buyers in THIS category judge their choice "
-                "(e.g. 'Ingredient Transparency' for a skincare brand, 'Room Comfort' for a hotel) — never "
-                "default to generic software axes like 'Technical' or 'Enterprise' unless the brand actually "
-                "is enterprise software. Score each 0-100 for how strongly this brand comes across on that "
-                "dimension, based on the evidence given."
+                "ALWAYS return at least 3-6 dimensions, even for a brand with thin or zero organic mentions — "
+                "never an empty array. Pick dimensions that genuinely matter to how buyers in THIS category "
+                "judge their choice (e.g. 'Ingredient Transparency' for a skincare brand, 'Room Comfort' for a "
+                "hotel) — never default to generic software axes like 'Technical' or 'Enterprise' unless the "
+                "brand actually is enterprise software. Score each 0-100 for how strongly this brand comes "
+                "across on that dimension. When the persona evidence is rich, ground scores in it directly; "
+                "when it's thin (few or no mentions), still choose sensible dimensions from the brand/industry "
+                "context and score them conservatively low rather than omitting the dimension — a brand's "
+                "near-invisibility is itself a real (low) score on every dimension, not a reason to skip radar."
             ),
         },
     },
@@ -98,10 +103,14 @@ _INPUT_SCHEMA = {
 _SYSTEM = (
     "You are a competitive-intelligence analyst reviewing the completed results of an AI-visibility study: "
     "real AI-generated answers to realistic buyer questions, scored for whether/how/where a brand got "
-    "mentioned versus its named competitors. Reason only from the evidence given — every claim should trace "
-    "back to a specific persona result, product share, or cited source in the data, not generic industry "
-    "knowledge. Be concrete and specific, never generic filler advice. The radar dimensions must be chosen "
-    "to fit this specific brand's actual category and buyer context, not assumed to be software-buyer axes."
+    "mentioned versus its named competitors. For rivalWins/brandWins/gaps/opportunities, reason only from the "
+    "evidence given — every claim should trace back to a specific persona result, product share, or cited "
+    "source in the data, not generic industry knowledge. Be concrete and specific, never generic filler "
+    "advice. The one exception is the radar: even when a brand has thin or zero organic mentions to reason "
+    "from directly, still choose dimensions from the brand/industry/buyer context and score them (low, if "
+    "that's what the near-invisibility warrants) — never leave radar empty just because the rest of the "
+    "evidence is thin. Radar dimensions must be chosen to fit this specific brand's actual category and buyer "
+    "context, not assumed to be software-buyer axes."
 )
 
 
@@ -199,7 +208,13 @@ async def generate_insights(
             tool_name=_TOOL_NAME,
             tool_description="Return the competitor diagnosis, opportunities, and radar categories.",
             input_schema=_INPUT_SCHEMA,
-            max_tokens=2048,
+            # Same failure mode confirmed live in grounding.py's source
+            # enrichment call: rivalWins/brandWins/gaps/opportunities/
+            # radarCategories in one JSON tool call can legitimately exceed
+            # 2048 tokens for a verbose run (several detailed opportunities
+            # alone can approach it), and radarCategories — last in the
+            # schema — is exactly what gets cut when that happens.
+            max_tokens=4096,
         )
         # Forced tool-call output isn't a hard type guarantee (same defensive
         # posture as detect.py/category_gen.py — an array field has come back
