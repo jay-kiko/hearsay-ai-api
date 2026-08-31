@@ -33,6 +33,8 @@ from app.services.anthropic_client import call_structured
 
 logger = logging.getLogger("hearsay.insights")
 
+_IMPACT_RANK = {"High": 3, "Medium": 2, "Low": 1}
+
 _TOOL_NAME = "generate_competitive_insights"
 _INPUT_SCHEMA = {
     "type": "object",
@@ -220,6 +222,10 @@ async def generate_insights(
         opportunities = [
             Opportunity(**o) for o in (opportunities_raw if isinstance(opportunities_raw, list) else []) if isinstance(o, dict)
         ]
+        # The Opportunities view promises "ranked by impact" — the model's
+        # own generation order doesn't reliably match that, so enforce it
+        # deterministically rather than trust output order.
+        opportunities.sort(key=lambda o: _IMPACT_RANK.get(o.impact, 0), reverse=True)
         radar_raw = result.get("radarCategories", [])
         radar = [
             RadarCategory(**r) for r in (radar_raw if isinstance(radar_raw, list) else []) if isinstance(r, dict)
