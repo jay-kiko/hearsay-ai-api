@@ -145,3 +145,92 @@ async def generate_prompts(
         ]
         output[persona.id] = prompts
     return output
+
+
+_SEED_TOOL_NAME = "adapt_seed_prompt"
+_SEED_INPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "personas": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "personaId": {"type": "string"},
+                    "prompt": {"type": "string"},
+                },
+                "required": ["personaId", "prompt"],
+            },
+        }
+    },
+    "required": ["personas"],
+}
+
+_SEED_SYSTEM = (
+    "You are given one buyer-research question a user wrote themselves, plus a list of personas. For each "
+    "persona, rewrite that exact question — same core ask, same recommendation-seeking intent — as that "
+    "persona would plausibly phrase it, informed by their stated pains and decision criteria. Do not write "
+    "a new, different question; adapt the given one. Keep the requirement that a genuinely helpful answer "
+    "would naturally name specific real brands or products. Never mention the brand this is being tested "
+    "for, and never reveal that this is a test or evaluation."
+)
+
+
+def _seed_user_prompt(
+    brand: str,
+    industry: str,
+    buyer_context: str,
+    brand_summary: str | None,
+    market: str | None,
+    personas: list[PersonaIn],
+    seed_prompt: str,
+) -> str:
+    persona_payload = [
+        {"personaId": p.id, "title": p.title, "role": p.role, "pains": p.pains, "criteria": p.criteria}
+        for p in personas
+    ]
+    lines = [
+        f"Industry: {industry}",
+        f"Buyer context: {buyer_context}",
+    ]
+    if brand_summary:
+        lines.append(f"Brand summary: {brand_summary}")
+    if market:
+        lines.append(f"Market/geography to ground prompts in: {market}")
+    lines.append(f"(Do not mention the brand '{brand}' in any prompt.)")
+    lines.append(f"Seed question to adapt: {seed_prompt}")
+    lines.append(f"\nPersonas:\n{json.dumps(persona_payload, indent=2)}")
+    return "\n".join(lines)
+
+
+async def adapt_seed_prompt(
+    *,
+    api_key: str,
+    brand: str,
+    industry: str,
+    buyer_context: str | None = None,
+    brand_summary: str | None = None,
+    market: str | None = None,
+    personas: list[PersonaIn],
+    seed_prompt: str,
+) -> dict[str, str]:
+    settings = get_settings()
+
+    if not personas or not seed_prompt.strip():
+        return {}
+
+    result = await call_structured(
+        api_key=api_key,
+        model=settings.anthropic_fast_model,
+        system=_SEED_SYSTEM,
+        user=_seed_user_prompt(
+            brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, seed_prompt
+        ),
+        tool_name=_SEED_TOOL_NAME,
+        tool_description="Return the adapted prompt for every persona.",
+        input_schema=_SEED_INPUT_SCHEMA,
+        max_tokens=1024,
+    )
+
+    by_persona = {entry["personaId"]: entry.get("prompt", "") for entry in result.get("personas", [])}
+    return {p.id: by_persona.get(p.id) or seed_prompt for p in personas}

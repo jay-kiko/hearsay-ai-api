@@ -139,10 +139,33 @@ class PromptsRequest(CamelModel):
     market: str | None = None
     access_code: str
     prompts_per_persona: int | None = None
+    # When non-empty, generate prompts_per_persona prompts PER category (each
+    # scoped to that category's own name/buyerContext) and concatenate them
+    # per persona, instead of one generation pass over the top-level
+    # industry/buyerContext — lets a user run personas across every category
+    # facet they pick, not just one.
+    categories: list[CategorySuggestion] = Field(default_factory=list)
 
 
 class PromptsResponse(CamelModel):
     prompts: dict[str, list[str]]
+
+
+class AdaptSeedPromptRequest(CamelModel):
+    brand: str
+    industry: str
+    personas: list[PersonaIn]
+    seed_prompt: str
+    buyer_context: str | None = None
+    brand_summary: str | None = None
+    market: str | None = None
+    access_code: str
+
+
+class AdaptSeedPromptResponse(CamelModel):
+    # One adapted prompt per persona — a single seed question in, one
+    # persona-voiced variant out, not a list like PromptsResponse.
+    prompts: dict[str, str]
 
 
 # ── /api/analysis ────────────────────────────────────────────────────
@@ -180,6 +203,9 @@ class PersonaExchange(CamelModel):
     parts: list[ResponsePart]
 
 
+PersonaOpportunity = Literal["Defend", "Grow", "High", "Critical Gap"]
+
+
 class PersonaResult(CamelModel):
     prompt: str
     mentioned: bool
@@ -189,6 +215,10 @@ class PersonaResult(CamelModel):
     quote: str
     parts: list[ResponsePart]
     exchanges: list[PersonaExchange]  # one entry per prompt asked, in the order they were sent
+    # Deterministic read on this persona's competitive position, from vis/mentioned
+    # alone (see pipeline._classify_opportunity) — not mentioned at all is always a
+    # "Critical Gap" regardless of how the other personas are doing.
+    opportunity: PersonaOpportunity
 
 
 PersonaStatus = Literal["waiting", "running", "done", "error"]
@@ -220,6 +250,32 @@ class Product(CamelModel):
     is_brand: bool = False
 
 
+class ScoreComponent(CamelModel):
+    name: str
+    score: int
+    note: str
+
+
+class CompetitorDiagnosis(CamelModel):
+    rival_wins: list[str]
+    brand_wins: list[str]
+    gaps: list[str]
+
+
+class Opportunity(CamelModel):
+    title: str
+    type: str  # "Critical gap" | "Source gap" | "Competitive" | "Keyword gap" | "Community" | ...
+    impact: Literal["High", "Medium", "Low"]
+    effort: Literal["High", "Medium", "Low"]
+    detail: str
+    action: str
+
+
+class RadarCategory(CamelModel):
+    name: str
+    score: int
+
+
 class Citation(CamelModel):
     domain: str
     title: str
@@ -238,10 +294,28 @@ class Community(CamelModel):
     mentions: int
 
 
+class SourceIntel(CamelModel):
+    domain: str
+    url: str
+    category: str
+    influence: str
+    cited: int
+    # Best-effort AI inference from the domain's title + the grounding call's
+    # own research synthesis — grounding runs once per job with its own
+    # standalone web search, entirely separate from the per-persona pipeline,
+    # so there's no real measured link between a specific persona's answer
+    # and a specific source. Not ground truth, a plausibility read.
+    keywords: list[str]
+    personas: list[str]
+    competitors: list[str]
+    visibility: Literal["Visible", "Weak visibility", "Not visible"]
+
+
 class Sources(CamelModel):
     citations: list[Citation]
     publishers: list[Publisher]
     communities: list[Community]
+    source_intel: list[SourceIntel] = Field(default_factory=list)
 
 
 class SitelistEntry(CamelModel):
@@ -259,6 +333,10 @@ class AnalysisComplete(CamelModel):
     products: list[Product]
     sources: Sources
     sitelist: list[SitelistEntry]
+    score_breakdown: list[ScoreComponent]
+    competitor_diagnosis: CompetitorDiagnosis
+    opportunities: list[Opportunity]
+    radar: list[RadarCategory]
 
 
 class JobStatus(str, Enum):

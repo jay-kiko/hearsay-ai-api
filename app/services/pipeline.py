@@ -135,6 +135,21 @@ async def _analyze_one_prompt(
     )
 
 
+def _classify_opportunity(mentioned: bool, vis: int) -> str:
+    # Deterministic read on competitive position, off the same vis score
+    # scoring.py already computes — no new inputs, no extra call. Not
+    # mentioned at all always wins out over the vis-based tiers below, since
+    # a vis of 0 can also mean "mentioned but ranked/sentimented terribly"
+    # (a different, less severe situation than never coming up at all).
+    if not mentioned:
+        return "Critical Gap"
+    if vis >= 80:
+        return "Defend"
+    if vis >= 55:
+        return "Grow"
+    return "High"
+
+
 def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
     mentioned = any(a.mentioned for a in analyses)
     ranked = [a for a in analyses if a.rank is not None]
@@ -155,6 +170,7 @@ def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
         rank=best_rank,
         quote=representative.quote,
         parts=representative.parts,
+        opportunity=_classify_opportunity(mentioned, avg_vis),
         exchanges=[
             PersonaExchange(
                 prompt=a.prompt,

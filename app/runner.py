@@ -15,6 +15,7 @@ from app.job_store import JobStore
 from app.models import AnalysisComplete, AnalysisRequest, PersonaEvent
 from app.services import aggregation
 from app.services.grounding import run_grounding
+from app.services.insights_gen import generate_insights
 from app.services.pipeline import run_persona
 
 logger = logging.getLogger("hearsay.runner")
@@ -92,6 +93,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             brand=request.brand,
             industry=request.industry,
             competitors=request.competitors,
+            personas=request.personas,
             market=request.market,
         )
 
@@ -99,8 +101,32 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         overview.failed_count = len(tasks) - len(results)
         products = aggregation.build_products(results, request.brand, request.competitors)
         overview.top_competitor = aggregation.top_competitor(products, request.brand)
+        score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
 
-        complete = AnalysisComplete(overview=overview, products=products, sources=sources, sitelist=sitelist)
+        competitor_diagnosis, opportunities, radar = await generate_insights(
+            api_key=anthropic_api_key,
+            brand=request.brand,
+            industry=request.industry,
+            buyer_context=request.buyer_context,
+            brand_summary=request.brand_summary,
+            market=request.market,
+            competitors=request.competitors,
+            personas=request.personas,
+            results=results,
+            products=products,
+            sources=sources,
+        )
+
+        complete = AnalysisComplete(
+            overview=overview,
+            products=products,
+            sources=sources,
+            sitelist=sitelist,
+            score_breakdown=score_breakdown,
+            competitor_diagnosis=competitor_diagnosis,
+            opportunities=opportunities,
+            radar=radar,
+        )
         job_store.complete(job_id, complete)
     except Exception as exc:  # noqa: BLE001 - last-resort guard so the SSE stream always terminates
         logger.exception("job %s failed", job_id)

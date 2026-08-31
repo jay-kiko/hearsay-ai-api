@@ -53,7 +53,8 @@ default 10) — see [Access codes](#access-codes) below.
 | `POST /api/detect` **(throttled)** | Free-text query → `{ brand, industry, competitors, buyerContext, brandSummary }`. Two-stage: real web search, then structured extraction. Competitors come back as `{ name, matchNames }` — see [Competitor matching](#competitor-matching). |
 | `POST /api/categories` **(throttled)** | Given a confirmed brand, suggests 4-6 specific category facets (e.g. "Sensitive Skin" within "Skincare"), each with its own correctly-scoped `buyerContext` — picking one narrows generation instead of testing the whole broad industry. |
 | `POST /api/generate-personas` **(throttled)** | Generates buyer personas for a brand/industry/competitor set. Not hardcoded to B2B software — framing follows whatever `buyerContext` actually describes. |
-| `POST /api/prompts` **(throttled, not consumed)** | Writes realistic buyer-research questions per persona. Every prompt is required to be phrased so a helpful answer would *name* a brand — purely educational questions with no recommendation angle are rejected by the generation prompt itself. |
+| `POST /api/prompts` **(throttled, not consumed)** | Writes realistic buyer-research questions per persona. Every prompt is required to be phrased so a helpful answer would *name* a brand — purely educational questions with no recommendation angle are rejected by the generation prompt itself. Pass `categories` (a list of `{ name, buyerContext }`, from `/api/categories`) to fan out generation across every category picked instead of just one — each persona's prompt list is the concatenation across all of them. Selecting N categories costs N throttle calls, not 1. |
+| `POST /api/prompts/seed` **(throttled, not consumed)** | Given one user-written `seedPrompt`, adapts it into each persona's own voice/pains/criteria — one adapted prompt per persona back, not a fresh batch. |
 | `POST /api/analysis` | Spends one use of the access code, kicks off a job, returns `{ jobId }` immediately — the actual work happens after the response is sent. |
 | `GET /api/analysis/{jobId}/stream` | SSE: one `persona` event per completed persona, then one `complete` event with the full result. |
 | `GET /api/analysis/{jobId}` | Polling fallback — same shape as the SSE `complete` payload, for reconnects. |
@@ -120,6 +121,60 @@ A persona's own score is the average across all its prompts; the overview's
 `visibilityScore` is the average across all personas' (already-averaged)
 scores — not a flat average across every raw prompt.
 
+Each persona result also carries a deterministic `opportunity` classification
+(`Defend` / `Grow` / `High` / `Critical Gap`) off that same `vis` score —
+not mentioned at all is always `Critical Gap` regardless of how the other
+personas are doing.
+
+`Product.share` (`app/services/aggregation.py`) is a product's slice of *all*
+product mentions across every persona — `count / sum(every product's count)`
+— not its mention rate across personas (`count / personaCount`), which would
+let every product's share be counted independently against the same
+denominator and sum to well over 100% whenever more than one product got
+mentioned per persona.
+
+## Score breakdown, competitor diagnosis, opportunities, and radar
+
+`AnalysisComplete` also carries four richer views on the same run, split by
+how they're produced:
+
+- **`scoreBreakdown`** (`aggregation.build_score_breakdown`) — six
+  deterministic sub-scores behind the single `visibilityScore` (Presence,
+  Share of Voice, Recommendation Strength, Ranking, Sentiment, Source
+  Authority), each with a plain-language note. No extra AI call.
+- **`competitorDiagnosis`**, **`opportunities`**, and **`radar`**
+  (`app/services/insights_gen.py`) — one combined structured call per job,
+  reasoning over every persona's exchanges, share of voice, and cited
+  sources. Bundled into a single call since all three need the same
+  evidence. `radar`'s dimensions are chosen by the model to fit the brand's
+  actual category and buyer context (never hardcoded software axes like
+  "Technical"/"Enterprise" unless the brand genuinely is enterprise
+  software) — this is a judgment call, not something deterministic math or
+  search grounding alone can produce. Fails open (empty diagnosis/
+  opportunities/radar) on any error, same posture as `run_grounding` — one
+  bad call never sinks a job whose persona results already succeeded.
+
+## Source intel
+
+`Sources.sourceIntel` (`app/services/grounding.py`) enriches each cited
+domain with `keywords`, which `personas` would find it relevant, which
+`competitors` it discusses, and a `visibility` rating for the brand itself —
+plus fixes `Publisher.type`, previously always the literal string
+`"Publisher"`, into a real classification (review platform, tech news,
+vendor blog, ...). One combined structured call per job, capped to the 15
+most-cited domains (an uncapped list is exactly what caused a real
+`stop_reason: max_tokens` truncation with a 24-domain result — the response
+came back as an empty object rather than a partial list, so this isn't a
+"slightly fewer results" degradation, it's a hard zero). The long tail of
+single-mention domains keeps its placeholder defaults rather than pushing
+that budget further.
+
+Grounding runs once per job with its own standalone web search, entirely
+separate from the per-persona pipeline (the "answer" call has no web-search
+tool at all) — so `keywords`/`competitors`/`personas`/`visibility` are the
+model's best inference from a domain's title and the grounding call's own
+research synthesis, not a measured link to any specific persona's answer.
+
 ## Environment variables
 
 See [`.env.example`](.env.example) for the full list with inline comments —
@@ -143,8 +198,9 @@ app/
     prompt_gen.py           Buyer-question generation
     pipeline.py             Per-persona answer + sentiment pipeline
     scoring.py              Deterministic mention/rank/visibility scoring
-    aggregation.py          Overview + Share-of-Voice aggregation
-    grounding.py            Real citations via web_search
+    aggregation.py          Overview + Share-of-Voice + score breakdown
+    insights_gen.py         Competitor diagnosis, opportunities, radar
+    grounding.py            Real citations + source intel via web_search
     anthropic_client.py     Thin Anthropic SDK wrapper
   scripts/
     mint_codes.py            CLI code minting
