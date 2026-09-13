@@ -22,14 +22,17 @@ def _all_exchanges(results: dict[str, PersonaResult]) -> list[PersonaExchange]:
     return [ex for r in results.values() for ex in r.exchanges]
 
 
-def _exchange_mentions(exchange: PersonaExchange, match_names: list[str]) -> bool:
-    # A highlighted part's text is whatever alias literally matched (e.g.
-    # "Tommy Hilfiger"), not necessarily the competitor's canonical display
-    # name (e.g. "PVH (parent of Tommy Hilfiger and Calvin Klein)") — check
-    # against every alias, not just the one name, or this silently misses
-    # every sub-brand mention the same way the old exact-name check did.
-    candidates = {n.strip().lower() for n in match_names if n.strip()}
-    return any(part.text.strip().lower() in candidates for part in exchange.parts)
+def _exchange_mentions(exchange: PersonaExchange, canonical_name: str) -> bool:
+    # Trust ResponsePart.name (set once, in scoring.py, from whatever alias
+    # actually matched — static list or a per-answer LLM-recognized one) as
+    # the single source of truth. This used to re-derive "was X mentioned"
+    # by re-matching part.text against a locally-known alias list, which
+    # went stale the moment mention detection started recognizing aliases
+    # this second, independent check didn't know about (confirmed live: a
+    # run where every mention came through under an LLM-recognized product
+    # name showed 100% mention rate but 0% Share of Voice, because this
+    # check's alias list only ever had the bare brand name).
+    return any(part.name == canonical_name for part in exchange.parts)
 
 
 def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]:
@@ -53,15 +56,7 @@ def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]
     return mentioned, len(all_exchanges)
 
 
-def build_overview(results: dict[str, PersonaResult]) -> Overview:
-    persona_total = len(results)
-    # Deliberately double-averaged (per-persona, then across personas) rather
-    # than a flat average over every raw prompt — a persona with more
-    # prompts shouldn't dominate the overview average any more than one with
-    # fewer. This is the opposite bias from mentioned/total below, and both
-    # are handled correctly for what each one actually measures.
-    visibility_score = round(sum(r.vis for r in results.values()) / persona_total) if persona_total else 0
-
+def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> Overview:
     mentioned, total = _prompt_mention_counts(results)
     mention_rate = (mentioned / total) if total else 0.0
 
@@ -79,10 +74,9 @@ def build_overview(results: dict[str, PersonaResult]) -> Overview:
 
 
 def build_products(results: dict[str, PersonaResult], brand: str, competitors: list[Competitor]) -> list[Product]:
-    # (display name, aliases to check, is_brand) — brand has no aliases of
-    # its own in current scope, just its literal name.
-    entries: list[tuple[str, list[str], bool]] = [(brand, [brand], True)]
-    entries += [(c.name, c.match_names or [c.name], False) for c in competitors]
+    # (display name, is_brand) — no aliases needed here; _exchange_mentions
+    # reads the canonical name scoring.py already attached to each part.
+    entries: list[tuple[str, bool]] = [(brand, True)] + [(c.name, False) for c in competitors]
 
     # Counts every individual prompt exchange, not one OR'd boolean per
     # persona (confirmed live: with this counting a persona-count instead,
@@ -92,8 +86,8 @@ def build_products(results: dict[str, PersonaResult], brand: str, competitors: l
     # silently using different units).
     all_exchanges = _all_exchanges(results)
     counts = [
-        (name, sum(1 for ex in all_exchanges if _exchange_mentions(ex, match_names)), is_brand)
-        for name, match_names, is_brand in entries
+        (name, sum(1 for ex in all_exchanges if _exchange_mentions(ex, name)), is_brand)
+        for name, is_brand in entries
     ]
     # Share of Voice is each product's slice of *all* product mentions, not
     # its mention rate across personas — dividing by persona count instead
@@ -194,6 +188,29 @@ def build_score_breakdown(
             ),
         ),
     ]
+
+
+# Headline score = a real weighted composite of the breakdown above, not the
+# separate rank/sentiment-only calculation it used to be — Share of Voice and
+# Source Authority previously had zero influence on this number despite the
+# breakdown's docstring implying they were "sub-scores behind" it (a brand
+# drowned out by competitors in most answers could still post a 90+ purely
+# off rank+sentiment on the answers it did appear in). Recommendation
+# Strength is deliberately excluded here: it's rank_score × sentiment
+# averaged over mentioned exchanges — the same signal Ranking + Sentiment
+# already contribute below — so including it too would triple-count it.
+_COMPOSITE_WEIGHTS = {
+    "Presence": 0.30,
+    "Share of Voice": 0.30,
+    "Ranking": 0.20,
+    "Sentiment": 0.10,
+    "Source Authority": 0.10,
+}
+
+
+def compute_composite_score(score_breakdown: list[ScoreComponent]) -> int:
+    weighted = sum(_COMPOSITE_WEIGHTS.get(c.name, 0.0) * c.score for c in score_breakdown)
+    return round(weighted)
 
 
 def top_competitor(products: list[Product], brand: str) -> str | None:

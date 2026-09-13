@@ -24,6 +24,17 @@ _INPUT_SCHEMA = {
     "type": "object",
     "properties": {
         "brand": {"type": "string", "description": "The brand or product name."},
+        "brandMatchNames": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "Every real-world name variant that should count as a mention of this brand — "
+                "the brand name itself, common short forms, and any sub-brands or product lines "
+                "it sells under. An AI answer is far more likely to name a specific product line "
+                "(e.g. 'Redmi Note 13') than the parent brand (e.g. 'Xiaomi') — include both, and "
+                "every distinct sub-brand/product line, so real mentions aren't missed."
+            ),
+        },
         "industry": {
             "type": "string",
             "description": "A specific category name, e.g. 'Project Management Software', not a vague label.",
@@ -83,7 +94,7 @@ _INPUT_SCHEMA = {
             ),
         },
     },
-    "required": ["brand", "industry", "competitors", "buyerContext", "brandSummary"],
+    "required": ["brand", "brandMatchNames", "industry", "competitors", "buyerContext", "brandSummary"],
 }
 
 _RESEARCH_SYSTEM = (
@@ -106,7 +117,11 @@ _EXTRACT_SYSTEM = (
     "actually compete in that category — never generic placeholders and never the brand itself. "
     "For each competitor, also list every real name variant an AI might use to refer to it — "
     "the company name, common short forms, and any sub-brands (a holding company is usually "
-    "mentioned by its sub-brand's name, not its own). Identify what kind of real-world choice "
+    "mentioned by its sub-brand's name, not its own). Do the same for the brand itself in "
+    "brandMatchNames: list every name variant an AI answer might use, including specific "
+    "product lines or sub-brands it sells under (e.g. Xiaomi's answer must include 'Redmi', "
+    "since AI answers name the product line far more often than the parent brand). Identify "
+    "what kind of real-world choice "
     "this actually is: software/vendor procurement, a consumer product purchase, a "
     "hospitality/travel booking, a service or agency hire, or something else — ground this in "
     "the true nature of the brand's industry from the research, not a generic 'evaluating tools' "
@@ -116,6 +131,22 @@ _EXTRACT_SYSTEM = (
     "fall back to your own best judgment from the original query, and say so plainly in the "
     "brandSummary rather than inventing confident-sounding detail."
 )
+
+
+def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
+    """Same defensive-parsing rationale as _normalize_competitors — tool-forced
+    output isn't a hard type guarantee. Always include the literal brand name
+    itself even if the model's list omits it, so a malformed/empty response
+    still falls back to today's bare-name matching instead of matching nothing."""
+    names: list[str] = []
+    if isinstance(value, str):
+        names = [n.strip() for n in value.split(",") if n.strip()]
+    elif isinstance(value, list):
+        names = [str(n).strip() for n in value if str(n).strip()]
+
+    if brand not in names:
+        names.append(brand)
+    return names
 
 
 def _normalize_competitors(value: object) -> list[Competitor]:
@@ -198,6 +229,7 @@ async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
 
     return DetectResponse(
         brand=result["brand"],
+        brand_match_names=_normalize_brand_match_names(result.get("brandMatchNames", []), result["brand"]),
         industry=result["industry"],
         competitors=_normalize_competitors(result.get("competitors", [])),
         buyer_context=result["buyerContext"],

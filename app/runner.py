@@ -29,6 +29,7 @@ async def _run_one_persona(
     persona,
     prompts,
     brand,
+    brand_match_names,
     competitors,
     buyer_context,
     market,
@@ -41,6 +42,7 @@ async def _run_one_persona(
                 persona=persona,
                 prompts=prompts,
                 brand=brand,
+                brand_match_names=brand_match_names,
                 competitors=competitors,
                 buyer_context=buyer_context,
                 market=market,
@@ -59,6 +61,8 @@ async def _run_one_persona(
 async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, anthropic_api_key: str) -> None:
     settings = get_settings()
     semaphore = asyncio.Semaphore(settings.persona_concurrency)
+    # Falls back to the bare brand name for callers that don't send aliases yet.
+    brand_match_names = request.brand_match_names or [request.brand]
 
     try:
         tasks = [
@@ -69,6 +73,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
                 persona=persona,
                 prompts=request.prompts.get(persona.id) or [],
                 brand=request.brand,
+                brand_match_names=brand_match_names,
                 competitors=request.competitors,
                 buyer_context=request.buyer_context,
                 market=request.market,
@@ -97,11 +102,13 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             market=request.market,
         )
 
-        overview = aggregation.build_overview(results)
-        overview.failed_count = len(tasks) - len(results)
         products = aggregation.build_products(results, request.brand, request.competitors)
-        overview.top_competitor = aggregation.top_competitor(products, request.brand)
         score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
+        visibility_score = aggregation.compute_composite_score(score_breakdown)
+
+        overview = aggregation.build_overview(results, visibility_score)
+        overview.failed_count = len(tasks) - len(results)
+        overview.top_competitor = aggregation.top_competitor(products, request.brand)
 
         competitor_diagnosis, opportunities, radar = await generate_insights(
             api_key=anthropic_api_key,

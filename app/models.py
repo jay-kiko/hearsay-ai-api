@@ -62,6 +62,13 @@ class DetectRequest(CamelModel):
 
 class DetectResponse(CamelModel):
     brand: str
+    # Every real-world name variant that should count as a mention of the
+    # brand itself — same rationale as Competitor.match_names above. An AI
+    # answer is far more likely to name a specific product line (e.g.
+    # "Redmi Note 13") than the parent brand (e.g. "Xiaomi"), or a short
+    # form ("Samsung") than a fuller entered name ("Samsung Mobile") —
+    # matching only the literal brand string misses those real mentions.
+    brand_match_names: list[str]
     industry: str
     competitors: list[Competitor]
     # Free text, not a fixed enum — describes what kind of real-world choice
@@ -172,6 +179,9 @@ class AdaptSeedPromptResponse(CamelModel):
 
 class AnalysisRequest(CamelModel):
     brand: str
+    # Optional/defaults empty for callers that don't send it yet — falls
+    # back to matching on the bare brand string, today's behavior.
+    brand_match_names: list[str] = Field(default_factory=list)
     industry: str
     competitors: list[Competitor] = Field(default_factory=list)
     buyer_context: str | None = None
@@ -191,6 +201,13 @@ class AnalysisStartResponse(CamelModel):
 class ResponsePart(CamelModel):
     text: str
     kind: Literal["brand", "competitor", "normal"]
+    # Canonical entity name for brand/competitor parts (e.g. "Xiaomi" even
+    # when text is "Redmi Note 13") — lets downstream aggregation attribute
+    # a mention to the right entity directly, instead of re-matching text
+    # against an alias list that can go stale the moment mention detection
+    # picks up an alias (LLM-recognized sub-brand, etc.) the aggregation
+    # layer doesn't independently know about. None for kind="normal".
+    name: str | None = None
 
 
 class PersonaExchange(CamelModel):

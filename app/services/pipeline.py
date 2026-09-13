@@ -54,17 +54,111 @@ _SENTIMENT_INPUT_SCHEMA = {
             "type": "string",
             "description": "The single sentence from the answer that best represents its stance on the brand, verbatim. Empty string if the brand isn't mentioned.",
         },
+        "mentionText": {
+            "type": "string",
+            "description": (
+                "The exact substring, copied verbatim from the answer, that identifies the brand — "
+                "this can be the brand name itself, or a specific product/model name you recognize "
+                "as belonging to it even if it wasn't in the known-names list (e.g. a phone model "
+                "number for a phone manufacturer). Must be a specific name, never a generic word "
+                "like 'phone' or 'brand'. Empty string if the brand isn't mentioned under any name."
+            ),
+        },
+        "competitorMentions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "competitor": {
+                        "type": "string",
+                        "description": "Must exactly match one of the known competitor names given.",
+                    },
+                    "mentionText": {
+                        "type": "string",
+                        "description": (
+                            "The exact substring, verbatim from the answer, that identifies this "
+                            "competitor under a specific product/model name NOT already in its "
+                            "known name list. Never a generic word."
+                        ),
+                    },
+                },
+                "required": ["competitor", "mentionText"],
+            },
+            "description": (
+                "Any known competitor mentioned under a product/model name you recognize as "
+                "belonging to it but that isn't already in its known name list. Empty array if none."
+            ),
+        },
     },
-    "required": ["sentiment", "quote"],
+    "required": ["sentiment", "quote", "mentionText", "competitorMentions"],
 }
 
 
-def _sentiment_system(brand: str) -> str:
+def _sentiment_system(brand: str, brand_match_names: list[str], competitors: list[Competitor]) -> str:
+    # Must recognize the same aliases (sub-brands, product lines, short forms)
+    # as the deterministic mention detection in scoring.py, or this call
+    # disagrees with it — e.g. an answer naming "Redmi Note 13" gets marked
+    # mentioned=True downstream while sentiment stays stuck at Neutral
+    # because this prompt only knew to look for the literal brand name.
+    #
+    # The known-names list can never be exhaustive for a category with many
+    # product lines (phone models, etc.) — mentionText lets this same call
+    # catch an unlisted product/model it recognizes from its own knowledge,
+    # instead of silently missing anything not pre-guessed at detect time.
+    names = ", ".join(f"'{n}'" for n in (brand_match_names or [brand]))
+    competitor_lines = (
+        "; ".join(f"{c.name} (known names: {', '.join(c.match_names)})" for c in competitors)
+        if competitors
+        else "none"
+    )
     return (
         f"Classify the sentiment of the following AI-generated answer specifically "
-        f"toward the brand '{brand}' — not the general tone of the answer. If '{brand}' "
-        f"is not mentioned at all, sentiment must be 'Neutral' and quote must be ''."
+        f"toward the brand '{brand}' — not the general tone of the answer. The brand may be "
+        f"referred to by any of these known names, all of which count as the brand: {names}. It "
+        f"may also be referred to by a specific product or model name not in that list that you "
+        f"recognize as belonging to this brand — treat that as a mention too. If the brand isn't "
+        f"mentioned under any name, sentiment must be 'Neutral', quote must be '', and mentionText "
+        f"must be ''.\n\n"
+        f"Separately, here are the known competitors and their known name variants: "
+        f"{competitor_lines}. The known-name lists can't be exhaustive for a category with many "
+        f"product lines — if the answer names a specific product or model you recognize as "
+        f"belonging to one of these competitors, but under a name not already in its known list, "
+        f"report it in competitorMentions using that competitor's exact name as given above."
     )
+
+
+def _apply_competitor_mentions(competitors: list[Competitor], raw_mentions: object) -> list[Competitor]:
+    """Builds a per-answer copy of `competitors` with any LLM-recognized,
+    previously-unlisted product/model names appended to the matching
+    competitor's match_names. Never mutates the input list — it's the same
+    object shared across every concurrent prompt/persona task in this run."""
+    if not isinstance(raw_mentions, list):
+        return competitors
+
+    extra_by_name: dict[str, list[str]] = {}
+    for entry in raw_mentions:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("competitor", "")).strip()
+        text = str(entry.get("mentionText", "")).strip()
+        if name and text:
+            extra_by_name.setdefault(name.lower(), []).append(text)
+
+    if not extra_by_name:
+        return competitors
+
+    effective: list[Competitor] = []
+    for c in competitors:
+        extra = extra_by_name.get(c.name.lower(), [])
+        if not extra:
+            effective.append(c)
+            continue
+        match_names = list(c.match_names)
+        for text in extra:
+            if text.lower() not in (n.lower() for n in match_names):
+                match_names.append(text)
+        effective.append(Competitor(name=c.name, match_names=match_names))
+    return effective
 
 
 @dataclass
@@ -82,6 +176,7 @@ async def _analyze_one_prompt(
     *,
     prompt: str,
     brand: str,
+    brand_match_names: list[str],
     competitors: list[Competitor],
     buyer_context: str | None,
     market: str | None,
@@ -99,7 +194,7 @@ async def _analyze_one_prompt(
     sentiment_result = await call_structured(
         api_key=api_key,
         model=fast_model,
-        system=_sentiment_system(brand),
+        system=_sentiment_system(brand, brand_match_names, competitors),
         user=answer_text or "(empty response)",
         tool_name=_SENTIMENT_TOOL_NAME,
         tool_description="Classify sentiment toward the brand and extract a supporting quote.",
@@ -108,9 +203,23 @@ async def _analyze_one_prompt(
     )
     sentiment = Sentiment(sentiment_result.get("sentiment", "Neutral"))
     quote = sentiment_result.get("quote", "") or ""
+    mention_text = (sentiment_result.get("mentionText", "") or "").strip()
+
+    # mention_text is per-answer and LLM-supplied (may recognize an unlisted
+    # product/model name) — append rather than trust alone, so the static
+    # detect-time aliases still apply even if this call misses one.
+    effective_match_names = list(brand_match_names or [brand])
+    if mention_text and mention_text.lower() not in (n.lower() for n in effective_match_names):
+        effective_match_names.append(mention_text)
+
+    effective_competitors = _apply_competitor_mentions(competitors, sentiment_result.get("competitorMentions", []))
 
     mentioned, rank, vis, parts = analyze_answer(
-        text=answer_text, brand=brand, competitors=competitors, sentiment=sentiment
+        text=answer_text,
+        brand=brand,
+        competitors=effective_competitors,
+        sentiment=sentiment,
+        brand_match_names=effective_match_names,
     )
     # `mentioned` is the deterministic regex ground truth (scoring.py); the
     # sentiment call's own quote can disagree with it — it was told to return
@@ -191,6 +300,7 @@ async def run_persona(
     persona: PersonaIn,
     prompts: list[str],
     brand: str,
+    brand_match_names: list[str],
     competitors: list[Competitor],
     buyer_context: str | None,
     market: str | None,
@@ -202,6 +312,7 @@ async def run_persona(
         _analyze_one_prompt(
             prompt=p,
             brand=brand,
+            brand_match_names=brand_match_names,
             competitors=competitors,
             buyer_context=buyer_context,
             market=market,

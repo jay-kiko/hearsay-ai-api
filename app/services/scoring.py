@@ -58,12 +58,24 @@ class Mention:
     name: str
 
 
-def find_mentions(text: str, brand: str, competitors: list[Competitor]) -> list[Mention]:
+def find_mentions(
+    text: str, brand: str, competitors: list[Competitor], brand_match_names: list[str] | None = None
+) -> list[Mention]:
     candidates: list[Mention] = []
 
-    brand_pattern = _pattern_for(brand)
-    if brand_pattern:
-        for m in brand_pattern.finditer(text):
+    # Try every brand alias (sub-brand, product line, short form) — same
+    # rationale as competitor aliases below — but record matches under the
+    # canonical brand name so rank/Share-of-Voice count it as one entity.
+    seen_brand_spans: set[tuple[int, int]] = set()
+    for alias in brand_match_names or [brand]:
+        pattern = _pattern_for(alias)
+        if not pattern:
+            continue
+        for m in pattern.finditer(text):
+            span = (m.start(), m.end())
+            if span in seen_brand_spans:
+                continue
+            seen_brand_spans.add(span)
             candidates.append(Mention(m.start(), m.end(), "brand", brand))
 
     for competitor in competitors:
@@ -106,7 +118,7 @@ def build_parts(text: str, mentions: list[Mention]) -> list[ResponsePart]:
     for mention in mentions:
         if mention.start > cursor:
             parts.append(ResponsePart(text=text[cursor:mention.start], kind="normal"))
-        parts.append(ResponsePart(text=text[mention.start:mention.end], kind=mention.kind))
+        parts.append(ResponsePart(text=text[mention.start:mention.end], kind=mention.kind, name=mention.name))
         cursor = mention.end
     if cursor < len(text):
         parts.append(ResponsePart(text=text[cursor:], kind="normal"))
@@ -139,8 +151,9 @@ def analyze_answer(
     brand: str,
     competitors: list[Competitor],
     sentiment: Sentiment,
+    brand_match_names: list[str] | None = None,
 ) -> tuple[bool, int | None, int, list[ResponsePart]]:
-    mentions = find_mentions(text, brand, competitors)
+    mentions = find_mentions(text, brand, competitors, brand_match_names)
     mentioned = any(m.kind == "brand" for m in mentions)
     rank = compute_rank(mentions, brand)
     vis = compute_visibility_score(mentioned, rank, sentiment)
