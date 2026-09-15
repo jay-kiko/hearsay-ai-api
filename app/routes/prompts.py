@@ -31,12 +31,28 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
     code_store = get_code_store()
 
     if body.categories:
+        # prompts_per_persona is a fixed total per persona, not a per-category
+        # rate — selecting more categories must split that same budget across
+        # them, not multiply it (5 categories at 3 each used to mean 15
+        # prompts per persona instead of 3). Distributed as evenly as
+        # possible; a category whose share rounds to 0 is skipped entirely —
+        # no call, no throttle charge — rather than still costing one for
+        # zero prompts.
+        total = body.prompts_per_persona or settings.prompts_per_persona
+        n = len(body.categories)
+        base, extra = divmod(total, n)
+        active = [
+            (category, base + (1 if i < extra else 0)) for i, category in enumerate(body.categories)
+        ]
+        active = [(category, count) for category, count in active if count > 0]
+
         # One category picked used to mean "one generation call" — selecting
         # several now means several real, billed generation calls (one per
-        # category, run across every persona), so the pre-spend throttle has
-        # to charge proportionally: N categories costs N calls, not 1, or a
-        # multi-select run would get unlimited free generation past the cap.
-        for _ in body.categories:
+        # active category, run across every persona), so the pre-spend
+        # throttle has to charge proportionally: N active categories costs N
+        # calls, not 1, or a multi-select run would get unlimited free
+        # generation past the cap.
+        for _ in active:
             call_status = await code_store.register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
             _raise_for_call_status(call_status)
 
@@ -51,9 +67,9 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
                         brand_summary=body.brand_summary,
                         market=body.market,
                         personas=body.personas,
-                        prompts_per_persona=body.prompts_per_persona,
+                        prompts_per_persona=count,
                     )
-                    for category in body.categories
+                    for category, count in active
                 ]
             )
         except AuthenticationError as exc:
