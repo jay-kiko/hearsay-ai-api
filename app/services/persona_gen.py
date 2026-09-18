@@ -11,6 +11,8 @@ and non-tech brands alike.
 """
 from __future__ import annotations
 
+from uuid import uuid4
+
 from app.config import get_settings
 from app.models import Competitor, GeneratedPersona
 from app.services.anthropic_client import call_structured
@@ -131,3 +133,108 @@ async def generate_personas(
             )
         )
     return personas
+
+
+# ── Custom persona expansion ─────────────────────────────────────────
+# Lets a user type one free-text description instead of filling in
+# title/role/pains/criteria by hand. The output is a GeneratedPersona
+# just like the batch above, so once expanded, a custom persona is
+# structurally identical to an AI-generated one — prompt_gen.py and
+# everything downstream never need to know which path a persona came
+# from.
+
+_EXPAND_TOOL_NAME = "write_persona_from_description"
+
+_EXPAND_INPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "title": {"type": "string", "description": "A realistic persona name, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
+        "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
+        "desc": {
+            "type": "string",
+            "description": "One sentence summarizing what this persona is trying to decide or accomplish.",
+        },
+        "role": {"type": "string", "description": "One sentence on their position, scope, or life context."},
+        "pains": {"type": "string", "description": "Comma-separated realistic frustrations."},
+        "criteria": {
+            "type": "string",
+            "description": "Comma-separated things they'd weigh when making this choice.",
+        },
+    },
+    "required": ["title", "initials", "desc", "role", "pains", "criteria"],
+}
+
+_EXPAND_SYSTEM = (
+    "You turn a short user-written description of a buyer persona into one complete, "
+    "structured persona for AI-visibility research. The user's description is the source of "
+    "truth for who this persona is — never contradict or genericize it, only fill in what it "
+    "leaves unstated. Ground the fill-in details in the given industry, competitors, and buyer "
+    "context: if the buyer context describes consumers choosing a hotel, product, or "
+    "restaurant, write the persona as a real person making that kind of personal or "
+    "experiential choice — not a procurement officer 'evaluating vendors'. Only frame the "
+    "persona as a software/vendor evaluator when the buyer context actually describes a "
+    "software or B2B procurement decision. When a brand summary and/or market is given, use "
+    "them too — the brand summary refines what's actually being chosen between, and the "
+    "market anchors the persona in that specific region's real buyers, places, and vernacular "
+    "rather than a generic global default."
+)
+
+
+def _expand_user_prompt(
+    description: str,
+    industry: str,
+    competitors: list[Competitor],
+    buyer_context: str,
+    brand_summary: str | None,
+    market: str | None,
+) -> str:
+    competitor_list = ", ".join(c.name for c in competitors) if competitors else "unspecified competitors"
+    lines = [
+        f"User's persona description: {description}",
+        f"Industry: {industry}",
+        f"Competitors in this category: {competitor_list}",
+        f"Buyer context: {buyer_context}",
+    ]
+    if brand_summary:
+        lines.append(f"Brand summary: {brand_summary}")
+    if market:
+        lines.append(f"Market/geography to ground the persona in: {market}")
+    lines.append("Write one persona true to the description and all of the above.")
+    return "\n".join(lines)
+
+
+async def expand_custom_persona(
+    *,
+    api_key: str,
+    description: str,
+    industry: str,
+    competitors: list[Competitor],
+    buyer_context: str | None,
+    brand_summary: str | None = None,
+    market: str | None = None,
+) -> GeneratedPersona:
+    settings = get_settings()
+
+    result = await call_structured(
+        api_key=api_key,
+        model=settings.anthropic_fast_model,
+        system=_EXPAND_SYSTEM,
+        user=_expand_user_prompt(
+            description, industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market
+        ),
+        tool_name=_EXPAND_TOOL_NAME,
+        tool_description="Return the written persona.",
+        input_schema=_EXPAND_INPUT_SCHEMA,
+        max_tokens=1024,
+    )
+
+    title = result.get("title") or "Custom Persona"
+    return GeneratedPersona(
+        id=f"custom-{uuid4().hex[:8]}",
+        title=title,
+        initials=(result.get("initials") or "".join(w[0] for w in title.split()[:2])).upper()[:3],
+        desc=result.get("desc", ""),
+        role=result.get("role", ""),
+        pains=result.get("pains", ""),
+        criteria=result.get("criteria", ""),
+    )

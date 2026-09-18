@@ -135,6 +135,26 @@ class GeneratePersonasResponse(CamelModel):
     personas: list[GeneratedPersona]
 
 
+# ── /api/personas/expand ─────────────────────────────────────────────
+
+class ExpandPersonaRequest(CamelModel):
+    # The one field a user types for a custom persona — everything else
+    # below is the same category context /api/generate-personas already
+    # takes, used to ground the fill-in fields rather than inventing them
+    # from the description alone.
+    description: str = Field(min_length=10, max_length=500)
+    industry: str
+    competitors: list[Competitor] = Field(default_factory=list)
+    buyer_context: str | None = None
+    brand_summary: str | None = None
+    market: str | None = None
+    access_code: str
+
+
+class ExpandPersonaResponse(CamelModel):
+    persona: GeneratedPersona
+
+
 # ── /api/prompts ─────────────────────────────────────────────────────
 
 class PromptsRequest(CamelModel):
