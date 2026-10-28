@@ -268,6 +268,7 @@ class PageCheck:
 _MAX_BODY_BYTES = 200_000
 _SKIP_ELEMENTS = frozenset({"script", "style", "noscript", "template"})
 _TAG_NAME_RE = re.compile(r"/?([a-zA-Z][a-zA-Z0-9-]*)")
+_ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 
 
 def html_to_text(raw: str) -> str:
@@ -279,7 +280,10 @@ def html_to_text(raw: str) -> str:
     regex, and HTMLParser didn't finish 200KB in two minutes), which froze
     the event loop for every request. Every scan here starts where the last
     one ended, and an unterminated tag/comment/script ends the parse."""
-    lowered = raw.lower()
+    # ASCII-only lowering keeps every index identical to `raw`: str.lower()
+    # turns some characters into two ('İ'), which shifted every later index
+    # and dropped real page text (a brand mention included).
+    lowered = raw.translate(_ASCII_LOWER)
     n = len(raw)
     out: list[str] = []
     i = 0

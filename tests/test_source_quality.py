@@ -176,3 +176,10 @@ def test_page_fetcher_only_uses_default_web_ports():
     assert is_public_http_url("https://example.com:443/a")
     assert not is_public_http_url("http://example.com:6379/")
     assert not is_public_http_url("http://example.com:99999/")
+
+
+def test_html_to_text_keeps_text_after_characters_that_lowercase_longer():
+    from app.services.source_quality import html_to_text
+
+    page = "İ" * 40 + "<script>x</script><p>Visible review of Brand here</p><div>more</div>"
+    assert "Visible review of Brand here" in html_to_text(page)
