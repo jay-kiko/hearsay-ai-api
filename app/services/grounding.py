@@ -452,7 +452,7 @@ def _build_sitelist(
             SitelistEntry(
                 name=publisher.name,
                 category=publisher.type,
-                score=round(100 * reach.get(publisher.name, 0) / questions) if questions else 0,
+                score=reach_share(reach.get(publisher.name, 0), questions),
                 inventory=fields["inventory"] if fields else [],
                 availability=fields["availability"] if fields else "Unknown",
                 cpm=fields["cpm"] if fields else "—",
@@ -462,15 +462,22 @@ def _build_sitelist(
     return entries
 
 
+def reach_share(reach: int, questions: int) -> int | None:
+    """Reach as 0-100: the share of buyer questions that surfaced the site.
+    The one definition behind both the reach label and the sitelist score.
+    None with fewer than two questions, where every source is "1 of 1" and a
+    ranking would be noise."""
+    return round(100 * reach / questions) if questions >= 2 else None
+
+
 def _reach_label(reach: int, questions: int) -> str:
     """e.g. 'High reach · 3 of 4 buyer questions'. Tiered on the share of
     questions so it means the same thing whatever the persona count."""
     count = f"{reach} of {questions} buyer question{'s' if questions != 1 else ''}"
-    # With one question every source is "1 of 1"; a High tier would be noise.
-    if questions < 2:
+    share = reach_share(reach, questions)
+    if share is None:
         return count
-    share = reach / questions
-    tier = "High" if share >= 0.5 else "Medium" if share >= 0.25 else "Low"
+    tier = "High" if share >= 50 else "Medium" if share >= 25 else "Low"
     return f"{tier} reach · {count}"
 
 

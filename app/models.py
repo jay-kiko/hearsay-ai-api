@@ -449,7 +449,9 @@ class Sources(CamelModel):
 class SitelistEntry(CamelModel):
     name: str
     category: str
-    score: int
+    # Reach, 0-100 (grounding.reach_share). None when fewer than two buyer
+    # questions were searched, where it can't rank anything.
+    score: int | None
     inventory: list[str]
     availability: str
     cpm: str

@@ -336,3 +336,11 @@ async def test_question_choice_rotates_so_later_categories_get_searched(calls):
 def test_reach_label_has_no_tier_with_a_single_question():
     assert grounding._reach_label(1, 1) == "1 of 1 buyer question"
     assert grounding._reach_label(3, 4) == "High reach · 3 of 4 buyer questions"
+
+
+def test_reach_has_one_definition_for_label_and_sitelist():
+    from app.models import Publisher
+
+    assert grounding.reach_share(1, 1) is None and grounding.reach_share(3, 4) == 75
+    [single] = grounding._build_sitelist([Publisher(name="a.com", type="Blog", mentions=1)], {"a.com": 1}, 1)
+    assert single.score is None and grounding._reach_label(1, 1) == "1 of 1 buyer question"
