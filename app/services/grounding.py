@@ -552,17 +552,19 @@ def _drop_entity_sites(hits: list[dict], entity_names: list[str]) -> list[dict]:
 
 async def _fetch_and_rank(
     domain_pages: dict[str, list[sq.SourcePage]], kept_domains: list[str], count_brand
-) -> tuple[dict[str, list[sq.SourcePage]], dict[str, sq.PageCheck]]:
+) -> tuple[dict[str, list[sq.SourcePage]], dict[str, sq.PageCheck]] | None:
     """Ranks each kept domain's pages by brand evidence and fetches the best
     few: a source never points at a dead page or bounces to the homepage, and
-    mentions are counted in the page text itself where it's readable."""
+    mentions are counted in the page text itself where it's readable. None
+    when the check itself failed: unchecked links are never shown
+    (invariant 1), so there is nothing to show."""
     ranked = {d: sq.rank_pages(domain_pages[d], count_brand) for d in kept_domains}
     candidate_urls = [p.url for pages in ranked.values() for p in pages[:_MAX_PAGES_CHECKED_PER_DOMAIN]]
     try:
         checks = await sq.check_pages(candidate_urls)
     except Exception:
-        logger.exception("page check failed, keeping all links unchecked")
-        checks = {}
+        logger.exception("page check failed; showing no sources rather than unchecked links")
+        return None
     for pages in ranked.values():
         for page in pages:
             page.body = checks.get(page.url, sq.PageCheck(alive=None)).text
@@ -764,7 +766,10 @@ async def run_grounding(
             logger.info("dropping %s: origin=%s", domain, enrichment.get(domain, {}).get("origin", "unclassified"))
 
     count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names)  # noqa: E731
-    ranked, checks = await _fetch_and_rank(classified.domain_pages, kept_domains, count_brand)
+    fetched = await _fetch_and_rank(classified.domain_pages, kept_domains, count_brand)
+    if fetched is None:
+        return empty_sources("Source links couldn't be checked this run, so none are shown.", query_log)
+    ranked, checks = fetched
     source_intel, citations, publishers, communities, reach_by_domain = _measure_sources(
         kept_domains=kept_domains, ranked=ranked, checks=checks, classified=classified, enrichment=enrichment,
         asked=asked, count_brand=count_brand, brand=brand, competitors=competitors,

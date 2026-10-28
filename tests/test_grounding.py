@@ -344,3 +344,14 @@ def test_reach_has_one_definition_for_label_and_sitelist():
     assert grounding.reach_share(1, 1) is None and grounding.reach_share(3, 4) == 75
     [single] = grounding._build_sitelist([Publisher(name="a.com", type="Blog", mentions=1)], {"a.com": 1}, 1)
     assert single.score is None and grounding._reach_label(1, 1) == "1 of 1 buyer question"
+
+
+async def test_a_failed_page_check_shows_no_unchecked_links(calls, monkeypatch):
+    async def broken(urls, **_):
+        raise RuntimeError("fetcher down")
+
+    monkeypatch.setattr(grounding.sq, "check_pages", broken)
+    sources, sitelist = await _run()
+    assert sources.source_intel == [] and sitelist == []
+    assert sources.coverage_note.startswith("Source links couldn't be checked")
+    assert sources.queries  # the searches that ran are still reported
