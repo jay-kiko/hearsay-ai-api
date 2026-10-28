@@ -111,7 +111,7 @@ async def generate_categories(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_fast_model,
+        model=settings.anthropic_quality_model,
         system=_SYSTEM,
         user=_user_prompt(brand, industry, competitors, buyer_context, brand_summary),
         tool_name=_TOOL_NAME,

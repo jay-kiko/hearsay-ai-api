@@ -10,12 +10,13 @@ server-held Anthropic key funds every request.
 - **No accounts, no persistent user data.** Access codes (`app/code_store.py`,
   SQLite) gate usage instead of logins. Analysis jobs live in an in-memory
   store (`app/job_store.py`) with a TTL — nothing is kept once a job expires.
-- **Two-model split** (`app/config.py`): `ANTHROPIC_MODEL` (quality) is
-  reserved for the one call that's the actual signal being measured — the
-  buyer-persona "answer." Every other call (sentiment classification,
-  prompt/persona generation, brand detection, source grounding) runs on
-  `ANTHROPIC_FAST_MODEL` — same quality where it matters, a fraction of the
-  cost everywhere else.
+- **Three-tier model split** (`app/config.py`, details in `CLAUDE.md`):
+  `ANTHROPIC_QUALITY_MODEL` for generative steps whose content *is* the
+  result (persona/prompt/category generation, insights — few calls per job);
+  `ANTHROPIC_MODEL` for the buyer-persona "answer" call (the signal being
+  measured) plus judgement calls (brand detection, grounding research,
+  source classification); `ANTHROPIC_FAST_MODEL` for mechanical extraction
+  only (sentiment, relevance filtering).
 - **Brand detection is grounded, not guessed.** `/api/detect` runs a real
   `web_search` pass before extracting structured output — a lone
   memory-only call confidently misidentifies smaller or ambiguous brands

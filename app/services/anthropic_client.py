@@ -12,7 +12,7 @@ import asyncio
 import logging
 from typing import Any
 
-from anthropic import AsyncAnthropic, RateLimitError
+from anthropic import AsyncAnthropic, BadRequestError, RateLimitError
 
 from app.config import get_settings
 
@@ -95,6 +95,21 @@ async def call_text(*, api_key: str, model: str, system: str, user: str, max_tok
         await client.close()
 
 
+# Some models (confirmed live for the quality tier) reject a forced tool call
+# with a 400 — "tool_choice: type 'tool' and 'any' are not supported for this
+# model". Remember which ones so only the first call per model pays for the
+# failed attempt.
+_NO_FORCED_TOOL_CHOICE: set[str] = set()
+_AUTO_TOOL_NUDGE = (
+    "\n\nYou must reply by calling the provided tool exactly once, with every required field filled. "
+    "Do not answer in plain text."
+)
+
+
+def _rejects_forced_tool_choice(exc: BadRequestError) -> bool:
+    return "tool_choice" in str(exc)
+
+
 async def call_structured(
     *,
     api_key: str,
@@ -106,19 +121,35 @@ async def call_structured(
     input_schema: dict[str, Any],
     max_tokens: int = 1536,
 ) -> dict[str, Any]:
-    """Force a tool call so the model's output is guaranteed-shape JSON."""
+    """Return a tool call's input as guaranteed-shape JSON.
+
+    Forces the tool call where the model allows it; for models that reject a
+    forced tool_choice, falls back to tool_choice=auto plus an instruction to
+    call the tool, and raises if the model still doesn't.
+    """
     settings = get_settings()
     client = AsyncAnthropic(api_key=api_key)
 
-    async def _do() -> dict[str, Any]:
-        response = await client.messages.create(
+    async def _request(forced: bool):
+        return await client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            system=_cacheable_system(system),
+            system=_cacheable_system(system if forced else system + _AUTO_TOOL_NUDGE),
             messages=[{"role": "user", "content": user}],
             tools=[{"name": tool_name, "description": tool_description, "input_schema": input_schema}],
-            tool_choice={"type": "tool", "name": tool_name},
+            tool_choice={"type": "tool", "name": tool_name} if forced else {"type": "auto"},
         )
+
+    async def _do() -> dict[str, Any]:
+        forced = model not in _NO_FORCED_TOOL_CHOICE
+        try:
+            response = await _request(forced)
+        except BadRequestError as exc:
+            if not forced or not _rejects_forced_tool_choice(exc):
+                raise
+            logger.info("%s rejects forced tool_choice, falling back to auto", model)
+            _NO_FORCED_TOOL_CHOICE.add(model)
+            response = await _request(False)
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
                 return block.input

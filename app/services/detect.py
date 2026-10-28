@@ -86,9 +86,9 @@ _INPUT_SCHEMA = {
         "brandSummary": {
             "type": "string",
             "description": (
-                "A fuller, 2-4 sentence plain-language summary of what this brand actually is and "
-                "does — its product/service mix, market position, and what distinguishes it from "
-                "competitors. This is shown directly to the user to confirm or correct before "
+                "A plain-language summary of what this brand actually is and does, in 2 short "
+                "sentences (about 40 words total): what it sells, who for, and what sets it apart. No "
+                "marketing language. This is shown directly to the user to confirm or correct before "
                 "anything downstream is generated, so it must be accurate and specific to the "
                 "research findings, not generic boilerplate."
             ),
