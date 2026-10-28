@@ -13,6 +13,7 @@ this, only the winning one was ever visible.
 from __future__ import annotations
 
 import asyncio
+import logging
 from collections import Counter
 from dataclasses import dataclass
 
@@ -20,6 +21,8 @@ from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.scoring import analyze_answer, matched_texts
+
+logger = logging.getLogger("hearsay.pipeline")
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
 
@@ -237,7 +240,10 @@ async def _analyze_one_prompt(
         input_schema=_SENTIMENT_INPUT_SCHEMA,
         max_tokens=512,
     )
-    sentiment = Sentiment(sentiment_result.get("sentiment", "Neutral"))
+    # An off-enum value ("positive") would raise and fail the prompt; read it
+    # as Neutral instead.
+    raw_sentiment = sentiment_result.get("sentiment")
+    sentiment = Sentiment(raw_sentiment) if raw_sentiment in Sentiment._value2member_map_ else Sentiment.neutral
     quote = sentiment_result.get("quote", "") or ""
     # mentionText is per-answer and LLM-supplied (may recognize an unlisted
     # product/model name) — appended only once verified against the answer,
@@ -360,5 +366,19 @@ async def run_persona(
         )
         for p in prompts
     ]
-    analyses = await asyncio.gather(*tasks)
-    return _aggregate(list(analyses))
+    # One failed prompt (after its own retries) used to fail the whole persona
+    # and throw away its successful answers, which the client had paid for.
+    # Keep what succeeded; fail only when nothing did.
+    outcomes = await asyncio.gather(*tasks, return_exceptions=True)
+    analyses = [o for o in outcomes if isinstance(o, _PromptAnalysis)]
+    errors = [o for o in outcomes if isinstance(o, BaseException)]
+    for error in errors:
+        if not isinstance(error, Exception):
+            raise error  # cancellation and the like are not prompt failures
+    if not analyses:
+        raise errors[0]
+    for error in errors:
+        logger.warning("persona %s: one prompt failed, keeping the rest: %r", persona.id, error)
+    result = _aggregate(analyses)
+    result.failed_prompts = len(errors)
+    return result

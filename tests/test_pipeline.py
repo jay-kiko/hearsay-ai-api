@@ -64,3 +64,28 @@ async def test_competitor_mention_text_cannot_overlap_the_brand_name(monkeypatch
                                                               "mentionText": "Disney"}]})
     result = await _analyze()
     assert [p.text for p in result.parts if p.kind == "competitor"] == ["Royal Caribbean"]
+
+
+async def test_one_failed_prompt_keeps_the_personas_other_answers(monkeypatch):
+    from app.models import PersonaIn
+
+    async def flaky_text(*, user, **_):
+        if user == "bad":
+            raise RuntimeError("upstream 500")
+        return ANSWER
+
+    async def fake_structured(**_):
+        return {"sentiment": "Neutral", "quote": "", "mentionText": "", "competitorMentions": []}
+
+    monkeypatch.setattr(pipeline, "call_text", flaky_text)
+    monkeypatch.setattr(pipeline, "call_structured", fake_structured)
+    persona = PersonaIn(id="p1", title="T", role="r", pains="p", criteria="c")
+    kwargs = dict(persona=persona, brand="Disney Cruise Line", brand_match_names=["Disney Cruise Line"],
+                  competitors=[RC], buyer_context=None, market=None, api_key="k")
+
+    result = await pipeline.run_persona(prompts=["good", "bad", "good too"], **kwargs)
+    assert [ex.prompt for ex in result.exchanges] == ["good", "good too"]
+    assert result.failed_prompts == 1
+
+    with pytest.raises(RuntimeError):
+        await pipeline.run_persona(prompts=["bad"], **kwargs)

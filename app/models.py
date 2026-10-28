@@ -277,6 +277,9 @@ class PersonaResult(CamelModel):
     # alone (see pipeline._classify_opportunity) — not mentioned at all is always a
     # "Critical Gap" regardless of how the other personas are doing.
     opportunity: PersonaOpportunity
+    # Prompts whose calls failed after retries; they're left out of every count
+    # above rather than failing the persona.
+    failed_prompts: int = 0
 
 
 PersonaStatus = Literal["waiting", "running", "done", "error"]
