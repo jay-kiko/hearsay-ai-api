@@ -50,6 +50,9 @@ class Settings(BaseSettings):
     persona_count: int = 4
     persona_concurrency: int = 4
     job_ttl_seconds: int = 1800
+    # A redemption unfinished after this long belongs to a lost job and is
+    # refunded. Well past the longest job (calls time out at 180s, with retries).
+    stale_job_seconds: int = 3600
 
     @property
     def cors_origin_list(self) -> list[str]:

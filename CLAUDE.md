@@ -110,10 +110,10 @@ Promoting a high-fan-out call needs a cost estimate first.
 
 ## Gotchas confirmed live
 
-- **One worker process only.** Jobs, their progress streams and the rate limiter live in memory, and
-  `code_store.refund_unfinished()` treats every unfinished redemption at startup as a job the last process
-  lost. A second worker would 404 streams for jobs started in the other one and refund its running jobs.
-  Scaling out needs a shared job store first.
+- **One worker process only.** Jobs, their progress streams and the rate limiter live in memory; a
+  second worker would 404 streams for jobs started in the other one. Scaling out needs a shared job store
+  first. A redemption still unfinished after `STALE_JOB_SECONDS` is a lost job and is refunded by a
+  periodic sweep (by age, so a rolling deploy's overlapping process is safe).
 - An access-code use is spent before the job starts and refunded by `runner._fail` when the job delivers
   nothing; a delivered job is marked `complete` so it never is.
 - The quality-tier model rejects a forced `tool_choice` (400). `call_structured`

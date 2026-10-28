@@ -20,17 +20,33 @@ from app.services.anthropic_client import close_clients
 logging.basicConfig(level=logging.INFO)
 
 
+async def _refund_lost_jobs_loop(interval_seconds: int = 300) -> None:
+    """Jobs live in memory, so one lost to a restart or crash never refunds
+    itself. Swept periodically (not just at startup) by age, so a rolling
+    deploy's overlap never refunds jobs the other process is still running."""
+    logger = logging.getLogger("hearsay")
+    while True:
+        try:
+            refunded = await get_code_store().refund_stale(
+                get_settings().stale_job_seconds, get_job_store().running_job_ids()
+            )
+            if refunded:
+                logger.warning("refunded %d use(s) for jobs that were lost", refunded)
+        except Exception:  # noqa: BLE001 - keep sweeping
+            logger.exception("refund sweep failed")
+        await asyncio.sleep(interval_seconds)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await get_code_store().connect()
-    refunded = await get_code_store().refund_unfinished()
-    if refunded:
-        logging.getLogger("hearsay").warning("refunded %d use(s) for jobs lost by the last process", refunded)
     eviction_task = asyncio.create_task(get_job_store().evict_loop())
+    refund_task = asyncio.create_task(_refund_lost_jobs_loop())
     try:
         yield
     finally:
         eviction_task.cancel()
+        refund_task.cancel()
         await close_clients()
         await get_code_store().close()
 

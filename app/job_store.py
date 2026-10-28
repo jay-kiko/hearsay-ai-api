@@ -128,6 +128,9 @@ class JobStore:
         if job and queue in job.subscribers:
             job.subscribers.remove(queue)
 
+    def running_job_ids(self) -> set[str]:
+        return {jid for jid, job in self._jobs.items() if job.task is not None and not job.task.done()}
+
     async def evict_loop(self, interval_seconds: int = 60) -> None:
         while True:
             await asyncio.sleep(interval_seconds)

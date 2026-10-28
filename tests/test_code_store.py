@@ -34,13 +34,16 @@ async def test_finished_job_is_never_refunded(store):
     assert await _remaining(store, code) == 1
 
 
-async def test_jobs_lost_by_the_last_process_are_refunded_at_startup(store):
-    [code] = await store.mint(1, uses=3)
-    for job in ("done", "lost", "failed"):
+async def test_only_stale_unfinished_jobs_are_refunded(store):
+    [code] = await store.mint(1, uses=4)
+    for job in ("done", "lost", "failed", "mine"):
         await store.redeem(code, job)
     await store.finish("done")
     await store.refund("failed")
-    assert await store.refund_unfinished() == 1  # only "lost"
+    # Young jobs may belong to another process mid-deploy: never refunded.
+    assert await store.refund_stale(older_than_seconds=3600) == 0
+    # Once old enough, "lost" is refunded; this process's running job isn't.
+    assert await store.refund_stale(older_than_seconds=-1, running={"mine"}) == 1
     assert await _remaining(store, code) == 2
 
 
@@ -58,6 +61,6 @@ async def test_redemptions_from_before_outcomes_existed_are_not_refunded(tmp_pat
         await db.commit()
     s = CodeStore(str(path))
     await s.connect()
-    assert await s.refund_unfinished() == 0
+    assert await s.refund_stale(older_than_seconds=-1) == 0
     assert await s.status("AAAA-BBBB") == "exhausted"
     await s.close()

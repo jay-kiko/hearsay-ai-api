@@ -59,6 +59,13 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _before(timestamp: str, cutoff: float) -> bool:
+    try:
+        return datetime.fromisoformat(timestamp).timestamp() < cutoff
+    except ValueError:
+        return False  # unreadable: never refund on a guess
+
+
 class CodeRecord(CamelModel):
     code: str
     created_at: str
@@ -87,7 +94,7 @@ class CodeStore:
         try:
             await self._conn.execute("ALTER TABLE code_redemptions ADD COLUMN outcome TEXT")
             # Rows from before outcomes were tracked must not read as jobs lost
-            # mid-run, or refund_unfinished() would hand every past use back.
+            # mid-run, or refund_stale() would hand every past use back.
             await self._conn.execute("UPDATE code_redemptions SET outcome = 'legacy' WHERE outcome IS NULL")
         except aiosqlite.OperationalError:
             pass  # column already present
@@ -185,13 +192,21 @@ class CodeStore:
         await self._db.commit()
         return bool(cursor.rowcount)
 
-    async def refund_unfinished(self) -> int:
-        """At startup: jobs live in memory, so a redemption still unfinished
-        belongs to a job the last process lost (restart, redeploy, crash).
-        Correct only with a single worker process — see CLAUDE.md."""
-        async with self._db.execute("SELECT job_id FROM code_redemptions WHERE outcome IS NULL") as cursor:
-            job_ids = [row[0] for row in await cursor.fetchall()]
-        return sum([await self.refund(job_id) for job_id in job_ids])
+    async def refund_stale(self, older_than_seconds: float, running: set[str] = frozenset()) -> int:
+        """Refunds redemptions still unfinished well past the longest a job can
+        run: their job was lost (restart, crash) and will never finish.
+
+        Age, not "everything unfinished at startup": during a rolling deploy
+        the new process starts while the old one is still running jobs, and
+        refunding those handed the use back to clients who then got their
+        result too. `running` excludes this process's own live jobs."""
+        cutoff = datetime.now(timezone.utc).timestamp() - older_than_seconds
+        async with self._db.execute(
+            "SELECT job_id, redeemed_at FROM code_redemptions WHERE outcome IS NULL"
+        ) as cursor:
+            rows = await cursor.fetchall()
+        stale = [job_id for job_id, redeemed_at in rows if job_id not in running and _before(redeemed_at, cutoff)]
+        return sum([await self.refund(job_id) for job_id in stale])
 
     async def register_prompt_call(self, code: str, max_calls: int) -> CallStatus:
         """Soft throttle on the unconsumed /api/prompts and /api/detect paths: capped, not spent."""
