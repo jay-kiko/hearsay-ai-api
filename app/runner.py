@@ -94,26 +94,38 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             if request.prompts.get(persona.id)
         ]
 
-        pairs = await asyncio.gather(*tasks) if tasks else []
-        results = {pid: result for pid, result in pairs if result is not None}
-
         if not tasks:
             await _fail(job_store, job_id, "No personas had prompts to analyze")
             return
+
+        # Grounding needs only the prompts, not the persona answers, so it runs
+        # alongside them instead of adding its whole duration (search, filter,
+        # classification, page fetches) after them.
+        grounding = asyncio.create_task(
+            run_grounding(
+                api_key=anthropic_api_key,
+                brand=request.brand,
+                industry=request.industry,
+                competitors=request.competitors,
+                brand_match_names=brand_match_names,
+                personas=request.personas,
+                prompts=request.prompts,
+                market=request.market,
+            )
+        )
+        try:
+            pairs = await asyncio.gather(*tasks)
+        except BaseException:
+            grounding.cancel()
+            raise
+        results = {pid: result for pid, result in pairs if result is not None}
+
         if not results:
+            grounding.cancel()  # nothing to attach sources to; stop spending on it
             await _fail(job_store, job_id, "All persona calls failed — see per-persona errors for details")
             return
 
-        sources, sitelist = await run_grounding(
-            api_key=anthropic_api_key,
-            brand=request.brand,
-            industry=request.industry,
-            competitors=request.competitors,
-            brand_match_names=brand_match_names,
-            personas=request.personas,
-            prompts=request.prompts,
-            market=request.market,
-        )
+        sources, sitelist = await grounding
 
         products = aggregation.build_products(results, request.brand, request.competitors)
         score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)

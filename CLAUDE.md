@@ -26,7 +26,7 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 1. **Detect** (`detect.py`) — grounded web search → brand, aliases, industry, competitors, buyer context.
 2. **Categories / personas / prompts** (`category_gen.py`, `persona_gen.py`, `prompt_gen.py`) — generative; the *wording is the product*.
 3. **Per-persona** (`pipeline.py`) — for each prompt: one "answer" call (no brand, no web search) → one sentiment call → deterministic mention/rank/score (`scoring.py`).
-4. **Grounding** (`grounding.py` + `source_quality.py`) — ONE web-search call per job that searches one brand-free buyer question per persona (each persona's first prompt) → third-party sources, then measures brand + competitors on each page. The Singapore inventory (`inventory.py`) only labels sources as buyable in the sitelist. Separate from step 3: these are pages buyers' questions surface, not pages that shaped a specific answer.
+4. **Grounding** (`grounding.py` + `source_quality.py`) — ONE web-search call per job that searches one brand-free buyer question per persona (each persona's first prompt) → third-party sources, then measures brand + competitors on each page. The Singapore inventory (`inventory.py`) only labels sources as buyable in the sitelist. Separate from step 3 and run concurrently with it (it needs only the prompts): these are pages buyers' questions surface, not pages that shaped a specific answer.
 5. **Aggregation** (`aggregation.py`) — deterministic: Overview, Share of Voice, score breakdown, composite.
 6. **Insights** (`insights_gen.py`) — one generative call over everything above.
 
