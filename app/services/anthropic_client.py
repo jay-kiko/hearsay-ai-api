@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import weakref
 from typing import Any
 
 from anthropic import (
@@ -49,32 +50,36 @@ _RATE_LIMIT_MAX_DELAY_SECONDS = 60.0
 # Requests that fail the same way every time: retrying only costs time.
 _NOT_RETRYABLE = (AuthenticationError, BadRequestError, NotFoundError, PermissionDeniedError, UnprocessableEntityError)
 
-_clients: dict[tuple[int, str], AsyncAnthropic] = {}
-_semaphores: dict[int, asyncio.Semaphore] = {}
+# Keyed by the loop object itself, weakly: the client's connection pool and
+# the semaphore belong to the loop that made them. An id(loop) key could be
+# reused by a new loop after the old one was collected (tests open one per
+# test) and hand back objects bound to a closed loop.
+_clients: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, dict[str, AsyncAnthropic]] = weakref.WeakKeyDictionary()
+_semaphores: weakref.WeakKeyDictionary[asyncio.AbstractEventLoop, asyncio.Semaphore] = weakref.WeakKeyDictionary()
 
 
 def _client(api_key: str) -> AsyncAnthropic:
-    # Keyed by loop too: the client's connection pool belongs to the loop
-    # that opened it (one loop in production; tests open one per test).
-    key = (id(asyncio.get_running_loop()), api_key)
-    if key not in _clients:
+    per_loop = _clients.setdefault(asyncio.get_running_loop(), {})
+    if api_key not in per_loop:
         settings = get_settings()
-        _clients[key] = AsyncAnthropic(api_key=api_key, timeout=settings.anthropic_timeout_seconds, max_retries=0)
-    return _clients[key]
+        per_loop[api_key] = AsyncAnthropic(api_key=api_key, timeout=settings.anthropic_timeout_seconds, max_retries=0)
+    return per_loop[api_key]
 
 
 def _in_flight() -> asyncio.Semaphore:
-    loop_id = id(asyncio.get_running_loop())
-    if loop_id not in _semaphores:
-        _semaphores[loop_id] = asyncio.Semaphore(get_settings().anthropic_max_concurrency)
-    return _semaphores[loop_id]
+    loop = asyncio.get_running_loop()
+    if loop not in _semaphores:
+        _semaphores[loop] = asyncio.Semaphore(get_settings().anthropic_max_concurrency)
+    return _semaphores[loop]
 
 
 async def close_clients() -> None:
-    for client in list(_clients.values()):
-        await client.close()
+    """At shutdown. The semaphore is left alone: calls still in flight hold
+    its slots, and a fresh one would let new calls ignore them."""
+    for per_loop in list(_clients.values()):
+        for client in per_loop.values():
+            await client.close()
     _clients.clear()
-    _semaphores.clear()
 
 
 def _cacheable_system(system: str) -> list[dict[str, Any]]:

@@ -153,3 +153,21 @@ async def test_one_shared_client_with_timeout_and_no_sdk_retries():
     await _call()
     await _call()
     assert len(made) == 1 and made[0]["max_retries"] == 0 and made[0]["timeout"] > 0
+
+
+def test_caches_are_per_loop_and_shutdown_keeps_the_semaphore():
+    import asyncio
+
+    async def grab():
+        return ac._client("k"), ac._in_flight()
+
+    first_loop, second_loop = asyncio.new_event_loop(), asyncio.new_event_loop()
+    try:
+        client_a, sem_a = first_loop.run_until_complete(grab())
+        client_b, _ = second_loop.run_until_complete(grab())
+        assert client_a is not client_b  # never a client bound to another loop
+        first_loop.run_until_complete(ac.close_clients())
+        assert first_loop.run_until_complete(grab())[1] is sem_a
+    finally:
+        first_loop.close()
+        second_loop.close()
