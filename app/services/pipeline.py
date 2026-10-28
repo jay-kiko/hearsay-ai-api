@@ -196,7 +196,9 @@ def _apply_competitor_mentions(
         for text in extra:
             if text.lower() not in (n.lower() for n in match_names):
                 match_names.append(text)
-        effective.append(Competitor(name=c.name, match_names=match_names))
+        # model_copy, not a new Competitor: per-answer names may run past the
+        # request-size cap on match_names, which only bounds what callers send.
+        effective.append(c.model_copy(update={"match_names": match_names}))
     return effective
 
 

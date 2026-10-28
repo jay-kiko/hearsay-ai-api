@@ -135,3 +135,37 @@ def test_error_events_are_valid_json_without_internal_detail():
     assert payload == {"message": "Something went wrong during the analysis."}
     late = store.subscribe(job.job_id).get_nowait()  # replay for a late subscriber
     assert json.loads(late.split("data: ", 1)[1]) == payload
+
+
+# ── request size limits ───────────────────────────────────────────────
+
+def test_requests_reject_oversized_input():
+    from pydantic import ValidationError
+
+    from app.models import AnalysisRequest, DetectRequest, PromptsRequest
+
+    persona = {"id": "p1", "title": "T", "role": "r", "pains": "p", "criteria": "c"}
+    base = {"brand": "B", "industry": "i", "accessCode": "AAAA-BBBB", "personas": [persona], "prompts": {"p1": ["q"]}}
+    AnalysisRequest(**base)
+    for bad in (
+        {"prompts": {"p1": ["x" * 501]}},
+        {"personas": [persona] * 11},
+        {"brandMatchNames": ["a"]},  # a 1-letter alias matches everything
+        {"competitors": [{"name": f"C{i}", "matchNames": [f"C{i}"]} for i in range(16)]},
+        {"brandSummary": "x" * 2001},
+    ):
+        with pytest.raises(ValidationError):
+            AnalysisRequest(**{**base, **bad})
+    with pytest.raises(ValidationError):
+        DetectRequest(query="x" * 501, accessCode="A")
+    with pytest.raises(ValidationError):
+        PromptsRequest(**{**base, "promptsPerPersona": 1000})
+
+
+def test_detect_output_fits_the_request_limits():
+    from app.services.detect import _normalize_brand_match_names, _normalize_competitors
+
+    names = _normalize_brand_match_names(["X", "Disney", "disney", *[f"Ship {i}" for i in range(40)]], "Disney Cruise Line")
+    assert names[0] == "Disney Cruise Line" and "X" not in names and len(names) == 25
+    comps = _normalize_competitors([{"name": f"Line {i}", "matchNames": ["L"]} for i in range(20)] + ["Q"])
+    assert len(comps) == 15 and all(c.match_names == [c.name] for c in comps)

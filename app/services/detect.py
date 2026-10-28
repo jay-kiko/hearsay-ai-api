@@ -15,7 +15,7 @@ formats those findings into the response shape.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import Competitor, DetectResponse
+from app.models import MAX_COMPETITORS, Competitor, DetectResponse
 from app.services.anthropic_client import call_structured, call_web_search
 
 _TOOL_NAME = "detect_brand"
@@ -133,6 +133,16 @@ _EXTRACT_SYSTEM = (
 )
 
 
+def _fit_names(names: list[str]) -> list[str]:
+    """Deduped and trimmed to the request limits (app.models.Alias / Aliases),
+    since these lists are sent straight back in every later request."""
+    out: list[str] = []
+    for name in names:
+        if 2 <= len(name) <= 120 and name.lower() not in (n.lower() for n in out):
+            out.append(name)
+    return out[:25]
+
+
 def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
     """Same defensive-parsing rationale as _normalize_competitors — tool-forced
     output isn't a hard type guarantee. Always include the literal brand name
@@ -145,8 +155,8 @@ def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
         names = [str(n).strip() for n in value if str(n).strip()]
 
     if brand not in names:
-        names.append(brand)
-    return names
+        names.insert(0, brand)
+    return _fit_names(names)
 
 
 def _normalize_competitors(value: object) -> list[Competitor]:
@@ -156,22 +166,23 @@ def _normalize_competitors(value: object) -> list[Competitor]:
     if isinstance(value, str):
         # Whole competitors field collapsed to a comma-joined string — no
         # matchNames available at all, fall back to name-only matching.
-        return [Competitor(name=n.strip(), match_names=[n.strip()]) for n in value.split(",") if n.strip()]
+        value = [n for n in value.split(",")]
 
     if not isinstance(value, list):
         return []
 
     competitors: list[Competitor] = []
+    value = value[:MAX_COMPETITORS]
     for entry in value:
         if isinstance(entry, str):
-            name = entry.strip()
-            if name:
+            name = entry.strip()[:120]
+            if len(name) >= 2:
                 competitors.append(Competitor(name=name, match_names=[name]))
             continue
         if not isinstance(entry, dict):
             continue
-        name = str(entry.get("name", "")).strip()
-        if not name:
+        name = str(entry.get("name", "")).strip()[:120]
+        if len(name) < 2:
             continue
         match_names_raw = entry.get("matchNames", [])
         if isinstance(match_names_raw, str):
@@ -181,8 +192,8 @@ def _normalize_competitors(value: object) -> list[Competitor]:
         else:
             match_names = []
         if name not in match_names:
-            match_names.append(name)
-        competitors.append(Competitor(name=name, match_names=match_names))
+            match_names.insert(0, name)
+        competitors.append(Competitor(name=name, match_names=_fit_names(match_names)))
     return competitors
 
 

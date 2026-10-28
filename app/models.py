@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 
 
 def to_camel(field_name: str) -> str:
@@ -15,6 +15,24 @@ class CamelModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
+# ── Request size limits ──────────────────────────────────────────────
+# Every request field below ends up in a billed model call on the server's
+# key, so each one is bounded: an unbounded string or list let one request
+# send megabytes to the quality model. Generous next to what the UI sends.
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
+# Aliases are matched as whole words in answers and pages; a 1-character alias
+# ("a") would make every text "mention" the brand.
+Alias = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=120)]
+Line = Annotated[str, StringConstraints(max_length=500)]
+Paragraph = Annotated[str, StringConstraints(max_length=2000)]
+Prompt = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+AccessCode = Annotated[str, StringConstraints(strip_whitespace=True, max_length=32)]
+Aliases = Annotated[list[Alias], Field(max_length=25)]
+MAX_PERSONAS = 10
+MAX_PROMPTS_PER_PERSONA = 10
+MAX_COMPETITORS = 15
+
+
 class Sentiment(str, Enum):
     positive = "Positive"
     neutral = "Neutral"
@@ -24,19 +42,19 @@ class Sentiment(str, Enum):
 # ── Shared input shapes ──────────────────────────────────────────────
 
 class PersonaIn(CamelModel):
-    id: str
-    title: str
-    role: str
-    pains: str
-    criteria: str
+    id: Annotated[str, StringConstraints(min_length=1, max_length=64)]
+    title: Name
+    role: Line
+    pains: Line
+    criteria: Line
     # Optional so existing callers keep working; when sent, it carries the
     # persona's one-line "what they're trying to decide" framing into prompt
     # generation, which is otherwise only given pains/criteria lists.
-    desc: str = ""
+    desc: Line = ""
 
 
 class Competitor(CamelModel):
-    name: str
+    name: Name
     # Every real-world variant that should count as a mention of this
     # competitor — the company name itself, common short forms, and any
     # sub-brands. A holding company like "PVH (parent of Tommy Hilfiger and
@@ -45,7 +63,7 @@ class Competitor(CamelModel):
     # parent company — matching only the literal display name misses almost
     # every real mention (confirmed live: zero matches against an answer
     # that named both sub-brands explicitly).
-    match_names: list[str]
+    match_names: Aliases
 
 
 # ── /api/access ──────────────────────────────────────────────────────
@@ -60,8 +78,8 @@ class AccessStatusResponse(CamelModel):
 # ── /api/detect ──────────────────────────────────────────────────────
 
 class DetectRequest(CamelModel):
-    query: str
-    access_code: str
+    query: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+    access_code: AccessCode
 
 
 class DetectResponse(CamelModel):
@@ -90,22 +108,22 @@ class DetectResponse(CamelModel):
 # ── /api/categories ───────────────────────────────────────────────────
 
 class CategoriesRequest(CamelModel):
-    brand: str
-    industry: str
-    competitors: list[Competitor] = Field(default_factory=list)
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    access_code: str
+    brand: Name
+    industry: Line
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    access_code: AccessCode
 
 
 class CategorySuggestion(CamelModel):
-    name: str
+    name: Name
     # Scoped to this specific facet, not a copy of the brand's overall
     # buyerContext — a brand can genuinely have multiple distinct buyer
     # types (e.g. Hotel101 sells to both real-estate investors AND
     # short-stay guests), and selecting one facet must narrow to just its
     # relevant buyer type, not leak the other one back in downstream.
-    buyer_context: str
+    buyer_context: Paragraph
 
 
 class CategoriesResponse(CamelModel):
@@ -115,14 +133,14 @@ class CategoriesResponse(CamelModel):
 # ── /api/generate-personas ───────────────────────────────────────────
 
 class GeneratePersonasRequest(CamelModel):
-    brand: str
-    industry: str
-    competitors: list[Competitor] = Field(default_factory=list)
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    market: str | None = None
-    access_code: str
-    persona_count: int | None = None
+    brand: Name
+    industry: Line
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    market: Name | None = None
+    access_code: AccessCode
+    persona_count: int | None = Field(default=None, ge=1, le=MAX_PERSONAS)
 
 
 class GeneratedPersona(CamelModel):
@@ -147,12 +165,12 @@ class ExpandPersonaRequest(CamelModel):
     # takes, used to ground the fill-in fields rather than inventing them
     # from the description alone.
     description: str = Field(min_length=10, max_length=500)
-    industry: str
-    competitors: list[Competitor] = Field(default_factory=list)
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    market: str | None = None
-    access_code: str
+    industry: Line
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    market: Name | None = None
+    access_code: AccessCode
 
 
 class ExpandPersonaResponse(CamelModel):
@@ -162,24 +180,24 @@ class ExpandPersonaResponse(CamelModel):
 # ── /api/prompts ─────────────────────────────────────────────────────
 
 class PromptsRequest(CamelModel):
-    brand: str
-    industry: str
-    personas: list[PersonaIn]
+    brand: Name
+    industry: Line
+    personas: list[PersonaIn] = Field(min_length=1, max_length=MAX_PERSONAS)
     # Optional: when sent, generated prompts that name the brand (any alias) or a
     # competitor are dropped. Without them only the bare brand name is screened.
-    competitors: list[Competitor] = Field(default_factory=list)
-    brand_match_names: list[str] = Field(default_factory=list)
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    market: str | None = None
-    access_code: str
-    prompts_per_persona: int | None = None
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    brand_match_names: Aliases = Field(default_factory=list)
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    market: Name | None = None
+    access_code: AccessCode
+    prompts_per_persona: int | None = Field(default=None, ge=1, le=MAX_PROMPTS_PER_PERSONA)
     # When non-empty, generate prompts_per_persona prompts PER category (each
     # scoped to that category's own name/buyerContext) and concatenate them
     # per persona, instead of one generation pass over the top-level
     # industry/buyerContext — lets a user run personas across every category
     # facet they pick, not just one.
-    categories: list[CategorySuggestion] = Field(default_factory=list)
+    categories: list[CategorySuggestion] = Field(default_factory=list, max_length=6)
 
 
 class PromptsResponse(CamelModel):
@@ -187,18 +205,18 @@ class PromptsResponse(CamelModel):
 
 
 class AdaptSeedPromptRequest(CamelModel):
-    brand: str
-    industry: str
-    personas: list[PersonaIn]
+    brand: Name
+    industry: Line
+    personas: list[PersonaIn] = Field(min_length=1, max_length=MAX_PERSONAS)
     # Optional: when sent, generated prompts that name the brand (any alias) or a
     # competitor are dropped. Without them only the bare brand name is screened.
-    competitors: list[Competitor] = Field(default_factory=list)
-    brand_match_names: list[str] = Field(default_factory=list)
-    seed_prompt: str
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    market: str | None = None
-    access_code: str
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    brand_match_names: Aliases = Field(default_factory=list)
+    seed_prompt: Prompt
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    market: Name | None = None
+    access_code: AccessCode
 
 
 class AdaptSeedPromptResponse(CamelModel):
@@ -210,26 +228,26 @@ class AdaptSeedPromptResponse(CamelModel):
 # ── /api/analysis ────────────────────────────────────────────────────
 
 class AnalysisRequest(CamelModel):
-    brand: str
+    brand: Name
     # Optional/defaults empty for callers that don't send it yet — falls
     # back to matching on the bare brand string, today's behavior.
-    brand_match_names: list[str] = Field(default_factory=list)
-    industry: str
-    competitors: list[Competitor] = Field(default_factory=list)
-    buyer_context: str | None = None
-    brand_summary: str | None = None
-    market: str | None = None
+    brand_match_names: Aliases = Field(default_factory=list)
+    industry: Line
+    competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    buyer_context: Paragraph | None = None
+    brand_summary: Paragraph | None = None
+    market: Name | None = None
     # Bounded: every persona and prompt is a billed call (and a search), and one
     # access-code use pays for the whole job. Generous next to the UI's 4 x 3.
-    personas: list[PersonaIn] = Field(min_length=1, max_length=10)
-    prompts: dict[str, list[str]]
-    access_code: str
+    personas: list[PersonaIn] = Field(min_length=1, max_length=MAX_PERSONAS)
+    prompts: Annotated[dict[str, list[Prompt]], Field(max_length=MAX_PERSONAS)]
+    access_code: AccessCode
 
     @field_validator("prompts")
     @classmethod
     def _cap_prompts(cls, value: dict[str, list[str]]) -> dict[str, list[str]]:
-        if any(len(p) > 10 for p in value.values()):
-            raise ValueError("at most 10 prompts per persona")
+        if any(len(p) > MAX_PROMPTS_PER_PERSONA for p in value.values()):
+            raise ValueError(f"at most {MAX_PROMPTS_PER_PERSONA} prompts per persona")
         return value
 
 
