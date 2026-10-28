@@ -478,53 +478,33 @@ _MAX_ENRICHED_DOMAINS = 15
 _MAX_PAGES_CHECKED_PER_DOMAIN = 3
 
 
-async def run_grounding(
-    *,
-    api_key: str,
-    brand: str,
-    industry: str,
-    competitors: list[Competitor],
-    personas: list[PersonaIn],
-    prompts: dict[str, list[str]],
-    brand_match_names: list[str] | None = None,
-    market: str | None = None,
-) -> tuple[Sources, list[SitelistEntry]]:
-    settings = get_settings()
+def _empty_sources(note: str, queries: list[SourceQuery] | None = None) -> tuple[Sources, list[SitelistEntry]]:
+    return Sources(citations=[], publishers=[], communities=[], source_intel=[], queries=queries or [],
+                   coverage_note=note), []
 
-    # One buyer question per persona, rotating through the prompt list by
-    # persona position: prompts generated across several categories are
-    # concatenated per persona, so always taking [0] searched only the first
-    # category. Deterministic: the same personas/prompts search the same questions.
+
+def _questions_to_search(personas: list[PersonaIn], prompts: dict[str, list[str]]) -> list[tuple[str, str]]:
+    """(persona title, question) — one buyer question per persona, rotating
+    through the prompt list by persona position: prompts generated across
+    several categories are concatenated per persona, so always taking [0]
+    searched only the first category. Deterministic: the same personas/prompts
+    search the same questions."""
     with_prompts = [p for p in personas if prompts.get(p.id)]
-    asked = [(p.title, prompts[p.id][i % len(prompts[p.id])]) for i, p in enumerate(with_prompts)]
-    if not asked:
-        return Sources(citations=[], publishers=[], communities=[], source_intel=[],
-                       coverage_note="No buyer questions to search, so no sources were researched."), []
+    return [(p.title, prompts[p.id][i % len(prompts[p.id])]) for i, p in enumerate(with_prompts)]
+
+
+def _screen_searches(
+    response, asked: list[tuple[str, str]], brand: str, competitors: list[Competitor], names: list[str]
+) -> tuple[list[dict], list[SourceQuery], dict[str, str], set[str]]:
+    """Hits tagged with the questions (0-based) that surfaced them, minus
+    results of any search that named the brand or a competitor, plus the
+    query log shown to the client."""
     questions = [q for _, q in asked]
-
-    try:
-        response = await call_web_search(
-            api_key=api_key,
-            # Fast tier: the model only runs given searches verbatim — the
-            # search engine, not the model, decides what comes back.
-            model=settings.anthropic_fast_model,
-            system=_SYSTEM,
-            user=_search_user(questions, market),
-            max_tokens=2048,
-            max_uses=len(questions),
-            user_location=_location_for(market),
-        )
-    except Exception:
-        logger.exception("grounding search failed, returning empty sources")
-        return Sources(citations=[], publishers=[], communities=[], source_intel=[],
-                       coverage_note="The source search failed, so no sources are shown for this run."), []
-
     hits, queries, errored = _extract_search(response)
     attribution = attribute_queries(queries, questions)
 
     # The model was told never to add a brand. Enforce it: a search that names
     # the brand or a competitor is a brand lookup, and its results are dropped.
-    names = [brand, *(brand_match_names or [])]
     leaked = {qid for qid, q in queries.items() if find_mentions(q, brand, competitors, names)}
     query_log = [
         SourceQuery(
@@ -547,66 +527,29 @@ async def run_grounding(
             continue
         hit["questions"] = {attribution[i] for i in ids - leaked if attribution.get(i) is not None}
         kept_hits.append(hit)
+    return kept_hits, query_log, queries, errored
 
-    # Deterministic first cut: a site built around the brand's or a competitor's
-    # name is the entity talking about itself. Cheap, and runs before any model
-    # call so those domains never spend filter/enrichment tokens.
-    for competitor in competitors:
-        names.extend([competitor.name, *competitor.match_names])
-    entity_slugs = sq.entity_slugs(names)
+
+def _drop_entity_sites(hits: list[dict], entity_names: list[str]) -> list[dict]:
+    """Deterministic first cut: a site built around the brand's or a
+    competitor's name is the entity talking about itself, and a proxy host can
+    smuggle one in. Cheap, and runs before any model call so those domains
+    never spend filter/enrichment tokens."""
+    slugs = sq.entity_slugs(entity_names)
 
     def _is_entity_or_proxy(url: str) -> bool:
-        return any(sq.is_proxy_host(h) or sq.is_entity_domain(h, entity_slugs) for h in sq.hosts_in(url))
+        return any(sq.is_proxy_host(h) or sq.is_entity_domain(h, slugs) for h in sq.hosts_in(url))
 
-    kept_hits = [h for h in kept_hits if not _is_entity_or_proxy(h.get("url", ""))]
-    kept_hits = await _filter_relevant(
-        kept_hits, industry=industry, market=market, questions=questions,
-        api_key=api_key, model=settings.anthropic_fast_model,
-    )
-    classified = _classify(kept_hits)
+    return [h for h in hits if not _is_entity_or_proxy(h.get("url", ""))]
 
-    # Capped to the most-cited domains — an uncapped list caused a real
-    # stop_reason=max_tokens truncation (24 domains blew through 2048 tokens
-    # before finishing even one entry, returning {}).
-    domain_counts = {c.domain: c.count for c in classified.citations}
-    top_domains = sorted(classified.domain_titles.items(), key=lambda kv: -domain_counts.get(kv[0], 0))
-    enrichment = await _enrich_sources(
-        domains={domain: (title, domain_counts.get(domain, 0)) for domain, title in top_domains[:_MAX_ENRICHED_DOMAINS]},
-        brand=brand,
-        competitors=competitors,
-        api_key=api_key,
-        # Standard tier: origin decides which sources a client sees as
-        # independent, so this is judgement, not mechanical extraction.
-        model=settings.anthropic_model,
-    )
 
-    # Enrichment output isn't a hard type guarantee (same defensive posture
-    # as detect.py/category_gen.py) — a malformed entry must degrade to
-    # placeholders, not fail a job whose persona results already succeeded.
-    def _clean_type(raw: object, fallback: str) -> str:
-        return raw if isinstance(raw, str) and raw.strip() else fallback
-
-    # Only domains the model positively classified as independent are shown.
-    # A domain it never classified (outside the enrichment cap, malformed
-    # entry, or the call failed) can't be vouched for, so it's dropped rather
-    # than assumed independent — booking/deal sites don't carry the brand's
-    # name, so the deterministic filter alone can't catch them.
-    if classified.domain_pages and not enrichment:
-        logger.warning("origin classification unavailable; showing no sources rather than unverified ones")
-        return Sources(
-            citations=[], publishers=[], communities=[], source_intel=[], queries=query_log,
-            coverage_note="Sources couldn't be checked for independence this run, so none are shown.",
-        ), []
-    kept_domains = [d for d in classified.domain_pages if enrichment.get(d, {}).get("origin") == "independent"]
-    for domain in classified.domain_pages:
-        if domain not in kept_domains:
-            logger.info("dropping %s: origin=%s", domain, enrichment.get(domain, {}).get("origin", "unclassified"))
-
-    # Rank each kept domain's pages by brand evidence, then fetch the best few:
-    # a source never points at a dead page or bounces to the homepage, and
-    # mentions are counted in the page text itself where it's readable.
-    count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names)  # noqa: E731
-    ranked = {d: sq.rank_pages(classified.domain_pages[d], count_brand) for d in kept_domains}
+async def _fetch_and_rank(
+    domain_pages: dict[str, list[sq.SourcePage]], kept_domains: list[str], count_brand
+) -> tuple[dict[str, list[sq.SourcePage]], dict[str, sq.PageCheck]]:
+    """Ranks each kept domain's pages by brand evidence and fetches the best
+    few: a source never points at a dead page or bounces to the homepage, and
+    mentions are counted in the page text itself where it's readable."""
+    ranked = {d: sq.rank_pages(domain_pages[d], count_brand) for d in kept_domains}
     candidate_urls = [p.url for pages in ranked.values() for p in pages[:_MAX_PAGES_CHECKED_PER_DOMAIN]]
     try:
         checks = await sq.check_pages(candidate_urls)
@@ -621,7 +564,30 @@ async def run_grounding(
     for domain, pages in ranked.items():
         checked, rest = pages[:_MAX_PAGES_CHECKED_PER_DOMAIN], pages[_MAX_PAGES_CHECKED_PER_DOMAIN:]
         ranked[domain] = [*sq.rank_pages(checked, count_brand), *rest]
+    return ranked, checks
 
+
+def _clean_type(raw: object, fallback: str) -> str:
+    # Enrichment output isn't a hard type guarantee: a malformed entry
+    # degrades to the placeholder, never fails the job.
+    return raw if isinstance(raw, str) and raw.strip() else fallback
+
+
+def _measure_sources(
+    *,
+    kept_domains: list[str],
+    ranked: dict[str, list[sq.SourcePage]],
+    checks: dict[str, sq.PageCheck],
+    classified: _ClassifiedDomains,
+    enrichment: dict[str, dict],
+    asked: list[tuple[str, str]],
+    count_brand,
+    brand: str,
+    competitors: list[Competitor],
+    brand_match_names: list[str] | None,
+) -> tuple[list[SourceIntel], list[Citation], list[Publisher], list[Community], dict[str, int]]:
+    """One SourceIntel per kept domain with a live page, every number on it
+    measured on the page it links to."""
     # Competitors are counted with the same matcher as the brand, so the two
     # numbers on a source are directly comparable. Each text is scanned once
     # and tallied per competitor; one scan per competitor per text redid the
@@ -694,21 +660,114 @@ async def run_grounding(
             )
         )
         reach_by_domain[domain] = reach
+    return source_intel, citations, publishers, communities, reach_by_domain
+
+
+def _coverage_note(
+    asked: list[tuple[str, str]], query_log: list[SourceQuery], queries: dict[str, str], errored: set[str], shown: int
+) -> str | None:
+    """Says when coverage is thin, so a short list never reads as "nobody
+    discusses this" (invariant 7)."""
+    all_failed = bool(queries) and len(errored) == len(queries)
+    searched = {q.question for q in query_log if q.question and not q.dropped and not q.failed}
+    skipped = [title for title, question in asked if question not in searched]
+    notes = []
+    if all_failed:
+        notes.append("Every source search failed this run, so no sources could be found.")
+    elif skipped:
+        notes.append(f"No usable search ran for: {', '.join(skipped)}.")
+    if shown < 3 and not all_failed:
+        notes.append(f"Only {shown} independent sources came back for these buyer questions, so treat this list as thin.")
+    return " ".join(notes) or None
+
+
+async def run_grounding(
+    *,
+    api_key: str,
+    brand: str,
+    industry: str,
+    competitors: list[Competitor],
+    personas: list[PersonaIn],
+    prompts: dict[str, list[str]],
+    brand_match_names: list[str] | None = None,
+    market: str | None = None,
+) -> tuple[Sources, list[SitelistEntry]]:
+    """Search → screen → filter → classify origin → fetch → measure. Each
+    stage is a function above; this only wires them and decides what an
+    empty or failed stage means for the client."""
+    settings = get_settings()
+
+    asked = _questions_to_search(personas, prompts)
+    if not asked:
+        return _empty_sources("No buyer questions to search, so no sources were researched.")
+    questions = [q for _, q in asked]
+
+    try:
+        response = await call_web_search(
+            api_key=api_key,
+            # Fast tier: the model only runs given searches verbatim — the
+            # search engine, not the model, decides what comes back.
+            model=settings.anthropic_fast_model,
+            system=_SYSTEM,
+            user=_search_user(questions, market),
+            max_tokens=2048,
+            max_uses=len(questions),
+            user_location=_location_for(market),
+        )
+    except Exception:
+        logger.exception("grounding search failed, returning empty sources")
+        return _empty_sources("The source search failed, so no sources are shown for this run.")
+
+    brand_names = [brand, *(brand_match_names or [])]
+    hits, query_log, queries, errored = _screen_searches(response, asked, brand, competitors, brand_names)
+    entity_names = brand_names + [n for c in competitors for n in (c.name, *c.match_names)]
+    hits = _drop_entity_sites(hits, entity_names)
+    hits = await _filter_relevant(
+        hits, industry=industry, market=market, questions=questions,
+        api_key=api_key, model=settings.anthropic_fast_model,
+    )
+    classified = _classify(hits)
+
+    # Capped to the most-cited domains — an uncapped list caused a real
+    # stop_reason=max_tokens truncation (24 domains blew through 2048 tokens
+    # before finishing even one entry, returning {}).
+    domain_counts = {c.domain: c.count for c in classified.citations}
+    top_domains = sorted(classified.domain_titles.items(), key=lambda kv: -domain_counts.get(kv[0], 0))
+    enrichment = await _enrich_sources(
+        domains={domain: (title, domain_counts.get(domain, 0)) for domain, title in top_domains[:_MAX_ENRICHED_DOMAINS]},
+        brand=brand,
+        competitors=competitors,
+        api_key=api_key,
+        # Standard tier: origin decides which sources a client sees as
+        # independent, so this is judgement, not mechanical extraction.
+        model=settings.anthropic_model,
+    )
+
+    # Only domains the model positively classified as independent are shown.
+    # A domain it never classified (outside the enrichment cap, malformed
+    # entry, or the call failed) can't be vouched for, so it's dropped rather
+    # than assumed independent — booking/deal sites don't carry the brand's
+    # name, so the deterministic filter alone can't catch them.
+    if classified.domain_pages and not enrichment:
+        logger.warning("origin classification unavailable; showing no sources rather than unverified ones")
+        return _empty_sources("Sources couldn't be checked for independence this run, so none are shown.", query_log)
+    kept_domains = [d for d in classified.domain_pages if enrichment.get(d, {}).get("origin") == "independent"]
+    for domain in classified.domain_pages:
+        if domain not in kept_domains:
+            logger.info("dropping %s: origin=%s", domain, enrichment.get(domain, {}).get("origin", "unclassified"))
+
+    count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names)  # noqa: E731
+    ranked, checks = await _fetch_and_rank(classified.domain_pages, kept_domains, count_brand)
+    source_intel, citations, publishers, communities, reach_by_domain = _measure_sources(
+        kept_domains=kept_domains, ranked=ranked, checks=checks, classified=classified, enrichment=enrichment,
+        asked=asked, count_brand=count_brand, brand=brand, competitors=competitors,
+        brand_match_names=brand_match_names,
+    )
 
     sources = Sources(
         citations=citations, publishers=publishers, communities=communities,
         source_intel=source_intel, queries=query_log,
+        coverage_note=_coverage_note(asked, query_log, queries, errored, len(source_intel)),
     )
-    searched = {q.question for q in query_log if q.question and not q.dropped and not q.failed}
-    skipped = [title for title, question in asked if question not in searched]
-    notes = []
-    if queries and len(errored) == len(queries):
-        notes.append("Every source search failed this run, so no sources could be found.")
-    elif skipped:
-        notes.append(f"No usable search ran for: {', '.join(skipped)}.")
-    if len(source_intel) < 3 and not (queries and len(errored) == len(queries)):
-        notes.append(f"Only {len(source_intel)} independent sources came back for these buyer questions, so treat this list as thin.")
-    sources.coverage_note = " ".join(notes) or None
-
     use_inventory = inventory.applies_to(market) and bool(inventory.load_sites())
     return sources, _build_sitelist(sources.publishers, reach_by_domain, len(asked), use_inventory=use_inventory)
