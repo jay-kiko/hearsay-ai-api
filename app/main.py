@@ -22,6 +22,9 @@ logging.basicConfig(level=logging.INFO)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await get_code_store().connect()
+    refunded = await get_code_store().refund_unfinished()
+    if refunded:
+        logging.getLogger("hearsay").warning("refunded %d use(s) for jobs lost by the last process", refunded)
     eviction_task = asyncio.create_task(get_job_store().evict_loop())
     try:
         yield

@@ -8,4 +8,6 @@ set -e
 mkdir -p /app/data
 chown -R appuser:appuser /app/data
 
+# Exactly one worker: jobs live in memory and unfinished redemptions are
+# refunded at startup (see CLAUDE.md "One worker process only").
 exec su appuser -s /bin/sh -c 'exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}"'

@@ -42,7 +42,10 @@ CREATE TABLE IF NOT EXISTS code_redemptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     code TEXT NOT NULL REFERENCES access_codes(code),
     job_id TEXT NOT NULL,
-    redeemed_at TEXT NOT NULL
+    redeemed_at TEXT NOT NULL,
+    -- NULL while the job runs, then 'complete' or 'refunded' ('legacy' for
+    -- rows from before this column existed).
+    outcome TEXT
 );
 """
 
@@ -79,6 +82,13 @@ class CodeStore:
             # Migration for databases created before revocation existed —
             # CREATE TABLE IF NOT EXISTS above is a no-op on an existing table.
             await self._conn.execute("ALTER TABLE access_codes ADD COLUMN revoked INTEGER NOT NULL DEFAULT 0")
+        except aiosqlite.OperationalError:
+            pass  # column already present
+        try:
+            await self._conn.execute("ALTER TABLE code_redemptions ADD COLUMN outcome TEXT")
+            # Rows from before outcomes were tracked must not read as jobs lost
+            # mid-run, or refund_unfinished() would hand every past use back.
+            await self._conn.execute("UPDATE code_redemptions SET outcome = 'legacy' WHERE outcome IS NULL")
         except aiosqlite.OperationalError:
             pass  # column already present
         await self._conn.commit()
@@ -159,6 +169,36 @@ class CodeStore:
         )
         await self._db.commit()
         return True
+
+    async def finish(self, job_id: str) -> None:
+        """Marks a redeemed job as delivered, so it is never refunded."""
+        await self._db.execute(
+            "UPDATE code_redemptions SET outcome = 'complete' WHERE job_id = ? AND outcome IS NULL", (job_id,)
+        )
+        await self._db.commit()
+
+    async def refund(self, job_id: str) -> bool:
+        """Gives back the use a job spent when it delivered no result. Once per
+        job: a redemption already finished or refunded is left alone."""
+        cursor = await self._db.execute(
+            "UPDATE code_redemptions SET outcome = 'refunded' WHERE job_id = ? AND outcome IS NULL", (job_id,)
+        )
+        if cursor.rowcount:
+            await self._db.execute(
+                "UPDATE access_codes SET uses_remaining = uses_remaining + 1 "
+                "WHERE code = (SELECT code FROM code_redemptions WHERE job_id = ?)",
+                (job_id,),
+            )
+        await self._db.commit()
+        return bool(cursor.rowcount)
+
+    async def refund_unfinished(self) -> int:
+        """At startup: jobs live in memory, so a redemption still unfinished
+        belongs to a job the last process lost (restart, redeploy, crash).
+        Correct only with a single worker process — see CLAUDE.md."""
+        async with self._db.execute("SELECT job_id FROM code_redemptions WHERE outcome IS NULL") as cursor:
+            job_ids = [row[0] for row in await cursor.fetchall()]
+        return sum([await self.refund(job_id) for job_id in job_ids])
 
     async def register_prompt_call(self, code: str, max_calls: int) -> CallStatus:
         """Soft throttle on the unconsumed /api/prompts and /api/detect paths: capped, not spent."""

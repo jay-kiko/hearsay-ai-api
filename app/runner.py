@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from app.code_store import get_code_store
 from app.config import get_settings
 from app.errors import user_facing_error
 from app.job_store import JobStore
@@ -59,6 +60,15 @@ async def _run_one_persona(
             return persona.id, None
 
 
+async def _fail(job_store: JobStore, job_id: str, message: str) -> None:
+    """Every failure path delivers nothing, so the access-code use is handed back."""
+    job_store.fail(job_id, message)
+    try:
+        await get_code_store().refund(job_id)
+    except Exception:  # noqa: BLE001 - a refund problem must not mask the job's own failure
+        logger.exception("refund failed for job %s", job_id)
+
+
 async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, anthropic_api_key: str) -> None:
     settings = get_settings()
     semaphore = asyncio.Semaphore(settings.persona_concurrency)
@@ -88,10 +98,10 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         results = {pid: result for pid, result in pairs if result is not None}
 
         if not tasks:
-            job_store.fail(job_id, "No personas had prompts to analyze")
+            await _fail(job_store, job_id, "No personas had prompts to analyze")
             return
         if not results:
-            job_store.fail(job_id, "All persona calls failed — see per-persona errors for details")
+            await _fail(job_store, job_id, "All persona calls failed — see per-persona errors for details")
             return
 
         sources, sitelist = await run_grounding(
@@ -140,6 +150,10 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             radar=radar,
         )
         job_store.complete(job_id, complete)
+        try:
+            await get_code_store().finish(job_id)
+        except Exception:  # noqa: BLE001 - the client already has the result
+            logger.exception("could not mark job %s finished", job_id)
     except Exception as exc:  # noqa: BLE001 - last-resort guard so the SSE stream always terminates
         logger.exception("job %s failed", job_id)
-        job_store.fail(job_id, user_facing_error(exc))
+        await _fail(job_store, job_id, user_facing_error(exc))
