@@ -150,3 +150,21 @@ def test_proxy_wrappers_cannot_smuggle_an_entity_site_past_the_host_check():
     archived = "https://web.archive.org/web/2020/https://disneycruise.disney.go.com/"
     assert any(sq.is_entity_domain(h, slugs) for h in sq.hosts_in(archived))
     assert sq.hosts_in("https://reddit.com/r/x") == ["reddit.com"]
+
+
+def test_html_to_text_is_linear_on_hostile_pages():
+    import time
+
+    from app.services.source_quality import html_to_text
+
+    for hostile in ("<script " * 25_000, "<!--" * 50_000, "<a href='" * 25_000, "<div>" * 40_000):
+        start = time.perf_counter()
+        html_to_text(hostile)
+        assert time.perf_counter() - start < 0.5
+
+
+def test_html_to_text_keeps_visible_text_only():
+    from app.services.source_quality import html_to_text
+
+    page = "<p>Hi &amp; <b>Disney</b></p><SCRIPT>x='<p>no</p>'</script ><style>p{}</style>ok<!-- c --> end"
+    assert html_to_text(page) == "Hi & Disney ok end"

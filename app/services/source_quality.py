@@ -258,14 +258,44 @@ class PageCheck:
 
 
 _MAX_BODY_BYTES = 200_000
-_SCRIPT_STYLE_RE = re.compile(r"<(script|style|noscript)\b.*?</\1>", re.IGNORECASE | re.DOTALL)
-_TAG_RE = re.compile(r"<[^>]+>")
+_SKIP_ELEMENTS = frozenset({"script", "style", "noscript", "template"})
+_TAG_NAME_RE = re.compile(r"/?([a-zA-Z][a-zA-Z0-9-]*)")
 
 
 def html_to_text(raw: str) -> str:
-    text = _SCRIPT_STYLE_RE.sub(" ", raw)
-    text = _TAG_RE.sub(" ", text)
-    return " ".join(html.unescape(text).split())
+    """Visible text of an HTML page, in one linear pass.
+
+    Pages come from search results, i.e. attacker-influenced. A regex
+    (`<script.*?</script>`) and the stdlib HTMLParser are both quadratic on a
+    page full of unclosed `<script` tags (confirmed: 64KB took 1.7s with the
+    regex, and HTMLParser didn't finish 200KB in two minutes), which froze
+    the event loop for every request. Every scan here starts where the last
+    one ended, and an unterminated tag/comment/script ends the parse."""
+    lowered = raw.lower()
+    n = len(raw)
+    out: list[str] = []
+    i = 0
+    while i < n:
+        lt = raw.find("<", i)
+        if lt == -1:
+            out.append(raw[i:])
+            break
+        out.append(raw[i:lt])
+        if raw.startswith("<!--", lt):
+            end = raw.find("-->", lt + 4)
+            i = n if end == -1 else end + 3
+            continue
+        gt = raw.find(">", lt + 1)
+        if gt == -1:
+            break
+        i = gt + 1
+        tag = _TAG_NAME_RE.match(raw, lt + 1)
+        if tag and not tag.group(0).startswith("/") and tag.group(1).lower() in _SKIP_ELEMENTS:
+            close = lowered.find("</" + tag.group(1).lower(), i)
+            close_gt = raw.find(">", close) if close != -1 else -1
+            i = n if close_gt == -1 else close_gt + 1
+        out.append(" ")
+    return " ".join(html.unescape("".join(out)).split())
 
 
 async def check_pages(urls: list[str], *, timeout: float = 6.0, concurrency: int = 8) -> dict[str, PageCheck]:
@@ -308,7 +338,9 @@ async def check_pages(urls: list[str], *, timeout: float = 6.0, concurrency: int
                                 raw.extend(chunk)
                                 if len(raw) >= _MAX_BODY_BYTES:
                                     break
-                            text = html_to_text(bytes(raw).decode(response.encoding or "utf-8", errors="replace"))
+                            decoded = bytes(raw).decode(response.encoding or "utf-8", errors="replace")
+                            # Off the event loop: CPU work on a page we don't control.
+                            text = await asyncio.to_thread(html_to_text, decoded)
                         results[url] = PageCheck(alive=alive, text=text)
                 except _BlockedAddress:
                     # The page (or a redirect) points at an internal address:
