@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import logging
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from dataclasses import dataclass
+from functools import lru_cache
 
 from app.config import get_settings
 from app.models import (
@@ -628,11 +629,15 @@ async def run_grounding(
         ranked[domain] = [*sq.rank_pages(checked, count_brand), *rest]
 
     # Competitors are counted with the same matcher as the brand, so the two
-    # numbers on a source are directly comparable.
+    # numbers on a source are directly comparable. Each text is scanned once
+    # and tallied per competitor; one scan per competitor per text redid the
+    # whole match C times over every page body.
+    @lru_cache(maxsize=256)
+    def _competitor_tally(text: str) -> Counter[str]:
+        return Counter(m.name for m in find_mentions(text, brand, competitors, brand_match_names) if m.kind == "competitor")
+
     def _competitor_counter(name: str):
-        return lambda text: sum(
-            1 for m in find_mentions(text, brand, competitors, brand_match_names) if m.kind == "competitor" and m.name == name
-        )
+        return lambda text: _competitor_tally(text)[name]
 
     competitor_counters = {c.name: _competitor_counter(c.name) for c in competitors}
 
