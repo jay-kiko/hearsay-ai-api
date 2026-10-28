@@ -15,7 +15,7 @@ import json
 import logging
 
 from app.config import get_settings
-from app.models import Competitor, PersonaIn
+from app.models import PROMPT_MAX, Competitor, PersonaIn
 from app.services.anthropic_client import call_structured
 from app.services.common import DEFAULT_BUYER_CONTEXT, persona_payload
 from app.services.scoring import find_mentions
@@ -137,9 +137,11 @@ def _fallback_prompt(industry: str, market: str | None) -> str:
 
 
 def _clean_prompts(raw: object) -> list[str]:
+    # Over-long prompts are dropped, not cut mid-question: they'd fail the
+    # analysis request's limit, and the instructions ask for 28 words at most.
     if not isinstance(raw, list):
         return []
-    return [p.strip() for p in raw if isinstance(p, str) and p.strip()]
+    return [p.strip() for p in raw if isinstance(p, str) and p.strip() and len(p.strip()) <= PROMPT_MAX]
 
 
 async def generate_prompts(
@@ -294,6 +296,8 @@ async def adapt_seed_prompt(
     for p in personas:
         adapted = by_persona.get(p.id, "")
         if adapted and not seed_names and names_a_brand(adapted, brand, competitors or [], brand_match_names):
+            adapted = ""
+        if len(adapted) > PROMPT_MAX:
             adapted = ""
         out[p.id] = adapted or seed_prompt
     return out

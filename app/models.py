@@ -19,18 +19,32 @@ class CamelModel(BaseModel):
 # Every request field below ends up in a billed model call on the server's
 # key, so each one is bounded: an unbounded string or list let one request
 # send megabytes to the quality model. Generous next to what the UI sends.
-Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
-# Aliases are matched as whole words in answers and pages; a 1-character alias
-# ("a") would make every text "mention" the brand.
-Alias = Annotated[str, StringConstraints(strip_whitespace=True, min_length=2, max_length=120)]
-Line = Annotated[str, StringConstraints(max_length=500)]
-Paragraph = Annotated[str, StringConstraints(max_length=2000)]
-Prompt = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+NAME_MAX, LINE_MAX, PARAGRAPH_MAX, PROMPT_MAX = 120, 500, 2000, 500
+MAX_ALIASES = 25
+Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=NAME_MAX)]
+# One character is allowed: a user may genuinely enter a brand or rival called
+# "X". Model-derived aliases are held to 2+ in detect, since a stray 1-letter
+# alias ("a") would make every text "mention" the brand.
+Alias = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=NAME_MAX)]
+Line = Annotated[str, StringConstraints(max_length=LINE_MAX)]
+Paragraph = Annotated[str, StringConstraints(max_length=PARAGRAPH_MAX)]
+Prompt = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=PROMPT_MAX)]
 AccessCode = Annotated[str, StringConstraints(strip_whitespace=True, max_length=32)]
-Aliases = Annotated[list[Alias], Field(max_length=25)]
+Aliases = Annotated[list[Alias], Field(max_length=MAX_ALIASES)]
 MAX_PERSONAS = 10
 MAX_PROMPTS_PER_PERSONA = 10
 MAX_COMPETITORS = 15
+
+
+def fit(text: object, limit: int) -> str:
+    """Model output trimmed to a request limit, at a word boundary. Every
+    model-produced field the frontend sends back goes through this where it is
+    produced, or the next request 422s."""
+    clean = " ".join(str(text or "").split())
+    if len(clean) <= limit:
+        return clean
+    cut = clean[: limit - 1]
+    return (cut.rsplit(" ", 1)[0] if " " in cut else cut).rstrip(" ,;:") + "…"
 
 
 class Sentiment(str, Enum):

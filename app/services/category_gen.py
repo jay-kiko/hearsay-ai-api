@@ -20,7 +20,7 @@ brand context, not open-ended research, so the fast model is fine here.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import CategorySuggestion, Competitor
+from app.models import NAME_MAX, PARAGRAPH_MAX, CategorySuggestion, Competitor, fit
 from app.services.anthropic_client import call_structured
 
 _TOOL_NAME = "suggest_product_categories"
@@ -122,8 +122,10 @@ async def generate_categories(
 
     suggestions: list[CategorySuggestion] = []
     for entry in _normalize(result.get("categories", [])):
-        name = str(entry.get("name", "")).strip()
-        context = str(entry.get("buyerContext", "")).strip()
+        # Fitted to the request limits: a suggestion is sent back in the
+        # prompts request, and an over-long one failed validation with a 500.
+        name = fit(entry.get("name"), NAME_MAX)
+        context = fit(entry.get("buyerContext"), PARAGRAPH_MAX)
         if name and context:
             suggestions.append(CategorySuggestion(name=name, buyer_context=context))
     return suggestions

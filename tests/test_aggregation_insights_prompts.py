@@ -150,7 +150,6 @@ def test_requests_reject_oversized_input():
     for bad in (
         {"prompts": {"p1": ["x" * 501]}},
         {"personas": [persona] * 11},
-        {"brandMatchNames": ["a"]},  # a 1-letter alias matches everything
         {"competitors": [{"name": f"C{i}", "matchNames": [f"C{i}"]} for i in range(16)]},
         {"brandSummary": "x" * 2001},
     ):
@@ -166,9 +165,36 @@ def test_detect_output_fits_the_request_limits():
     from app.services.detect import _normalize_brand_match_names, _normalize_competitors
 
     names = _normalize_brand_match_names(["X", "Disney", "disney", *[f"Ship {i}" for i in range(40)]], "Disney Cruise Line")
-    assert names[0] == "Disney Cruise Line" and "X" not in names and len(names) == 25
+    assert names[0] == "Disney Cruise Line" and "X" not in names and len(names) == 25  # derived 1-letter alias dropped
+    assert _normalize_brand_match_names([], "X") == ["X"]  # a brand really called X keeps its own name
     comps = _normalize_competitors([{"name": f"Line {i}", "matchNames": ["L"]} for i in range(20)] + ["Q"])
     assert len(comps) == 15 and all(c.match_names == [c.name] for c in comps)
+
+
+def test_every_model_produced_field_fits_the_request_it_is_sent_back_in():
+    from app.models import AnalysisRequest, CategorySuggestion, Competitor, fit
+
+    long = "word " * 1000
+    assert len(fit(long, 120)) <= 120 and fit(long, 120).endswith("…")
+    assert fit("short", 120) == "short"
+    category = CategorySuggestion(name=fit(long, 120), buyer_context=fit(long, 2000))
+    AnalysisRequest(brand=fit(long, 120), industry=fit(long, 500), brandSummary=fit(long, 2000),
+                    buyerContext=category.buyer_context, accessCode="A",
+                    competitors=[Competitor(name="X", match_names=["X"])],  # user-typed 1-letter rival
+                    personas=[{"id": "p1", "title": "T", "role": "r", "pains": "p", "criteria": "c"}],
+                    prompts={"p1": ["q"]})
+
+
+async def test_category_suggestions_are_fitted(monkeypatch):
+    from app.services import category_gen
+
+    async def fake(**_):
+        return {"categories": [{"name": "n" * 400, "buyerContext": "c " * 3000}]}
+
+    monkeypatch.setattr(category_gen, "call_structured", fake)
+    [suggestion] = await category_gen.generate_categories(api_key="k", brand="B", industry="i", competitors=[],
+                                                          buyer_context=None, brand_summary=None)
+    assert len(suggestion.name) <= 120 and len(suggestion.buyer_context) <= 2000
 
 
 async def test_prompt_output_budget_scales_and_extra_prompts_are_cut(monkeypatch):

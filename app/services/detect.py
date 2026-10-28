@@ -15,7 +15,16 @@ formats those findings into the response shape.
 from __future__ import annotations
 
 from app.config import get_settings
-from app.models import MAX_COMPETITORS, Competitor, DetectResponse
+from app.models import (
+    LINE_MAX,
+    MAX_ALIASES,
+    MAX_COMPETITORS,
+    NAME_MAX,
+    PARAGRAPH_MAX,
+    Competitor,
+    DetectResponse,
+    fit,
+)
 from app.services.anthropic_client import call_structured, call_web_search
 
 _TOOL_NAME = "detect_brand"
@@ -133,14 +142,16 @@ _EXTRACT_SYSTEM = (
 )
 
 
-def _fit_names(names: list[str]) -> list[str]:
+def _fit_names(names: list[str], keep: str | None = None) -> list[str]:
     """Deduped and trimmed to the request limits (app.models.Alias / Aliases),
-    since these lists are sent straight back in every later request."""
-    out: list[str] = []
+    since these lists are sent straight back in every later request. Derived
+    names need 2+ characters; `keep` (the entity's own name) is kept whatever
+    its length, so a brand called "X" still matches itself."""
+    out: list[str] = [keep] if keep else []
     for name in names:
-        if 2 <= len(name) <= 120 and name.lower() not in (n.lower() for n in out):
+        if 2 <= len(name) <= NAME_MAX and name.lower() not in (n.lower() for n in out):
             out.append(name)
-    return out[:25]
+    return out[:MAX_ALIASES]
 
 
 def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
@@ -154,9 +165,7 @@ def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
     elif isinstance(value, list):
         names = [str(n).strip() for n in value if str(n).strip()]
 
-    if brand not in names:
-        names.insert(0, brand)
-    return _fit_names(names)
+    return _fit_names(names, keep=brand)
 
 
 def _normalize_competitors(value: object) -> list[Competitor]:
@@ -175,14 +184,14 @@ def _normalize_competitors(value: object) -> list[Competitor]:
     value = value[:MAX_COMPETITORS]
     for entry in value:
         if isinstance(entry, str):
-            name = entry.strip()[:120]
-            if len(name) >= 2:
+            name = fit(entry, NAME_MAX)
+            if name:
                 competitors.append(Competitor(name=name, match_names=[name]))
             continue
         if not isinstance(entry, dict):
             continue
-        name = str(entry.get("name", "")).strip()[:120]
-        if len(name) < 2:
+        name = fit(entry.get("name"), NAME_MAX)
+        if not name:
             continue
         match_names_raw = entry.get("matchNames", [])
         if isinstance(match_names_raw, str):
@@ -191,9 +200,7 @@ def _normalize_competitors(value: object) -> list[Competitor]:
             match_names = [str(m).strip() for m in match_names_raw if str(m).strip()]
         else:
             match_names = []
-        if name not in match_names:
-            match_names.insert(0, name)
-        competitors.append(Competitor(name=name, match_names=_fit_names(match_names)))
+        competitors.append(Competitor(name=name, match_names=_fit_names(match_names, keep=name)))
     return competitors
 
 
@@ -238,11 +245,14 @@ async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
         max_tokens=768,
     )
 
+    # Every field is sent back in later requests, so each is fitted to its
+    # request limit here (app.models.fit) rather than 422ing downstream.
+    brand = fit(result["brand"], NAME_MAX)
     return DetectResponse(
-        brand=result["brand"],
-        brand_match_names=_normalize_brand_match_names(result.get("brandMatchNames", []), result["brand"]),
-        industry=result["industry"],
+        brand=brand,
+        brand_match_names=_normalize_brand_match_names(result.get("brandMatchNames", []), brand),
+        industry=fit(result["industry"], LINE_MAX),
         competitors=_normalize_competitors(result.get("competitors", [])),
-        buyer_context=result["buyerContext"],
-        brand_summary=result["brandSummary"],
+        buyer_context=fit(result["buyerContext"], PARAGRAPH_MAX),
+        brand_summary=fit(result["brandSummary"], PARAGRAPH_MAX),
     )
