@@ -236,3 +236,20 @@ def test_failed_prompts_are_reported_not_hidden():
     products = aggregation.build_products(results, "B", [])
     presence = aggregation.build_score_breakdown(results, products, "B", Sources(citations=[], publishers=[], communities=[]))[0]
     assert presence.note == "Mentioned in 1 of 1 persona queries (2 more couldn't be answered this run)"
+
+
+def test_empty_optional_fields_from_the_form_are_accepted():
+    """Confirmed live: an empty Market field 422'd persona generation."""
+    from app.models import AnalysisRequest, GeneratePersonasRequest, PromptsRequest
+
+    persona = {"id": "p1", "title": "T", "role": "r", "pains": "p", "criteria": "c"}
+    assert GeneratePersonasRequest(brand="B", industry="i", accessCode="A", market="").market is None
+    assert GeneratePersonasRequest(brand="B", industry="i", accessCode="A", market="  ").market is None
+    assert PromptsRequest(brand="B", industry="i", accessCode="A", personas=[persona], market="").market is None
+    request = AnalysisRequest(
+        brand="B", industry="i", accessCode="A", market="", personas=[persona],
+        prompts={"p1": ["q", "", "  "]}, brandMatchNames=["B", ""],
+        competitors=[{"name": "R", "matchNames": ["R", ""]}],
+    )
+    assert request.market is None and request.prompts == {"p1": ["q"]}
+    assert request.brand_match_names == ["B"] and request.competitors[0].match_names == ["R"]

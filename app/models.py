@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, StringConstraints, field_validator
 
 
 def to_camel(field_name: str) -> str:
@@ -29,8 +29,23 @@ Alias = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, ma
 Line = Annotated[str, StringConstraints(max_length=LINE_MAX)]
 Paragraph = Annotated[str, StringConstraints(max_length=PARAGRAPH_MAX)]
 Prompt = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=PROMPT_MAX)]
+
+
+def _blank_to_none(value: object) -> object:
+    return None if isinstance(value, str) and not value.strip() else value
+
+
+# An optional field left empty arrives as "" from the form; that means "not
+# given", never a 422 (confirmed live: an empty Market blocked persona
+# generation with "String should have at least 1 character").
+OptionalName = Annotated[Name | None, BeforeValidator(_blank_to_none)]
 AccessCode = Annotated[str, StringConstraints(strip_whitespace=True, max_length=32)]
-Aliases = Annotated[list[Alias], Field(max_length=MAX_ALIASES)]
+def _drop_blanks(value: object) -> object:
+    return [v for v in value if not (isinstance(v, str) and not v.strip())] if isinstance(value, list) else value
+
+
+# Blank entries (an emptied form field) are dropped, not rejected.
+Aliases = Annotated[list[Alias], Field(max_length=MAX_ALIASES), BeforeValidator(_drop_blanks)]
 MAX_PERSONAS = 10
 MAX_PROMPTS_PER_PERSONA = 10
 MAX_COMPETITORS = 15
@@ -152,7 +167,7 @@ class GeneratePersonasRequest(CamelModel):
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
-    market: Name | None = None
+    market: OptionalName = None
     access_code: AccessCode
     persona_count: int | None = Field(default=None, ge=1, le=MAX_PERSONAS)
 
@@ -183,7 +198,7 @@ class ExpandPersonaRequest(CamelModel):
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
-    market: Name | None = None
+    market: OptionalName = None
     access_code: AccessCode
 
 
@@ -203,7 +218,7 @@ class PromptsRequest(CamelModel):
     brand_match_names: Aliases = Field(default_factory=list)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
-    market: Name | None = None
+    market: OptionalName = None
     access_code: AccessCode
     prompts_per_persona: int | None = Field(default=None, ge=1, le=MAX_PROMPTS_PER_PERSONA)
     # When non-empty, generate prompts_per_persona prompts PER category (each
@@ -229,7 +244,7 @@ class AdaptSeedPromptRequest(CamelModel):
     seed_prompt: Prompt
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
-    market: Name | None = None
+    market: OptionalName = None
     access_code: AccessCode
 
 
@@ -250,12 +265,21 @@ class AnalysisRequest(CamelModel):
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
-    market: Name | None = None
+    market: OptionalName = None
     # Bounded: every persona and prompt is a billed call (and a search), and one
     # access-code use pays for the whole job. Generous next to the UI's 4 x 3.
     personas: list[PersonaIn] = Field(min_length=1, max_length=MAX_PERSONAS)
     prompts: Annotated[dict[str, list[Prompt]], Field(max_length=MAX_PERSONAS)]
     access_code: AccessCode
+
+    @field_validator("prompts", mode="before")
+    @classmethod
+    def _drop_blank_prompts(cls, value: object) -> object:
+        # A prompt the user cleared in the editor arrives as ""; it was never
+        # a question, so it's dropped rather than failing the whole run.
+        if isinstance(value, dict):
+            return {k: _drop_blanks(v) for k, v in value.items()}
+        return value
 
     @field_validator("prompts")
     @classmethod
