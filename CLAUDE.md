@@ -38,8 +38,10 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 | Share of Voice | share of all product mentions | `aggregation.build_products` |
 | Ranking, Sentiment | first-mention position; sentiment call | `scoring.py`, `pipeline.py` |
 | Source "Visible" badge, `mentions`, `evidence` | brand aliases on the **linked page only**: its text where readable, plus title / quoted passages / URL slug | `grounding.py` via `source_quality` + `scoring.count_brand_mentions` |
-| Source Authority score | the same `mentions` as the badge | `aggregation.build_score_breakdown` |
+| Source "Couldn't verify" badge | page unreadable (bot-blocked, timed out, script-rendered) and no brand in its title/snippets: presence unknown, never shown as "Not visible" or a gap | `source_quality.visibility_from_evidence` |
+| Source Authority score | the same `mentions` as the badge, over readable sources only; left out of the headline when none were readable | `aggregation.build_score_breakdown`, `measured_sources` |
 | Source `url` | the page with brand evidence, link-checked (dead, homepage-redirect and internal-address links dropped) | `grounding.py` |
+| Source `link` | `url` + a text fragment scrolling to the first on-page brand mention | `source_quality.text_fragment_link` |
 | Source `influence` (reach), sitelist `score` | how many of the brand-free buyer questions surfaced the domain | `grounding._reach_label` |
 | Source `personas` (whose question surfaced it), `competitors`, `competitorMentions`, `gap` | measured from the search attribution and page text | `grounding.py` |
 | Source `keywords`, `Publisher.type` | **model inference** (plausibility, not measurement) | `grounding._enrich_sources` |

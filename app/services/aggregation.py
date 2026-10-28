@@ -10,7 +10,18 @@ from __future__ import annotations
 
 from collections import Counter
 
-from app.models import Competitor, Overview, PersonaExchange, PersonaResult, Product, ScoreComponent, Sentiment, Sources
+from app.models import (
+    Competitor,
+    Overview,
+    PersonaExchange,
+    PersonaResult,
+    Product,
+    ScoreComponent,
+    Sentiment,
+    SourceIntel,
+    Sources,
+)
+from app.services.source_quality import UNVERIFIED
 from app.services.scoring import SENTIMENT_MULTIPLIER, rank_score
 
 
@@ -123,10 +134,13 @@ def build_score_breakdown(
     )
 
     # The same measured `mentions` behind each source's Visible badge, so the
-    # score and the badges cannot disagree.
+    # score and the badges cannot disagree. Only sources whose page could be
+    # read count: an unreadable page is unknown, not "not named".
     total_sources = len(sources.source_intel)
-    named_sources = sum(1 for s in sources.source_intel if s.mentions > 0)
-    source_authority = round(named_sources / total_sources * 100) if total_sources else 0
+    readable = measured_sources(sources)
+    named_sources = sum(1 for s in readable if s.mentions > 0)
+    unverified = total_sources - len(readable)
+    source_authority = round(named_sources / len(readable) * 100) if readable else 0
 
     return [
         ScoreComponent(
@@ -160,18 +174,28 @@ def build_score_breakdown(
         ScoreComponent(
             name="Source Authority",
             score=source_authority,
-            note=(
-                f"Named in {named_sources} of {total_sources} independent sources"
-                + (
-                    " (judged from page text where readable, else titles and snippets, so a zero is low-confidence)"
-                    if named_sources == 0
-                    else ""
-                )
-                if total_sources
-                else "No independent sources found, so this is left out of the visibility score"
-            ),
+            note=_source_authority_note(named_sources, len(readable), unverified),
         ),
     ]
+
+
+def measured_sources(sources: Sources) -> list[SourceIntel]:
+    """Sources whose brand presence was actually measured (page or snippets
+    read). The one definition used by Source Authority and by whether it
+    counts toward the headline score."""
+    return [s for s in sources.source_intel if s.visibility != UNVERIFIED]
+
+
+def _source_authority_note(named: int, readable: int, unverified: int) -> str:
+    if not readable:
+        if unverified:
+            return (f"None of the {unverified} independent sources could be read, so this is left out of the "
+                    "visibility score")
+        return "No independent sources found, so this is left out of the visibility score"
+    note = f"Named in {named} of {readable} independent sources we could read"
+    if unverified:
+        note += f" ({unverified} more block automated reading)"
+    return note
 
 
 # Headline score: a weighted composite of the breakdown, so a brand drowned

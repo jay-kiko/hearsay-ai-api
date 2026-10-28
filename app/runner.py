@@ -144,7 +144,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         products = aggregation.build_products(results, request.brand, request.competitors)
         score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
         visibility_score = aggregation.compute_composite_score(
-            score_breakdown, has_sources=bool(sources.source_intel)
+            score_breakdown, has_sources=bool(aggregation.measured_sources(sources))
         )
 
         overview = aggregation.build_overview(results, visibility_score)

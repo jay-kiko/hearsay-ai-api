@@ -187,14 +187,25 @@ async def test_source_authority_agrees_with_the_badges(calls):
     assert authority.score == round(named / len(sources.source_intel) * 100)
 
 
-async def test_zero_named_sources_is_flagged_low_confidence():
-    intel = [SourceIntel(domain="a.example", url="https://a.example/x", category="PUBLISHER", influence="Low authority",
-                         cited=1, keywords=[], personas=[], competitors=[], visibility="Not visible")]
+def _authority(visibilities):
+    intel = [SourceIntel(domain=f"{i}.example", url=f"https://{i}.example/x", category="PUBLISHER", influence="",
+                         cited=1, keywords=[], personas=[], competitors=[], visibility=v, mentions=int(v == "Visible") * 2)
+             for i, v in enumerate(visibilities)]
     sources = Sources(citations=[], publishers=[], communities=[], source_intel=intel)
     results = {"p1": PersonaResult(prompt="q", mentioned=False, sentiment="Neutral", vis=0, rank=None, quote="", parts=[], opportunity="Critical Gap", exchanges=[])}
     breakdown = aggregation.build_score_breakdown(results, [Product(name=BRAND, count=0, share=0.0, is_brand=True)], BRAND, sources)
-    authority = next(c for c in breakdown if c.name == "Source Authority")
-    assert authority.score == 0 and "low-confidence" in authority.note
+    return next(c for c in breakdown if c.name == "Source Authority"), sources
+
+
+async def test_source_authority_counts_only_pages_we_could_read():
+    authority, sources = _authority(["Visible", "Not visible", "Couldn't verify", "Couldn't verify"])
+    assert authority.score == 50  # 1 of 2 readable, not 1 of 4
+    assert authority.note == "Named in 1 of 2 independent sources we could read (2 more block automated reading)"
+    assert aggregation.measured_sources(sources)
+
+    authority, sources = _authority(["Couldn't verify"])
+    assert authority.note.startswith("None of the 1 independent sources could be read")
+    assert not aggregation.measured_sources(sources)  # so it's left out of the headline score
 
 
 # ── degradation ──────────────────────────────────────────────────────
@@ -355,3 +366,34 @@ async def test_a_failed_page_check_shows_no_unchecked_links(calls, monkeypatch):
     assert sources.source_intel == [] and sitelist == []
     assert sources.coverage_note.startswith("Source links couldn't be checked")
     assert sources.queries  # the searches that ran are still reported
+
+
+# ── a page we couldn't read is unknown, and links point at the mention ──
+
+async def test_a_blocked_page_is_couldnt_verify_not_a_gap(calls, monkeypatch):
+    async def rival_blog_blocked(urls, **_):
+        # rivalblog 403s the checker (alive unknown, no text); the rest as usual
+        return {u: sq.PageCheck(alive=None if "rivalblog" in u else ("deadblog" not in u), text="" if "rivalblog" in u else BODIES.get(u, ""))
+                for u in urls}
+
+    monkeypatch.setattr(grounding.sq, "check_pages", rival_blog_blocked)
+    sources, _ = await _run()
+    rival = {s.domain: s for s in sources.source_intel}["rivalblog.example"]
+    assert rival.visibility == "Couldn't verify" and rival.gap is None
+    assert "block automated reading" in sources.coverage_note
+
+
+async def test_link_scrolls_to_the_first_on_page_mention(calls):
+    sources, _ = await _run()
+    by = {s.domain: s for s in sources.source_intel}
+    page = by["noevidence.example"]
+    assert page.link == page.url + "#:~:text=Disney%20Cruise%20Line"
+    # mentioned only in the title/slug: nothing on the page to point at
+    assert by["rivalblog.example"].link == by["rivalblog.example"].url
+
+
+def test_text_fragment_link_encoding():
+    assert sq.text_fragment_link("https://a.example/p", "Love, Bonito") == "https://a.example/p#:~:text=Love%2C%20Bonito"
+    assert sq.text_fragment_link("https://a.example/p", "Co-op") == "https://a.example/p#:~:text=Co%2Dop"
+    assert sq.text_fragment_link("https://a.example/p#top", "X Y") == "https://a.example/p#top:~:text=X%20Y"
+    assert sq.text_fragment_link("https://a.example/p", "  ") == "https://a.example/p"

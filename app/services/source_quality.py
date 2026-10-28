@@ -20,7 +20,7 @@ import socket
 import ssl
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 
 # Shorter slugs ("dcl", "ana") collide with unrelated hostnames far too often
 # to treat "slug appears in the domain" as "this is the brand's site".
@@ -126,14 +126,47 @@ def rank_pages(pages: list[SourcePage], count_mentions: Callable[[str], int]) ->
     return sorted(pages, key=lambda p: (-page_mentions(p, count_mentions), not p.cited))
 
 
-def visibility_from_evidence(evidence_count: int) -> str:
-    """Maps measured evidence to the badge. 'Not visible' means no evidence in
-    the titles/passages available — not proof the page never names the brand."""
+UNVERIFIED = "Couldn't verify"
+
+
+def visibility_from_evidence(evidence_count: int, page_readable: bool = True) -> str:
+    """Maps measured evidence to the badge. 'Not visible' means the page text
+    was read and doesn't name the brand. With no evidence and a page we
+    couldn't read (bot-blocked, timed out, script-rendered), the honest answer
+    is unknown: confirmed live, over half of a run's sources 403'd the checker
+    and were labelled "Not visible", including pages that almost certainly
+    name the brand (invariant 2)."""
     if evidence_count >= _VISIBLE_MIN_EVIDENCE:
         return "Visible"
     if evidence_count == 1:
         return "Weak visibility"
-    return "Not visible"
+    return "Not visible" if page_readable else UNVERIFIED
+
+
+def text_fragment_link(url: str, text: str) -> str:
+    """`url` plus a text fragment (#:~:text=...) that makes Chrome, Edge,
+    Safari and Firefox scroll to and highlight `text`; other browsers ignore
+    it and open the page as usual. Confirmed live: the first brand mention sat
+    25-40% of the way down the linked pages, so a plain link landed at the top
+    and looked like the page didn't mention the brand."""
+    if not text.strip():
+        return url
+    # Percent-encode everything, '-' too: it is the directive's own delimiter.
+    encoded = quote(" ".join(text.split()), safe="").replace("-", "%2D")
+    base, _, fragment = url.partition("#")
+    prefix = f"{base}#{fragment}" if fragment and ":~:" not in fragment else base + "#"
+    return f"{prefix}:~:text={encoded}"
+
+
+def first_mention_text(page: "SourcePage", mention_texts: Callable[[str], list[str]]) -> str:
+    """The brand as written where the page body first names it (else a quoted
+    passage); '' when only the title or URL slug names it, since those aren't
+    on-page text a fragment can find."""
+    for text in [page.body, *page.cited_texts]:
+        found = mention_texts(text) if text else []
+        if found:
+            return found[0]
+    return ""
 
 
 def _excerpt(text: str, start: int, limit: int) -> str:

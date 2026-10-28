@@ -591,6 +591,7 @@ def _measure_sources(
     enrichment: dict[str, dict],
     asked: list[tuple[str, str]],
     count_brand,
+    brand_texts,
     brand: str,
     competitors: list[Competitor],
     brand_match_names: list[str] | None,
@@ -643,7 +644,8 @@ def _measure_sources(
             name: n for name, counter in competitor_counters.items() if (n := sq.page_mentions(best, counter)) > 0
         }
         competitor_evidence = dict(sorted(competitor_evidence.items(), key=lambda kv: -kv[1]))
-        visibility = sq.visibility_from_evidence(brand_evidence)
+        readable = bool(best.body) and checks.get(best.url, sq.PageCheck(alive=None)).alive is True
+        visibility = sq.visibility_from_evidence(brand_evidence, page_readable=readable)
         surfaced_by = sorted({asked[i][0] for i in question_ids})
 
         citations.append(Citation(domain=domain, title=best.title, count=page_count))
@@ -664,6 +666,7 @@ def _measure_sources(
                 visibility=visibility,
                 mentions=brand_evidence,
                 evidence=sq.evidence_snippet([best], count_brand),
+                link=sq.text_fragment_link(best.url, sq.first_mention_text(best, brand_texts)),
                 competitor_mentions=competitor_evidence,
                 gap=sq.gap_for(visibility, competitor_evidence),
             )
@@ -673,7 +676,11 @@ def _measure_sources(
 
 
 def _coverage_note(
-    asked: list[tuple[str, str]], query_log: list[SourceQuery], queries: dict[str, str], errored: set[str], shown: int
+    asked: list[tuple[str, str]],
+    query_log: list[SourceQuery],
+    queries: dict[str, str],
+    errored: set[str],
+    source_intel: list[SourceIntel],
 ) -> str | None:
     """Says when coverage is thin, so a short list never reads as "nobody
     discusses this" (invariant 7)."""
@@ -685,8 +692,15 @@ def _coverage_note(
         notes.append("Every source search failed this run, so no sources could be found.")
     elif skipped:
         notes.append(f"No usable search ran for: {', '.join(skipped)}.")
+    shown = len(source_intel)
     if shown < 3 and not all_failed:
         notes.append(f"Only {shown} independent sources came back for these buyer questions, so treat this list as thin.")
+    unverified = sum(1 for s in source_intel if s.visibility == sq.UNVERIFIED)
+    if unverified:
+        notes.append(
+            f"{unverified} of {shown} sources block automated reading, so whether they name you is unknown; "
+            "open them to check."
+        )
     return " ".join(notes) or None
 
 
@@ -766,20 +780,24 @@ async def run_grounding(
             logger.info("dropping %s: origin=%s", domain, enrichment.get(domain, {}).get("origin", "unclassified"))
 
     count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names)  # noqa: E731
+    # The brand as written on a page (same matcher), for the deep link.
+    brand_texts = lambda text: [  # noqa: E731
+        text[m.start:m.end] for m in find_mentions(text, brand, [], brand_match_names) if m.kind == "brand"
+    ]
     fetched = await _fetch_and_rank(classified.domain_pages, kept_domains, count_brand)
     if fetched is None:
         return empty_sources("Source links couldn't be checked this run, so none are shown.", query_log)
     ranked, checks = fetched
     source_intel, citations, publishers, communities, reach_by_domain = _measure_sources(
         kept_domains=kept_domains, ranked=ranked, checks=checks, classified=classified, enrichment=enrichment,
-        asked=asked, count_brand=count_brand, brand=brand, competitors=competitors,
+        asked=asked, count_brand=count_brand, brand_texts=brand_texts, brand=brand, competitors=competitors,
         brand_match_names=brand_match_names,
     )
 
     sources = Sources(
         citations=citations, publishers=publishers, communities=communities,
         source_intel=source_intel, queries=query_log,
-        coverage_note=_coverage_note(asked, query_log, queries, errored, len(source_intel)),
+        coverage_note=_coverage_note(asked, query_log, queries, errored, source_intel),
     )
     use_inventory = inventory.applies_to(market) and bool(inventory.load_sites())
     return sources, _build_sitelist(sources.publishers, reach_by_domain, len(asked), use_inventory=use_inventory)

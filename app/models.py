@@ -435,11 +435,16 @@ class SourceIntel(CamelModel):
     # evidence on this domain's pages (page text, title, quoted passages, URL
     # slug) — see source_quality.py. "Not visible" means no evidence in what we
     # could read, not proof of absence.
-    visibility: Literal["Visible", "Weak visibility", "Not visible"]
+    # "Couldn't verify": the page couldn't be read (it blocks automated checks)
+    # and its title/snippet don't name the brand, so presence is unknown.
+    visibility: Literal["Visible", "Weak visibility", "Not visible", "Couldn't verify"]
     mentions: int = 0
     # The title/passage backing `visibility` (empty when mentions == 0). `url`
     # above is the specific page this evidence came from, link-checked.
     evidence: str = ""
+    # `url` plus a text fragment that scrolls the browser to the first brand
+    # mention; equal to `url` when there is no on-page mention to point at.
+    link: str = ""
     # Same measure as `mentions`, per competitor named on these pages.
     competitor_mentions: dict[str, int] = Field(default_factory=dict)
     # Only when not visible: "competitor-owned" (rivals named here) or "open".

@@ -188,7 +188,8 @@ def _user_prompt(
     ]
     lines.append(
         "\nIndependent sources that buyers' own questions surfaced (searched without the brand; brand and "
-        f"competitor mentions measured on each page):\n{json.dumps(source_rows, indent=2) if source_rows else 'none found'}"
+        "competitor mentions measured on each page; \"Couldn't verify\" means the page couldn't be read, so "
+        f"brand presence there is unknown, not absent):\n{json.dumps(source_rows, indent=2) if source_rows else 'none found'}"
     )
     lines.append(
         "\nProduce the competitor diagnosis, a concrete opportunities list, and the brand-strength radar."
