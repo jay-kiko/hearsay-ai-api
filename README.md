@@ -157,24 +157,73 @@ how they're produced:
 
 ## Source intel
 
-`Sources.sourceIntel` (`app/services/grounding.py`) enriches each cited
-domain with `keywords`, which `personas` would find it relevant, which
-`competitors` it discusses, and a `visibility` rating for the brand itself —
-plus fixes `Publisher.type`, previously always the literal string
-`"Publisher"`, into a real classification (review platform, tech news,
-vendor blog, ...). One combined structured call per job, capped to the 15
-most-cited domains (an uncapped list is exactly what caused a real
-`stop_reason: max_tokens` truncation with a 24-domain result — the response
-came back as an empty object rather than a partial list, so this isn't a
-"slightly fewer results" degradation, it's a hard zero). The long tail of
-single-mention domains keeps its placeholder defaults rather than pushing
-that budget further.
+Sources are found the way a buyer finds them, never by looking the brand up
+(`app/services/grounding.py`):
 
-Grounding runs once per job with its own standalone web search, entirely
-separate from the per-persona pipeline (the "answer" call has no web-search
-tool at all) — so `keywords`/`competitors`/`personas`/`visibility` are the
-model's best inference from a domain's title and the grounding call's own
-research synthesis, not a measured link to any specific persona's answer.
+- **One brand-free search per persona.** A single web-search call gets each
+  persona's first generated prompt as a numbered list and is told to search
+  each one in its own wording — no brand, competitor, industry label or brand
+  summary is in the request. Every search the model actually ran is returned in
+  `Sources.queries` with the persona it came from; any search that named the
+  brand or a competitor anyway is marked `dropped` and its results discarded.
+  Searching *for* the brand made nearly every source "Visible" by construction.
+- **Relevance is judged on the category, not the brand.** The filter sees the
+  questions and page titles only, never the brand/competitor names.
+- **Exclusion.** Domains built around the brand or a competitor name (or any
+  alias, including through translate/cache/archive wrappers) are dropped
+  deterministically; the enrichment call then classifies `origin` (independent /
+  owned / competitor / affiliate) and only `independent` ones are shown.
+- **A source is a page**, link-checked: 404/410, connection errors and deep links
+  that redirect to the homepage are dead.
+- **Origin must be verified.** If the origin call fails, no sources are shown
+  (with a `coverageNote`) rather than unverified ones — booking/deal sites don't
+  carry the brand's name, so the deterministic filter alone can't catch them.
+- **Everything shown as fact is measured on the linked page only**, with the
+  same matcher as persona mention detection, on its text where readable plus
+  title / quoted passages / URL slug: `mentions` and `visibility` (Visible 2+, Weak 1, Not
+  visible 0) for the brand, `competitorMentions` per rival, `personas` = whose
+  question surfaced the page, and `gap` for not-visible sources —
+  `competitor-owned` (rivals named there) or `open`. Source Authority uses the
+  same `mentions`, so badge and score can't disagree.
+- `influence` is reach ("High reach · 3 of 4 buyer questions") and the sitelist
+  `score` is the same share — not "AI influence", which nothing here observes.
+  `cited` / `Publisher.mentions` are distinct pages found on the domain.
+- With no sources, Source Authority is left out of the headline score rather
+  than counted as 0.
+- The page fetcher refuses any URL or redirect hop that is, or resolves to, a
+  non-public address.
+- `keywords` and `Publisher.type` remain model inference.
+- `coverageNote` is set when a persona's question went unsearched or fewer than
+  3 sources came back.
+
+Cost: about $0.09 per run on Haiku (4 searches). Measured stability (same
+inputs, two runs): 70% domain overlap for two gold cases, 9% for one where the
+model shortened the questions into keyword searches — search results are
+inherently noisy, so treat a single run's list as a sample.
+
+## Singapore programmatic inventory
+
+The inventory **labels** sources; it never decides which pages are sources. When
+a source found by the buyer-question search is in the Singapore inventory, its
+sitelist entry shows real CPM, reach (bid requests) and creative types and is
+marked `buyable`. Data lives in `app/data/sg_inventory.json` (web sites) and
+`sg_apps.json` (mobile apps), built offline from a DSP traffic-discovery CSV:
+
+```bash
+python -m app.scripts.build_inventory path/to/export.csv   # parse + clean (keeps existing tags)
+python -m app.scripts.tag_inventory                         # model-tag new sites/apps (quality model, one-time)
+```
+
+- **Parsing** merges Banner/Video/Native rows per domain. Mobile apps go to
+  `sg_apps.json`. Mangled site names ("merriam webster.com") are repaired only
+  when a hyphenated/joined form actually exists; anything else is reported.
+- **Apps** can't be sources, but `tag_inventory` maps each app to its publisher's
+  website (model-named, then verified to resolve); the app's reach merges into
+  that site's sitelist data as "In-app" inventory.
+- **Tags** (category, type, region, niches, `editorial`) are kept for the
+  planned actions page (recommending buyable sites in a niche).
+
+The CPM column's currency is not stated in the export.
 
 ## Environment variables
 
@@ -202,6 +251,8 @@ app/
     aggregation.py          Overview + Share-of-Voice + score breakdown
     insights_gen.py         Competitor diagnosis, opportunities, radar
     grounding.py            Real citations + source intel via web_search
+    source_quality.py       Source independence, evidence, link-health rules
+    inventory.py            Singapore programmatic inventory: parse, lookup, sitelist CPM/reach
     anthropic_client.py     Thin Anthropic SDK wrapper
   scripts/
     mint_codes.py            CLI code minting

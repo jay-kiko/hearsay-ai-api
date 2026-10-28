@@ -325,6 +325,9 @@ class RadarCategory(CamelModel):
     score: int
 
 
+# In Citation.count, Publisher.mentions, Community.mentions and SourceIntel.cited
+# the number is distinct pages found on that domain by the buyer-question
+# search — not brand mentions. Brand evidence is SourceIntel.mentions.
 class Citation(CamelModel):
     domain: str
     title: str
@@ -347,17 +350,42 @@ class SourceIntel(CamelModel):
     domain: str
     url: str
     category: str
+    # Reach label, e.g. "High reach · 3 of 4 buyer questions": how many of the
+    # brand-free buyer questions surfaced this domain.
     influence: str
     cited: int
-    # Best-effort AI inference from the domain's title + the grounding call's
-    # own research synthesis — grounding runs once per job with its own
-    # standalone web search, entirely separate from the per-persona pipeline,
-    # so there's no real measured link between a specific persona's answer
-    # and a specific source. Not ground truth, a plausibility read.
+    # `keywords` is a best-effort model inference from the domain's title.
+    # `personas` (whose buyer question surfaced this source) and `competitors`
+    # (named on its pages, most first) are measured — see grounding.py.
     keywords: list[str]
     personas: list[str]
     competitors: list[str]
+    # `visibility` is NOT inferred: it's derived from `mentions`, the brand's
+    # evidence on this domain's pages (page text, title, quoted passages, URL
+    # slug) — see source_quality.py. "Not visible" means no evidence in what we
+    # could read, not proof of absence.
     visibility: Literal["Visible", "Weak visibility", "Not visible"]
+    mentions: int = 0
+    # The title/passage backing `visibility` (empty when mentions == 0). `url`
+    # above is the specific page this evidence came from, link-checked.
+    evidence: str = ""
+    # Same measure as `mentions`, per competitor named on these pages.
+    competitor_mentions: dict[str, int] = Field(default_factory=dict)
+    # Only when not visible: "competitor-owned" (rivals named here) or "open".
+    gap: Literal["competitor-owned", "open"] | None = None
+
+
+class SourceQuery(CamelModel):
+    """One search the source step actually ran, for transparency."""
+
+    persona: str | None
+    question: str | None
+    query: str
+    # True when the model put a brand/competitor name in the query anyway;
+    # its results were discarded.
+    dropped: bool = False
+    # True when the search returned an error instead of results.
+    failed: bool = False
 
 
 class Sources(CamelModel):
@@ -365,6 +393,10 @@ class Sources(CamelModel):
     publishers: list[Publisher]
     communities: list[Community]
     source_intel: list[SourceIntel] = Field(default_factory=list)
+    queries: list[SourceQuery] = Field(default_factory=list)
+    # Set when a persona's question went unsearched or few sources came back,
+    # so a short list reads as thin coverage rather than "nobody discusses this".
+    coverage_note: str | None = None
 
 
 class SitelistEntry(CamelModel):

@@ -147,10 +147,14 @@ def build_score_breakdown(
         else 0
     )
 
-    brand_lower = brand.lower()
-    total_citations = len(sources.citations)
-    named_citations = sum(1 for c in sources.citations if brand_lower in c.title.lower())
-    source_authority = round(named_citations / total_citations * 100) if total_citations else 0
+    # Measured by grounding.py from page evidence (titles + passages the search
+    # returned, matched with the same alias logic as persona mentions) — the same
+    # number behind each source's Visible badge, so the two cannot disagree. The
+    # old check required the exact brand string in the page title, which missed
+    # aliases and read 0 beside a sources list full of "Visible".
+    total_sources = len(sources.source_intel)
+    named_sources = sum(1 for s in sources.source_intel if s.mentions > 0)
+    source_authority = round(named_sources / total_sources * 100) if total_sources else 0
 
     return [
         ScoreComponent(
@@ -182,9 +186,14 @@ def build_score_breakdown(
             name="Source Authority",
             score=source_authority,
             note=(
-                f"Named in {named_citations} of {total_citations} researched sources"
-                if total_citations
-                else "No sources found to be named in"
+                f"Named in {named_sources} of {total_sources} independent sources"
+                + (
+                    " (judged from page text where readable, else titles and snippets, so a zero is low-confidence)"
+                    if named_sources == 0
+                    else ""
+                )
+                if total_sources
+                else "No independent sources found, so this is left out of the visibility score"
             ),
         ),
     ]
@@ -208,9 +217,14 @@ _COMPOSITE_WEIGHTS = {
 }
 
 
-def compute_composite_score(score_breakdown: list[ScoreComponent]) -> int:
-    weighted = sum(_COMPOSITE_WEIGHTS.get(c.name, 0.0) * c.score for c in score_breakdown)
-    return round(weighted)
+def compute_composite_score(score_breakdown: list[ScoreComponent], *, has_sources: bool = True) -> int:
+    """With no sources there is nothing to measure Source Authority on, so it is
+    left out and the other weights re-normalised — scoring it 0 would cut the
+    headline by up to 10 points over a search that came back empty."""
+    weights = {k: w for k, w in _COMPOSITE_WEIGHTS.items() if has_sources or k != "Source Authority"}
+    total = sum(weights.values())
+    weighted = sum(weights.get(c.name, 0.0) * c.score for c in score_breakdown)
+    return round(weighted / total) if total else 0
 
 
 def top_competitor(products: list[Product], brand: str) -> str | None:

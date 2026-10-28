@@ -161,19 +161,68 @@ async def call_structured(
         await client.close()
 
 
-async def call_web_search(*, api_key: str, model: str, system: str, user: str, max_tokens: int = 1536):
-    """Runs a Claude call with the native web_search tool enabled and returns the raw response."""
+# Search localisation only supports some countries (confirmed live: "Country
+# code SG is not supported" 400s the whole request). A safety net for markets
+# grounding._location_for doesn't already handle: unsupported codes are learned
+# from the error and searched without localisation.
+_UNSUPPORTED_COUNTRIES: set[str] = set()
+# A long server-side search turn can come back paused (stop_reason
+# "pause_turn"); it is resumed by sending the paused content back.
+_MAX_PAUSE_RESUMES = 2
+
+
+async def call_web_search(
+    *,
+    api_key: str,
+    model: str,
+    system: str,
+    user: str,
+    max_tokens: int = 1536,
+    max_uses: int | None = None,
+    user_location: dict | None = None,
+):
+    """Runs a Claude call with the native web_search tool enabled and returns the
+    response. A paused turn is resumed, and the returned response carries the
+    content blocks of every part of the turn."""
     settings = get_settings()
     client = AsyncAnthropic(api_key=api_key)
 
     async def _do():
-        return await client.messages.create(
-            model=model,
-            max_tokens=max_tokens,
-            system=_cacheable_system(system),
-            messages=[{"role": "user", "content": user}],
-            tools=[WEB_SEARCH_TOOL],
-        )
+        country = (user_location or {}).get("country")
+        use_location = bool(user_location) and country not in _UNSUPPORTED_COUNTRIES
+        tool = dict(WEB_SEARCH_TOOL)
+        if max_uses is not None:
+            tool["max_uses"] = max_uses
+        if use_location:
+            tool["user_location"] = user_location
+
+        messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
+        blocks: list = []
+        for _ in range(_MAX_PAUSE_RESUMES + 1):
+            try:
+                response = await client.messages.create(
+                    model=model,
+                    max_tokens=max_tokens,
+                    system=_cacheable_system(system),
+                    messages=messages,
+                    tools=[tool],
+                )
+            except BadRequestError as exc:
+                if "user_location" not in tool or "Country code" not in str(exc):
+                    raise
+                logger.info("search localisation unsupported for %s; searching without it", user_location)
+                if country:
+                    _UNSUPPORTED_COUNTRIES.add(country)
+                tool = {k: v for k, v in tool.items() if k != "user_location"}
+                continue
+            blocks.extend(response.content)
+            if response.stop_reason != "pause_turn":
+                break
+            messages = [*messages, {"role": "assistant", "content": response.content}]
+        if hasattr(response, "model_copy"):
+            return response.model_copy(update={"content": blocks})
+        response.content = blocks
+        return response
 
     try:
         return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_web_search")

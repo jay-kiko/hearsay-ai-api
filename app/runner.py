@@ -98,13 +98,17 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             brand=request.brand,
             industry=request.industry,
             competitors=request.competitors,
+            brand_match_names=brand_match_names,
             personas=request.personas,
+            prompts=request.prompts,
             market=request.market,
         )
 
         products = aggregation.build_products(results, request.brand, request.competitors)
         score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
-        visibility_score = aggregation.compute_composite_score(score_breakdown)
+        visibility_score = aggregation.compute_composite_score(
+            score_breakdown, has_sources=bool(sources.source_intel)
+        )
 
         overview = aggregation.build_overview(results, visibility_score)
         overview.failed_count = len(tasks) - len(results)

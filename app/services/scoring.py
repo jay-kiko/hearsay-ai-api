@@ -109,6 +109,14 @@ def find_mentions(
     return merged
 
 
+def count_brand_mentions(text: str, brand: str, brand_match_names: list[str] | None = None) -> int:
+    """How many times `text` names the brand under any known alias. The one
+    place anything outside this module should ask "does this text mention the
+    brand" — source evidence (grounding.py) goes through here so it agrees
+    with the per-prompt mention detection instead of re-deriving its own."""
+    return sum(1 for m in find_mentions(text, brand, [], brand_match_names) if m.kind == "brand")
+
+
 def build_parts(text: str, mentions: list[Mention]) -> list[ResponsePart]:
     if not mentions:
         return [ResponsePart(text=text, kind="normal")] if text else []
