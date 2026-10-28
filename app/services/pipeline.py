@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
-from app.services.scoring import analyze_answer
+from app.services.scoring import analyze_answer, matched_texts
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
 
@@ -127,11 +127,44 @@ def _sentiment_system(brand: str, brand_match_names: list[str], competitors: lis
     )
 
 
-def _apply_competitor_mentions(competitors: list[Competitor], raw_mentions: object) -> list[Competitor]:
+_MIN_ALIAS_LEN = 3
+
+
+def verified_alias(candidate: object, answer: str, other_entities: list[str]) -> str | None:
+    """A model-suggested product/model name, accepted only if the answer really
+    names it. Without this check a generic word ("cruise") became a brand alias
+    and turned a Royal Caribbean answer into mentioned=True, rank 1 (invariant 2:
+    a model never fills a measured field).
+
+    Accepted when the candidate appears in the answer under the same matching
+    rule as every other mention, at least one occurrence is written like a name
+    (has a capital letter or digit, so "cruise" is out but "Disney Wish" and
+    "Redmi Note 13" are in), and it doesn't overlap another entity's name (which
+    would steal that entity's mention)."""
+    if not isinstance(candidate, str):
+        return None
+    name = candidate.strip()
+    if len(name) < _MIN_ALIAS_LEN:
+        return None
+    occurrences = matched_texts(name, answer)
+    if not any(any(ch.isupper() or ch.isdigit() for ch in occ) for occ in occurrences):
+        return None
+    lowered = name.lower()
+    for other in other_entities:
+        other_l = other.strip().lower()
+        if other_l and (other_l in lowered or lowered in other_l):
+            return None
+    return name
+
+
+def _apply_competitor_mentions(
+    competitors: list[Competitor], raw_mentions: object, answer: str, brand_names: list[str]
+) -> list[Competitor]:
     """Builds a per-answer copy of `competitors` with any LLM-recognized,
     previously-unlisted product/model names appended to the matching
-    competitor's match_names. Never mutates the input list — it's the same
-    object shared across every concurrent prompt/persona task in this run."""
+    competitor's match_names — each one checked by verified_alias first. Never
+    mutates the input list — it's the same object shared across every
+    concurrent prompt/persona task in this run."""
     if not isinstance(raw_mentions, list):
         return competitors
 
@@ -140,7 +173,10 @@ def _apply_competitor_mentions(competitors: list[Competitor], raw_mentions: obje
         if not isinstance(entry, dict):
             continue
         name = str(entry.get("competitor", "")).strip()
-        text = str(entry.get("mentionText", "")).strip()
+        others = brand_names + [
+            alias for c in competitors if c.name.lower() != name.lower() for alias in (c.name, *c.match_names)
+        ]
+        text = verified_alias(entry.get("mentionText"), answer, others)
         if name and text:
             extra_by_name.setdefault(name.lower(), []).append(text)
 
@@ -203,16 +239,18 @@ async def _analyze_one_prompt(
     )
     sentiment = Sentiment(sentiment_result.get("sentiment", "Neutral"))
     quote = sentiment_result.get("quote", "") or ""
-    mention_text = (sentiment_result.get("mentionText", "") or "").strip()
-
-    # mention_text is per-answer and LLM-supplied (may recognize an unlisted
-    # product/model name) — append rather than trust alone, so the static
-    # detect-time aliases still apply even if this call misses one.
+    # mentionText is per-answer and LLM-supplied (may recognize an unlisted
+    # product/model name) — appended only once verified against the answer,
+    # and on top of the static detect-time aliases, never instead of them.
     effective_match_names = list(brand_match_names or [brand])
+    competitor_names = [alias for c in competitors for alias in (c.name, *c.match_names)]
+    mention_text = verified_alias(sentiment_result.get("mentionText"), answer_text, competitor_names)
     if mention_text and mention_text.lower() not in (n.lower() for n in effective_match_names):
         effective_match_names.append(mention_text)
 
-    effective_competitors = _apply_competitor_mentions(competitors, sentiment_result.get("competitorMentions", []))
+    effective_competitors = _apply_competitor_mentions(
+        competitors, sentiment_result.get("competitorMentions", []), answer_text, effective_match_names
+    )
 
     mentioned, rank, vis, parts = analyze_answer(
         text=answer_text,

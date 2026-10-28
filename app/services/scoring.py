@@ -109,6 +109,13 @@ def find_mentions(
     return merged
 
 
+def matched_texts(name: str, text: str) -> list[str]:
+    """Every substring of `text` that the matcher would count as `name`, as
+    written in the text — the same rule find_mentions applies."""
+    pattern = _pattern_for(name)
+    return [m.group(0) for m in pattern.finditer(text)] if pattern else []
+
+
 def count_brand_mentions(text: str, brand: str, brand_match_names: list[str] | None = None) -> int:
     """How many times `text` names the brand under any known alias. The one
     place anything outside this module should ask "does this text mention the
