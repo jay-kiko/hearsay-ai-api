@@ -116,7 +116,7 @@ async def test_search_sends_one_question_per_persona_and_never_the_brand(calls):
     for name in ("disney", "dcl", "royal caribbean"):
         assert name not in sent
     assert "1. Which cruise lines from Singapore" in kw["user"] and "2. Any 3 night sailings" in kw["user"]
-    assert "second q" not in kw["user"]  # only each persona's first prompt
+    assert "second q" not in kw["user"]  # one question per persona
     assert kw["max_uses"] == 2
     # SG is rejected as a country code; city + timezone is accepted
     assert kw["user_location"] == {"type": "approximate", "city": "Singapore", "timezone": "Asia/Singapore"}
@@ -323,3 +323,16 @@ def test_prompt_writer_receives_persona_description():
     from app.services import prompt_gen
     text = prompt_gen._user_prompt("B", "Cruises", "ctx", None, None, [persona], 3)
     assert "Planning a first family cruise" in text
+
+
+async def test_question_choice_rotates_so_later_categories_get_searched(calls):
+    prompts = {"p1": ["cat A for p1", "cat B for p1"], "p2": ["cat A for p2", "cat B for p2"]}
+    await grounding.run_grounding(api_key="k", brand=BRAND, industry="Cruises", competitors=COMPETITORS,
+                                  brand_match_names=ALIASES, personas=PERSONAS, prompts=prompts)
+    user = calls["search"][-1]["user"]
+    assert "1. cat A for p1" in user and "2. cat B for p2" in user
+
+
+def test_reach_label_has_no_tier_with_a_single_question():
+    assert grounding._reach_label(1, 1) == "1 of 1 buyer question"
+    assert grounding._reach_label(3, 4) == "High reach · 3 of 4 buyer questions"

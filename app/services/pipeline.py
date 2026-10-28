@@ -314,8 +314,10 @@ def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
 
     avg_vis = round(sum(a.vis for a in analyses) / len(analyses))
     best_rank = min((a.rank for a in ranked), default=None)
-    sentiment_counts = Counter(a.sentiment for a in analyses)
-    top_sentiment = sentiment_counts.most_common(1)[0][0]
+    # Only prompts that named the brand have a sentiment toward it; the rest
+    # are forced Neutral and would outvote a real Positive/Negative.
+    sentiment_counts = Counter(a.sentiment for a in analyses if a.mentioned)
+    top_sentiment = sentiment_counts.most_common(1)[0][0] if sentiment_counts else Sentiment.neutral
 
     return PersonaResult(
         prompt=representative.prompt,

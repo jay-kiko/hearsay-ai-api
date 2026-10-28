@@ -89,3 +89,16 @@ async def test_one_failed_prompt_keeps_the_personas_other_answers(monkeypatch):
 
     with pytest.raises(RuntimeError):
         await pipeline.run_persona(prompts=["bad"], **kwargs)
+
+
+def test_persona_sentiment_ignores_prompts_that_never_named_the_brand():
+    from app.models import Sentiment
+    from app.services.pipeline import _aggregate, _PromptAnalysis
+
+    def analysis(mentioned, sentiment):
+        return _PromptAnalysis(prompt="q", mentioned=mentioned, sentiment=sentiment, rank=1 if mentioned else None,
+                               vis=50 if mentioned else 0, quote="", parts=[])
+
+    result = _aggregate([analysis(True, Sentiment.positive), analysis(False, Sentiment.neutral),
+                         analysis(False, Sentiment.neutral)])
+    assert result.sentiment == Sentiment.positive

@@ -2,7 +2,7 @@
 
 Sources are found the way a buyer finds them, never by looking the brand up:
 one Claude call with the native `web_search` tool searches one brand-free
-buyer question per persona (each persona's first generated prompt), and the
+buyer question per persona (one of its generated prompts), and the
 pages that come back are the sources. Only afterwards is each page measured
 for the brand and every competitor. Searching for the brand would make nearly
 every source "Visible" by construction — the bias this replaced.
@@ -463,9 +463,13 @@ def _build_sitelist(
 def _reach_label(reach: int, questions: int) -> str:
     """e.g. 'High reach · 3 of 4 buyer questions'. Tiered on the share of
     questions so it means the same thing whatever the persona count."""
-    share = reach / questions if questions else 0
+    count = f"{reach} of {questions} buyer question{'s' if questions != 1 else ''}"
+    # With one question every source is "1 of 1"; a High tier would be noise.
+    if questions < 2:
+        return count
+    share = reach / questions
     tier = "High" if share >= 0.5 else "Medium" if share >= 0.25 else "Low"
-    return f"{tier} reach · {reach} of {questions} buyer question{'s' if questions != 1 else ''}"
+    return f"{tier} reach · {count}"
 
 
 _MAX_ENRICHED_DOMAINS = 15
@@ -485,9 +489,12 @@ async def run_grounding(
 ) -> tuple[Sources, list[SitelistEntry]]:
     settings = get_settings()
 
-    # One buyer question per persona: its first prompt. Deterministic, so the
-    # same personas/prompts always search the same questions.
-    asked = [(p.title, prompts[p.id][0]) for p in personas if prompts.get(p.id)]
+    # One buyer question per persona, rotating through the prompt list by
+    # persona position: prompts generated across several categories are
+    # concatenated per persona, so always taking [0] searched only the first
+    # category. Deterministic: the same personas/prompts search the same questions.
+    with_prompts = [p for p in personas if prompts.get(p.id)]
+    asked = [(p.title, prompts[p.id][i % len(prompts[p.id])]) for i, p in enumerate(with_prompts)]
     if not asked:
         return Sources(citations=[], publishers=[], communities=[], source_intel=[],
                        coverage_note="No buyer questions to search, so no sources were researched."), []

@@ -184,7 +184,10 @@ async def generate_prompts(
         tool_name=_TOOL_NAME,
         tool_description="Return the written prompts for every persona.",
         input_schema=_INPUT_SCHEMA,
-        max_tokens=2048,
+        # Sized to the output: a fixed 2048 cut off at 10 personas x 10 prompts,
+        # the truncated tool call came back empty and every persona silently
+        # got the fallback prompt. ~60 tokens per prompt plus JSON overhead.
+        max_tokens=max(2048, 60 * count * len(personas) + 512),
     )
 
     # Tool output isn't a hard type guarantee: skip malformed entries rather
@@ -192,7 +195,9 @@ async def generate_prompts(
     by_persona: dict[str, list[str]] = {}
     for entry in result.get("personas", []) if isinstance(result.get("personas"), list) else []:
         if isinstance(entry, dict) and isinstance(entry.get("personaId"), str):
-            by_persona[entry["personaId"]] = _clean_prompts(entry.get("prompts"))
+            # Capped at the requested count: extras would push a persona past
+            # the analysis request's per-persona limit.
+            by_persona[entry["personaId"]] = _clean_prompts(entry.get("prompts"))[:count]
 
     output: dict[str, list[str]] = {}
     for persona in personas:
