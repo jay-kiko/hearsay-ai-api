@@ -1,0 +1,123 @@
+from types import SimpleNamespace
+
+import httpx
+import pytest
+from anthropic import BadRequestError
+
+from app.services import anthropic_client as ac
+
+
+def _bad_request():
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    response = httpx.Response(400, request=request)
+    return BadRequestError(
+        'tool_choice: type "tool" and "any" are not supported for this model', response=response, body=None
+    )
+
+
+class _FakeClient:
+    """Rejects forced tool_choice like the quality-tier model does."""
+
+    calls: list[dict] = []
+
+    def __init__(self, **_):
+        self.messages = SimpleNamespace(create=self._create)
+
+    async def _create(self, **kwargs):
+        _FakeClient.calls.append(kwargs)
+        if kwargs["tool_choice"]["type"] == "tool":
+            raise _bad_request()
+        block = SimpleNamespace(type="tool_use", name="t", input={"x": "ok"})
+        return SimpleNamespace(content=[block])
+
+    async def close(self):
+        pass
+
+
+@pytest.fixture(autouse=True)
+def _reset(monkeypatch):
+    _FakeClient.calls = []
+    ac._NO_FORCED_TOOL_CHOICE.clear()
+    monkeypatch.setattr(ac, "AsyncAnthropic", _FakeClient)
+
+
+async def _call(model="fancy-model"):
+    return await ac.call_structured(
+        api_key="k", model=model, system="sys", user="u", tool_name="t", tool_description="d",
+        input_schema={"type": "object", "properties": {}},
+    )
+
+
+async def test_falls_back_to_auto_when_forced_tool_choice_rejected():
+    assert await _call() == {"x": "ok"}
+    assert [c["tool_choice"]["type"] for c in _FakeClient.calls] == ["tool", "auto"]
+    assert "calling the provided tool" in _FakeClient.calls[1]["system"][0]["text"]
+
+
+async def test_remembers_the_model_so_later_calls_skip_the_failed_attempt():
+    await _call()
+    _FakeClient.calls.clear()
+    await _call()
+    assert [c["tool_choice"]["type"] for c in _FakeClient.calls] == ["auto"]
+
+
+# ── web search ───────────────────────────────────────────────────────
+
+class _SearchFake:
+    seen: list = []
+    script: list = []  # responses (or exceptions) returned in order
+
+    def __init__(self, **_):
+        self.messages = SimpleNamespace(create=self._create)
+
+    async def _create(self, **kw):
+        _SearchFake.seen.append(kw)
+        item = _SearchFake.script.pop(0)
+        if isinstance(item, Exception):
+            raise item
+        return item
+
+    async def close(self):
+        pass
+
+
+def _resp(blocks, stop="end_turn"):
+    return SimpleNamespace(content=blocks, stop_reason=stop)
+
+
+def _country_error():
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    return BadRequestError("tools.0.web_search_20250305: Country code SG is not supported.",
+                           response=httpx.Response(400, request=request), body=None)
+
+
+async def test_unsupported_search_country_is_dropped_and_remembered(monkeypatch):
+    ac._UNSUPPORTED_COUNTRIES.clear()
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    loc = {"type": "approximate", "country": "SG"}
+    _SearchFake.seen, _SearchFake.script = [], [_country_error(), _resp(["ok"])]
+    out = await ac.call_web_search(api_key="k", model="m", system="s", user="u", user_location=loc)
+    assert out.content == ["ok"]
+    assert [kw["tools"][0].get("user_location") for kw in _SearchFake.seen] == [loc, None]
+    _SearchFake.seen, _SearchFake.script = [], [_resp(["ok"])]
+    await ac.call_web_search(api_key="k", model="m", system="s", user="u", user_location=loc)
+    assert _SearchFake.seen[0]["tools"][0].get("user_location") is None  # remembered
+    ac._UNSUPPORTED_COUNTRIES.clear()
+
+
+async def test_location_without_country_is_never_blacklisted(monkeypatch):
+    ac._UNSUPPORTED_COUNTRIES.clear()
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    _SearchFake.seen, _SearchFake.script = [], [_country_error(), _resp(["ok"])]
+    await ac.call_web_search(api_key="k", model="m", system="s", user="u",
+                             user_location={"type": "approximate", "city": "Singapore"})
+    assert None not in ac._UNSUPPORTED_COUNTRIES
+
+
+async def test_paused_search_turn_is_resumed_and_blocks_merged(monkeypatch):
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    _SearchFake.seen, _SearchFake.script = [], [_resp(["a", "b"], stop="pause_turn"), _resp(["c"])]
+    out = await ac.call_web_search(api_key="k", model="m", system="s", user="u")
+    assert out.content == ["a", "b", "c"]
+    resumed = _SearchFake.seen[1]["messages"]
+    assert resumed[-1] == {"role": "assistant", "content": ["a", "b"]}
