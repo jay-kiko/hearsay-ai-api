@@ -20,34 +20,18 @@ def _all_exchanges(results: dict[str, PersonaResult]) -> list[PersonaExchange]:
 
 
 def _exchange_mentions(exchange: PersonaExchange, canonical_name: str) -> bool:
-    # Trust ResponsePart.name (set once, in scoring.py, from whatever alias
-    # actually matched — static list or a per-answer LLM-recognized one) as
-    # the single source of truth. This used to re-derive "was X mentioned"
-    # by re-matching part.text against a locally-known alias list, which
-    # went stale the moment mention detection started recognizing aliases
-    # this second, independent check didn't know about (confirmed live: a
-    # run where every mention came through under an LLM-recognized product
-    # name showed 100% mention rate but 0% Share of Voice, because this
-    # check's alias list only ever had the bare brand name).
+    # ResponsePart.name is set once, in scoring.py, from whichever alias
+    # matched. Re-matching text here against a local alias list misses aliases
+    # recognised per answer (confirmed live: 100% mention rate beside 0% Share
+    # of Voice).
     return any(part.name == canonical_name for part in exchange.parts)
 
 
 def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]:
-    """Mentioned/total across every individual prompt exchange, not one
-    OR-aggregated boolean per persona (PersonaResult.mentioned) — OR-of-
-    booleans gives a persona with more prompts a higher chance of counting
-    as "mentioned" purely from having more trials, independent of actual
-    visibility. Confirmed as a real, growing bias once multi-category prompt
-    generation made per-persona prompt counts vary instead of being uniform.
-
-    Every "how much was this mentioned" number in the API (Overview, Presence,
-    Products/Share of Voice, Recommendation Strength, Ranking, Sentiment)
-    counts at this same prompt level now — mixing prompt-level and
-    persona-level counts across an otherwise-connected set of numbers is
-    exactly what produced a visibly inconsistent Score Breakdown card
-    (Presence said "4 of 24," Sentiment/Ranking/Recommendation Strength were
-    silently still counting off 2 — the number of *personas* that ever
-    mentioned the brand, not the 4 individual prompts that did)."""
+    """Mentioned/total across every prompt exchange. Not one OR'd boolean per
+    persona: that lets a persona with more prompts count as "mentioned" just
+    from having more tries. Every mention-based number in the API counts at
+    this prompt level so they agree with each other (invariant 8)."""
     all_exchanges = _all_exchanges(results)
     mentioned = sum(1 for ex in all_exchanges if ex.mentioned)
     return mentioned, len(all_exchanges)
@@ -79,23 +63,14 @@ def build_products(results: dict[str, PersonaResult], brand: str, competitors: l
     # reads the canonical name scoring.py already attached to each part.
     entries: list[tuple[str, bool]] = [(brand, True)] + [(c.name, False) for c in competitors]
 
-    # Counts every individual prompt exchange, not one OR'd boolean per
-    # persona (confirmed live: with this counting a persona-count instead,
-    # "Products mentioned" showed 2 for a brand while Overview's prompt-level
-    # mention count showed 4 for the exact same run — two numbers that
-    # should agree, both describing "how much was this brand mentioned,"
-    # silently using different units).
+    # Prompt-level, like Overview, so the two counts agree.
     all_exchanges = _all_exchanges(results)
     counts = [
         (name, sum(1 for ex in all_exchanges if _exchange_mentions(ex, name)), is_brand)
         for name, is_brand in entries
     ]
-    # Share of Voice is each product's slice of *all* product mentions, not
-    # its mention rate across personas — dividing by persona count instead
-    # let every product's share be counted independently against the same
-    # denominator, so they summed to well over 100% whenever more than one
-    # product got mentioned per persona (confirmed live: 50/38/25/13%,
-    # summing to 126%, for counts of 4/3/2/1 out of 8 personas each).
+    # Each product's slice of *all* product mentions, so shares sum to 100%
+    # (dividing by persona count summed to 126% when answers named several).
     total_mentions = sum(count for _, count, _ in counts) or 1
 
     products = [
@@ -122,14 +97,8 @@ def build_score_breakdown(
     brand_product = next((p for p in products if p.is_brand), None)
     sov = round((brand_product.share if brand_product else 0.0) * 100)
 
-    # Recommendation Strength / Ranking / Sentiment all average over the same
-    # mentioned_exchanges (prompt-level) rather than one representative
-    # PersonaResult per persona — every "how much/how well was this brand
-    # mentioned" number in this breakdown now shares the same denominator as
-    # Presence, instead of Presence counting prompts while these counted
-    # personas (confirmed live: Presence said "4 of 24," these were silently
-    # still averaging over just 2 — the personas that ever mentioned the
-    # brand at all, not the 4 prompts that actually did).
+    # Recommendation Strength / Ranking / Sentiment average over the same
+    # mentioned exchanges Presence counts, so the card shares one denominator.
     rec_strength = round(sum(ex.vis for ex in mentioned_exchanges) / mentioned_prompts) if mentioned_prompts else 0
 
     ranked = [ex.rank for ex in mentioned_exchanges if ex.rank is not None]
@@ -148,11 +117,8 @@ def build_score_breakdown(
         else 0
     )
 
-    # Measured by grounding.py from page evidence (titles + passages the search
-    # returned, matched with the same alias logic as persona mentions) — the same
-    # number behind each source's Visible badge, so the two cannot disagree. The
-    # old check required the exact brand string in the page title, which missed
-    # aliases and read 0 beside a sources list full of "Visible".
+    # The same measured `mentions` behind each source's Visible badge, so the
+    # score and the badges cannot disagree.
     total_sources = len(sources.source_intel)
     named_sources = sum(1 for s in sources.source_intel if s.mentions > 0)
     source_authority = round(named_sources / total_sources * 100) if total_sources else 0
@@ -200,15 +166,10 @@ def build_score_breakdown(
     ]
 
 
-# Headline score = a real weighted composite of the breakdown above, not the
-# separate rank/sentiment-only calculation it used to be — Share of Voice and
-# Source Authority previously had zero influence on this number despite the
-# breakdown's docstring implying they were "sub-scores behind" it (a brand
-# drowned out by competitors in most answers could still post a 90+ purely
-# off rank+sentiment on the answers it did appear in). Recommendation
-# Strength is deliberately excluded here: it's rank_score × sentiment
-# averaged over mentioned exchanges — the same signal Ranking + Sentiment
-# already contribute below — so including it too would triple-count it.
+# Headline score: a weighted composite of the breakdown, so a brand drowned
+# out by competitors can't post 90+ off rank and sentiment alone.
+# Recommendation Strength is left out: it is rank x sentiment, which Ranking
+# and Sentiment already contribute, so including it would count them twice.
 _COMPOSITE_WEIGHTS = {
     "Presence": 0.30,
     "Share of Voice": 0.30,

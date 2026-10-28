@@ -137,17 +137,10 @@ class CodeStore:
     async def redeem(self, code: str, job_id: str) -> bool:
         """Atomically spends one use. Returns False if unknown, revoked, or exhausted.
 
-        Also resets prompt_calls to 0 — that counter is the pre-spend throttle
-        shared by /api/detect, /api/categories, /api/prompts, and
-        /api/generate-personas (see register_prompt_call), and it used to be
-        one pool for a code's *entire lifetime*. For a multi-use code that
-        silently starved every use after the first: heavy iteration during
-        one real journey through the Wizard could exhaust the budget before
-        a second, independent use of the same code ever got a chance. Each
-        successful redemption now gets its own fresh pre-spend allowance,
-        matching what a multi-use code was actually meant to allow — the
-        total exposure over a code's life still scales with uses_total,
-        which is a cap the admin already sets deliberately at mint time.
+        Also resets prompt_calls, the shared pre-spend throttle (see
+        register_prompt_call), so each use of a multi-use code gets its own
+        allowance instead of the first use's iteration starving the rest.
+        Lifetime exposure still scales with uses_total, set at mint time.
         """
         # aiosqlite serializes every call through one connection/one implicit
         # transaction shared across all concurrent coroutines. A 0-row UPDATE
