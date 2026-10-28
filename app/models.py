@@ -334,6 +334,9 @@ class Overview(CamelModel):
     avg_sentiment: Sentiment
     top_competitor: str | None
     failed_count: int = 0  # personas whose pipeline errored out entirely, excluded from the stats above
+    # Prompts that couldn't be answered (inside personas that otherwise
+    # succeeded), also excluded from `total`; see the Presence note.
+    failed_prompts: int = 0
 
 
 class Product(CamelModel):

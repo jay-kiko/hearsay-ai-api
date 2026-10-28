@@ -221,3 +221,18 @@ def test_insights_ask_for_distinct_points_without_a_padding_floor():
     assert "distinct point" in insights_gen._SYSTEM and "rather than padding" in insights_gen._SYSTEM
     description = insights_gen._INPUT_SCHEMA["properties"]["opportunities"]["description"]
     assert "4-6" not in description and "at least 2" in description
+
+
+
+def test_failed_prompts_are_reported_not_hidden():
+    from app.models import PersonaExchange, PersonaResult, Sentiment, Sources
+    from app.services import aggregation
+
+    ex = PersonaExchange(prompt="q", mentioned=True, sentiment=Sentiment.positive, rank=1, vis=100, quote="", parts=[])
+    result = PersonaResult(prompt="q", mentioned=True, sentiment=Sentiment.positive, vis=100, rank=1, quote="",
+                           parts=[], exchanges=[ex], opportunity="Defend", failed_prompts=2)
+    results = {"p1": result}
+    assert aggregation.build_overview(results, 50).failed_prompts == 2
+    products = aggregation.build_products(results, "B", [])
+    presence = aggregation.build_score_breakdown(results, products, "B", Sources(citations=[], publishers=[], communities=[]))[0]
+    assert presence.note == "Mentioned in 1 of 1 persona queries (2 more couldn't be answered this run)"

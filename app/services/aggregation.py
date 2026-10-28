@@ -37,6 +37,10 @@ def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]
     return mentioned, len(all_exchanges)
 
 
+def _failed_prompts(results: dict[str, PersonaResult]) -> int:
+    return sum(r.failed_prompts for r in results.values())
+
+
 def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> Overview:
     mentioned, total = _prompt_mention_counts(results)
     mention_rate = (mentioned / total) if total else 0.0
@@ -55,6 +59,7 @@ def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> 
         mention_rate=round(mention_rate, 3),
         avg_sentiment=avg_sentiment,
         top_competitor=None,  # filled in by build_products, which knows the competitor set
+        failed_prompts=_failed_prompts(results),
     )
 
 
@@ -127,7 +132,10 @@ def build_score_breakdown(
         ScoreComponent(
             name="Presence",
             score=presence,
-            note=f"Mentioned in {mentioned_prompts} of {total_prompts} persona queries",
+            # Failed prompts are out of the denominator, so say so: "4 of 10"
+            # must not read as the whole run when 12 were asked.
+            note=f"Mentioned in {mentioned_prompts} of {total_prompts} persona queries"
+            + (f" ({failed} more couldn't be answered this run)" if (failed := _failed_prompts(results)) else ""),
         ),
         ScoreComponent(
             name="Share of Voice", score=sov, note=f"{sov}% of all product mentions"
