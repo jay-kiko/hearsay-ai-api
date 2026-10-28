@@ -29,6 +29,10 @@ class PersonaIn(CamelModel):
     role: str
     pains: str
     criteria: str
+    # Optional so existing callers keep working; when sent, it carries the
+    # persona's one-line "what they're trying to decide" framing into prompt
+    # generation, which is otherwise only given pains/criteria lists.
+    desc: str = ""
 
 
 class Competitor(CamelModel):
@@ -161,6 +165,10 @@ class PromptsRequest(CamelModel):
     brand: str
     industry: str
     personas: list[PersonaIn]
+    # Optional: when sent, generated prompts that name the brand (any alias) or a
+    # competitor are dropped. Without them only the bare brand name is screened.
+    competitors: list[Competitor] = Field(default_factory=list)
+    brand_match_names: list[str] = Field(default_factory=list)
     buyer_context: str | None = None
     brand_summary: str | None = None
     market: str | None = None
@@ -182,6 +190,10 @@ class AdaptSeedPromptRequest(CamelModel):
     brand: str
     industry: str
     personas: list[PersonaIn]
+    # Optional: when sent, generated prompts that name the brand (any alias) or a
+    # competitor are dropped. Without them only the bare brand name is screened.
+    competitors: list[Competitor] = Field(default_factory=list)
+    brand_match_names: list[str] = Field(default_factory=list)
     seed_prompt: str
     buyer_context: str | None = None
     brand_summary: str | None = None

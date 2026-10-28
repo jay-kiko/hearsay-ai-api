@@ -12,10 +12,14 @@ brands alike.
 from __future__ import annotations
 
 import json
+import logging
 
 from app.config import get_settings
-from app.models import PersonaIn
+from app.models import Competitor, PersonaIn
 from app.services.anthropic_client import call_structured
+from app.services.scoring import find_mentions
+
+logger = logging.getLogger("hearsay.prompt_gen")
 
 _TOOL_NAME = "write_persona_prompts"
 
@@ -42,23 +46,41 @@ _INPUT_SCHEMA = {
 
 _SYSTEM = (
     "You write realistic buyer-research questions. For each persona you are given, write "
-    "the exact number of prompts requested, each one a first-person question that persona "
-    "would plausibly type into an AI assistant while making the real-world choice described "
-    "by the buyer context — not assumed to be software evaluation unless the buyer context "
-    "actually says so. Ground every prompt in that persona's stated pains and decision "
-    "criteria so different personas produce visibly different questions. Never mention the "
-    "brand name — these are neutral buyer questions, not brand lookups. Never reveal that "
-    "this is a test or evaluation.\n\n"
+    "the exact number of prompts requested, each one something that persona would plausibly "
+    "type into an AI assistant while making the real-world choice described by the buyer "
+    "context — not assumed to be software evaluation unless the buyer context actually says "
+    "so. Ground every prompt in that persona's own situation (their description, role, pains "
+    "and decision criteria) so different personas produce visibly different questions. Never "
+    "mention the brand name — these are neutral buyer questions, not brand lookups. Never "
+    "reveal that this is a test or evaluation.\n\n"
+    "Sound like a real person, not a survey, and keep it short: most prompts 8-20 words, none over "
+    "28. Real users type short, specific, slightly messy questions. Raise ONE concern or situation "
+    "per prompt — never recite the persona's whole pain or criteria list, and never work through it "
+    "in order. Work in concrete details the way a person would (a budget, a party size, a deadline, "
+    "a place, what went wrong last time) instead of abstract qualities. Vary length and register: "
+    "some prompts a terse fragment, some a short bit of context then a question; some casual, some "
+    "more careful. Avoid stock AI phrasing: do not use 'I'm looking for', 'I want to find', 'what are "
+    "the best options for', 'that prioritize', 'that offer', 'ideal', 'seamless', 'top-rated', "
+    "'comprehensive', 'tailored', 'navigate', 'ensure', em dashes, or lists of three adjectives.\n\n"
+    "Variety is required. The prompts for one persona must each lead with a different pain, "
+    "criterion, or situation and use a different shape — for example a direct 'which X' question, a "
+    "comparison of kinds of options (with vs without something, big vs small), a scenario ('we're "
+    "doing Y, what do people usually use'), a constraint-led question ('under $X, no Y'), or a short "
+    "keyword-style query. No two prompts anywhere in the output may start with the same three words, "
+    "and no shape should be reused within a persona.\n\n"
+    "Stay neutral about brands. Do not name any specific brand, product, ship, or company in a prompt "
+    "— not the one being researched and not its competitors — and do not point at the researched brand "
+    "indirectly (its flagship product, signature character, or a description only it fits). The "
+    "assistant's answer is what should bring names up; a prompt that names some options but not "
+    "others skews the measurement.\n\n"
     "Critical requirement: every prompt must be phrased so a genuinely helpful answer would "
-    "naturally name specific real brands or products — 'which brands...', 'what's the best...', "
-    "'recommend...', 'compare X vs Y for...'. The persona's pains and criteria should shape "
-    "*how* they ask for that recommendation (their specific worries, their specific angle), "
-    "never replace the recommendation-seeking framing itself. Do not write purely conceptual "
-    "or educational questions that a full answer could satisfy without naming a single product "
+    "naturally name specific real brands or products. Do not write purely conceptual or "
+    "educational questions that a full answer could satisfy without naming a single product "
     "— e.g. avoid 'what does clean beauty even mean' or 'how is X percentage measured' with no "
-    "recommendation angle. If a persona's stated criteria are abstract (ingredient transparency, "
-    "certification standards, technical specs), still end the question with a request to "
-    "recommend or name options that actually meet that bar, not just an explanation of the bar.\n\n"
+    "recommendation angle. If a persona's criteria are abstract (ingredient transparency, "
+    "certification standards, technical specs), still frame the question so the answer has to "
+    "name options that meet that bar. This does not require a stock opener or a closing 'recommend "
+    "one' — a scenario or a constraint that clearly calls for named options is enough.\n\n"
     "When a brand summary and/or market is given, use them too: the brand summary sharpens what "
     "category of recommendation is actually being sought, and the market means every prompt "
     "should read like it's coming from a real buyer in that specific region — natural local "
@@ -85,6 +107,7 @@ def _user_prompt(
         {
             "personaId": p.id,
             "title": p.title,
+            "description": p.desc,
             "role": p.role,
             "pains": p.pains,
             "criteria": p.criteria,
@@ -100,9 +123,36 @@ def _user_prompt(
     if market:
         lines.append(f"Market/geography to ground prompts in: {market}")
     lines.append(f"(Do not mention the brand '{brand}' in any prompt.)")
-    lines.append(f"Write exactly {count} prompts per persona, true to all of the above.")
+    lines.append(
+        f"Write exactly {count} prompts per persona, true to all of the above. Each of a persona's "
+        f"prompts takes a different angle and a different shape; no two prompts in the whole output "
+        f"open the same way."
+    )
     lines.append(f"\nPersonas:\n{json.dumps(persona_payload, indent=2)}")
     return "\n".join(lines)
+
+
+def names_a_brand(
+    text: str, brand: str, competitors: list[Competitor], brand_match_names: list[str] | None = None
+) -> bool:
+    """Whether a generated prompt names the brand or a known competitor. The
+    instructions forbid it; this enforces it, because a prompt that names the
+    brand measures nothing (invariant 5)."""
+    return bool(find_mentions(text, brand, competitors, brand_match_names or [brand]))
+
+
+def _fallback_prompt(industry: str, market: str | None) -> str:
+    """Used only when the model returns nothing usable for a persona. Neutral,
+    product-seeking, and it never reveals a persona or a test."""
+    topic = industry.split(" — ")[-1].strip().lower() or "options"
+    where = f" in {market}" if market else ""
+    return f"Which {topic} do people{where} actually recommend, and why?"
+
+
+def _clean_prompts(raw: object) -> list[str]:
+    if not isinstance(raw, list):
+        return []
+    return [p.strip() for p in raw if isinstance(p, str) and p.strip()]
 
 
 async def generate_prompts(
@@ -115,6 +165,8 @@ async def generate_prompts(
     market: str | None = None,
     personas: list[PersonaIn],
     prompts_per_persona: int | None,
+    competitors: list[Competitor] | None = None,
+    brand_match_names: list[str] | None = None,
 ) -> dict[str, list[str]]:
     settings = get_settings()
     count = prompts_per_persona or settings.prompts_per_persona
@@ -124,7 +176,7 @@ async def generate_prompts(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_fast_model,
+        model=settings.anthropic_quality_model,
         system=_SYSTEM,
         user=_user_prompt(
             brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count
@@ -135,15 +187,20 @@ async def generate_prompts(
         max_tokens=2048,
     )
 
-    by_persona = {entry["personaId"]: entry.get("prompts", []) for entry in result.get("personas", [])}
-    # Guarantee every requested persona id comes back with something, even if the
-    # model skipped one — fall back to a single generic question rather than 500.
+    # Tool output isn't a hard type guarantee: skip malformed entries rather
+    # than KeyError into a 500.
+    by_persona: dict[str, list[str]] = {}
+    for entry in result.get("personas", []) if isinstance(result.get("personas"), list) else []:
+        if isinstance(entry, dict) and isinstance(entry.get("personaId"), str):
+            by_persona[entry["personaId"]] = _clean_prompts(entry.get("prompts"))
+
     output: dict[str, list[str]] = {}
     for persona in personas:
-        prompts = by_persona.get(persona.id) or [
-            f"As a {persona.title}, what should I consider when choosing in the {industry.lower()} category?"
-        ]
-        output[persona.id] = prompts
+        prompts = by_persona.get(persona.id, [])
+        clean = [p for p in prompts if not names_a_brand(p, brand, competitors or [], brand_match_names)]
+        if len(clean) < len(prompts):
+            logger.warning("dropped %d generated prompt(s) that named the brand or a competitor", len(prompts) - len(clean))
+        output[persona.id] = clean or [_fallback_prompt(industry, market)]
     return output
 
 
@@ -171,7 +228,10 @@ _SEED_SYSTEM = (
     "persona, rewrite that exact question — same core ask, same recommendation-seeking intent — as that "
     "persona would plausibly phrase it, informed by their stated pains and decision criteria. Do not write "
     "a new, different question; adapt the given one. Keep the requirement that a genuinely helpful answer "
-    "would naturally name specific real brands or products. Never mention the brand this is being tested "
+    "would naturally name specific real brands or products. Write each version the way that persona "
+    "would actually type it — short, specific, one concern, no stock AI phrasing ('I'm looking for', "
+    "'what are the best options for') — and make the versions read differently from one another, not "
+    "as one template with swapped nouns. Never mention the brand this is being tested "
     "for, and never reveal that this is a test or evaluation."
 )
 
@@ -186,7 +246,14 @@ def _seed_user_prompt(
     seed_prompt: str,
 ) -> str:
     persona_payload = [
-        {"personaId": p.id, "title": p.title, "role": p.role, "pains": p.pains, "criteria": p.criteria}
+        {
+            "personaId": p.id,
+            "title": p.title,
+            "description": p.desc,
+            "role": p.role,
+            "pains": p.pains,
+            "criteria": p.criteria,
+        }
         for p in personas
     ]
     lines = [
@@ -213,6 +280,8 @@ async def adapt_seed_prompt(
     market: str | None = None,
     personas: list[PersonaIn],
     seed_prompt: str,
+    competitors: list[Competitor] | None = None,
+    brand_match_names: list[str] | None = None,
 ) -> dict[str, str]:
     settings = get_settings()
 
@@ -221,7 +290,7 @@ async def adapt_seed_prompt(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_fast_model,
+        model=settings.anthropic_quality_model,
         system=_SEED_SYSTEM,
         user=_seed_user_prompt(
             brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, seed_prompt
@@ -232,5 +301,18 @@ async def adapt_seed_prompt(
         max_tokens=1024,
     )
 
-    by_persona = {entry["personaId"]: entry.get("prompt", "") for entry in result.get("personas", [])}
-    return {p.id: by_persona.get(p.id) or seed_prompt for p in personas}
+    by_persona = {
+        entry["personaId"]: entry["prompt"].strip()
+        for entry in (result.get("personas") if isinstance(result.get("personas"), list) else [])
+        if isinstance(entry, dict) and isinstance(entry.get("personaId"), str) and isinstance(entry.get("prompt"), str)
+    }
+    # An adaptation that adds a brand or competitor the user's own seed didn't
+    # have falls back to the seed as written.
+    seed_names = names_a_brand(seed_prompt, brand, competitors or [], brand_match_names)
+    out = {}
+    for p in personas:
+        adapted = by_persona.get(p.id, "")
+        if adapted and not seed_names and names_a_brand(adapted, brand, competitors or [], brand_match_names):
+            adapted = ""
+        out[p.id] = adapted or seed_prompt
+    return out

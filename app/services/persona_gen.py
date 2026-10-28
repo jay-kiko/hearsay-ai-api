@@ -27,17 +27,17 @@ _INPUT_SCHEMA = {
             "items": {
                 "type": "object",
                 "properties": {
-                    "title": {"type": "string", "description": "A realistic persona name, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
+                    "title": {"type": "string", "description": "A short, plain persona name of 2-4 words, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
                     "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
                     "desc": {
                         "type": "string",
-                        "description": "One sentence summarizing what this persona is trying to decide or accomplish.",
+                        "description": "One plain sentence, at most 15 words: what this persona is trying to decide.",
                     },
-                    "role": {"type": "string", "description": "One sentence on their position, scope, or life context."},
-                    "pains": {"type": "string", "description": "Comma-separated realistic frustrations."},
+                    "role": {"type": "string", "description": "At most 10 words on their position or life context."},
+                    "pains": {"type": "string", "description": "2-3 comma-separated frustrations, 12 words total at most. Short phrases, no sentences."},
                     "criteria": {
                         "type": "string",
-                        "description": "Comma-separated things they'd weigh when making this choice.",
+                        "description": "2-3 comma-separated things they weigh, 10 words total at most. Short phrases.",
                     },
                 },
                 "required": ["title", "initials", "desc", "role", "pains", "criteria"],
@@ -65,6 +65,20 @@ _SYSTEM = (
     "customers, or businesses AND consumers) and the industry given is specifically about only "
     "one of them, write personas for that one industry only — do not blend the other buyer "
     "type's motivations into these personas just because the buyer context mentions it."
+)
+
+_BREVITY_RULES = (
+    " Keep every field short and plain: write the way a person would jot a note about a friend, "
+    "not a marketing persona deck. Short phrases, concrete details, no corporate or AI-sounding "
+    "words ('navigate', 'leverage', 'seamless', 'holistic', 'ensure'), no em dashes."
+)
+
+# Generated (not user-written) personas feed prompt generation; a brand or
+# competitor named here leaks into the prompts and skews what we measure.
+_NO_BRANDS_RULE = (
+    " Never name any specific brand, product, ship or company in any field — not the brand being "
+    "researched (a summary of it may be given as background) and not its competitors. Describe the "
+    "situation and what the person cares about, not which options they are choosing between."
 )
 
 _DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
@@ -107,8 +121,8 @@ async def generate_personas(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_fast_model,
-        system=_SYSTEM,
+        model=settings.anthropic_quality_model,
+        system=_SYSTEM + _BREVITY_RULES + _NO_BRANDS_RULE,
         user=_user_prompt(
             industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, count
         ),
@@ -148,17 +162,17 @@ _EXPAND_TOOL_NAME = "write_persona_from_description"
 _EXPAND_INPUT_SCHEMA = {
     "type": "object",
     "properties": {
-        "title": {"type": "string", "description": "A realistic persona name, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
+        "title": {"type": "string", "description": "A short, plain persona name of 2-4 words, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
         "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
         "desc": {
             "type": "string",
-            "description": "One sentence summarizing what this persona is trying to decide or accomplish.",
+            "description": "One plain sentence, at most 15 words: what this persona is trying to decide.",
         },
-        "role": {"type": "string", "description": "One sentence on their position, scope, or life context."},
-        "pains": {"type": "string", "description": "Comma-separated realistic frustrations."},
+        "role": {"type": "string", "description": "At most 10 words on their position or life context."},
+        "pains": {"type": "string", "description": "2-3 comma-separated frustrations, 12 words total at most. Short phrases, no sentences."},
         "criteria": {
             "type": "string",
-            "description": "Comma-separated things they'd weigh when making this choice.",
+            "description": "2-3 comma-separated things they weigh, 10 words total at most. Short phrases.",
         },
     },
     "required": ["title", "initials", "desc", "role", "pains", "criteria"],
@@ -168,7 +182,10 @@ _EXPAND_SYSTEM = (
     "You turn a short user-written description of a buyer persona into one complete, "
     "structured persona for AI-visibility research. The user's description is the source of "
     "truth for who this persona is — never contradict or genericize it, only fill in what it "
-    "leaves unstated. Ground the fill-in details in the given industry, competitors, and buyer "
+    "leaves unstated. When the description is sparse, keep the fill-in modest and plausible "
+    "for the category rather than inventing distinctive biographical specifics the user never "
+    "gave — the more the user specified, the more the persona should read exactly as described. "
+    "Ground the fill-in details in the given industry, competitors, and buyer "
     "context: if the buyer context describes consumers choosing a hotel, product, or "
     "restaurant, write the persona as a real person making that kind of personal or "
     "experiential choice — not a procurement officer 'evaluating vendors'. Only frame the "
@@ -217,8 +234,10 @@ async def expand_custom_persona(
 
     result = await call_structured(
         api_key=api_key,
-        model=settings.anthropic_fast_model,
-        system=_EXPAND_SYSTEM,
+        model=settings.anthropic_quality_model,
+        # The no-brands rule too: expanded fields feed prompt generation, and the
+        # competitor list given as context leaked rival names into them.
+        system=_EXPAND_SYSTEM + _BREVITY_RULES + _NO_BRANDS_RULE,
         user=_expand_user_prompt(
             description, industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market
         ),

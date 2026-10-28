@@ -68,6 +68,8 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
                         market=body.market,
                         personas=body.personas,
                         prompts_per_persona=count,
+                        competitors=body.competitors,
+                        brand_match_names=body.brand_match_names,
                     )
                     for category, count in active
                 ]
@@ -100,6 +102,8 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
             market=body.market,
             personas=body.personas,
             prompts_per_persona=body.prompts_per_persona,
+            competitors=body.competitors,
+            brand_match_names=body.brand_match_names,
         )
     except AuthenticationError as exc:
         raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
@@ -128,6 +132,8 @@ async def create_seed_prompts(body: AdaptSeedPromptRequest) -> AdaptSeedPromptRe
             market=body.market,
             personas=body.personas,
             seed_prompt=body.seed_prompt,
+            competitors=body.competitors,
+            brand_match_names=body.brand_match_names,
         )
     except AuthenticationError as exc:
         raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
