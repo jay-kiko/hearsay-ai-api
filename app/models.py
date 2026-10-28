@@ -3,7 +3,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def to_camel(field_name: str) -> str:
@@ -219,9 +219,18 @@ class AnalysisRequest(CamelModel):
     buyer_context: str | None = None
     brand_summary: str | None = None
     market: str | None = None
-    personas: list[PersonaIn]
+    # Bounded: every persona and prompt is a billed call (and a search), and one
+    # access-code use pays for the whole job. Generous next to the UI's 4 x 3.
+    personas: list[PersonaIn] = Field(min_length=1, max_length=10)
     prompts: dict[str, list[str]]
     access_code: str
+
+    @field_validator("prompts")
+    @classmethod
+    def _cap_prompts(cls, value: dict[str, list[str]]) -> dict[str, list[str]]:
+        if any(len(p) > 10 for p in value.values()):
+            raise ValueError("at most 10 prompts per persona")
+        return value
 
 
 class AnalysisStartResponse(CamelModel):

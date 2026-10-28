@@ -60,7 +60,11 @@ def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> 
     mentioned, total = _prompt_mention_counts(results)
     mention_rate = (mentioned / total) if total else 0.0
 
-    sentiment_counts = Counter(r.sentiment for r in results.values())
+    # Same basis as the breakdown's Sentiment: only prompts that mentioned the
+    # brand. Persona-level sentiment also counts non-mentions (forced Neutral),
+    # which put "Neutral" next to "4 positive · 0 neutral · 0 negative".
+    mentioned_exchanges = [ex for r in results.values() for ex in (r.exchanges or []) if ex.mentioned]
+    sentiment_counts = Counter(ex.sentiment for ex in mentioned_exchanges)
     avg_sentiment = sentiment_counts.most_common(1)[0][0] if sentiment_counts else Sentiment.neutral
 
     return Overview(

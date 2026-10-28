@@ -9,9 +9,10 @@ three since they all reason over identical evidence — same principle as
 category_gen.py's one call covering several facets.
 
 This is synthesis over already-collected data, not the organic-mention
-signal being measured (that's pipeline.py's job) — runs on the fast model,
-once per job, and fails open (empty results) rather than sinking the whole
-job on a bad call, matching grounding.py's posture.
+signal being measured (that's pipeline.py's job). It runs once per job on the
+quality model (its text is what a client reads), is fed the same prompt-level
+counts and measured source data the UI shows so its claims can't contradict
+them, and fails open (empty results) rather than sinking the job.
 """
 from __future__ import annotations
 
@@ -42,32 +43,32 @@ _INPUT_SCHEMA = {
         "rivalWins": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Short themes where competitors consistently beat the brand across the persona results.",
+            "description": "Themes where competitors consistently beat the brand across the persona results. Each at most 12 words.",
         },
         "brandWins": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Short themes where the brand itself comes out ahead.",
+            "description": "Themes where the brand itself comes out ahead. Each at most 12 words.",
         },
         "gaps": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "Buyer scenarios/query types the brand is essentially invisible in.",
+            "description": "Buyer scenarios/query types the brand is essentially invisible in. Each at most 12 words.",
         },
         "opportunities": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "title": {"type": "string"},
+                    "title": {"type": "string", "description": "At most 8 words."},
                     "type": {
                         "type": "string",
                         "enum": ["Critical gap", "Source gap", "Competitive", "Keyword gap", "Community"],
                     },
                     "impact": {"type": "string", "enum": ["High", "Medium", "Low"]},
                     "effort": {"type": "string", "enum": ["High", "Medium", "Low"]},
-                    "detail": {"type": "string", "description": "1-2 sentences on what the data actually shows."},
-                    "action": {"type": "string", "description": "A concrete, specific next step."},
+                    "detail": {"type": "string", "description": "One sentence, at most 25 words, on what the data actually shows."},
+                    "action": {"type": "string", "description": "One concrete, specific next step, at most 20 words."},
                 },
                 "required": ["title", "type", "impact", "effort", "detail", "action"],
             },
@@ -110,7 +111,12 @@ _SYSTEM = (
     "from directly, still choose dimensions from the brand/industry/buyer context and score them (low, if "
     "that's what the near-invisibility warrants) — never leave radar empty just because the rest of the "
     "evidence is thin. Radar dimensions must be chosen to fit this specific brand's actual category and buyer "
-    "context, not assumed to be software-buyer axes."
+    "context, not assumed to be software-buyer axes. A 'Source gap' or 'Community' opportunity must name a "
+    "specific source from the list given and cite its measured gap (e.g. rivals named there, brand absent); "
+    "if no source list is given, don't produce those types. Write like a sharp colleague, not a consultant "
+    "deck: short, plain sentences with the specific number or example up front. No filler openers "
+    "('It is important to', 'Consider'), no jargon ('leverage', 'ensure', 'robust', 'holistic', "
+    "'synergy'), no em dashes."
 )
 
 
@@ -127,19 +133,24 @@ def _user_prompt(
     products: list[Product],
     sources: Sources,
 ) -> str:
-    persona_summaries = [
-        {
+    # Prompt-level, like every number the UI shows ("mentioned in 4 of 12
+    # queries") — a persona-level boolean let the text say "2 of 4 personas".
+    persona_summaries = []
+    for persona in personas:
+        result = results.get(persona.id)
+        if result is None:
+            continue
+        exchanges = result.exchanges or []
+        persona_summaries.append({
             "title": persona.title,
-            "mentioned": result.mentioned,
-            "sentiment": result.sentiment.value,
-            "rank": result.rank,
-            "vis": result.vis,
-            "opportunity": result.opportunity,
-            "quote": result.quote,
-        }
-        for persona in personas
-        if (result := results.get(persona.id)) is not None
-    ]
+            "promptsMentioningBrand": f"{sum(1 for ex in exchanges if ex.mentioned)} of {len(exchanges)}",
+            "exchanges": [
+                {"prompt": ex.prompt, "mentioned": ex.mentioned, "sentiment": ex.sentiment.value,
+                 "rank": ex.rank, "quote": ex.quote}
+                for ex in exchanges
+            ],
+        })
+    all_exchanges = [ex for r in results.values() for ex in (r.exchanges or [])]
 
     lines = [
         f"Brand: {brand}",
@@ -152,20 +163,44 @@ def _user_prompt(
         lines.append(f"Brand summary: {brand_summary}")
     if market:
         lines.append(f"Market: {market}")
+    lines.append(
+        f"\nThe brand was mentioned in {sum(1 for ex in all_exchanges if ex.mentioned)} of "
+        f"{len(all_exchanges)} buyer queries. Use prompt-level counts like this, never persona counts."
+    )
     lines.append(f"\nPersona results:\n{json.dumps(persona_summaries, indent=2)}")
     lines.append(
         f"\nShare of voice (product mention counts across all persona queries):\n"
         f"{json.dumps([p.model_dump(by_alias=True) for p in products], indent=2)}"
     )
-    top_domains = sorted(sources.citations, key=lambda c: -c.count)[:8]
+    # Measured per source: who surfaced it, whether the brand and each rival
+    # are named on it, and the gap. Source/community opportunities must come
+    # from these, not be guessed.
+    source_rows = [
+        {"domain": i.domain, "type": i.category, "reach": i.influence, "surfacedBy": i.personas,
+         "brandVisibility": i.visibility, "brandMentions": i.mentions,
+         "competitorMentions": i.competitor_mentions, "gap": i.gap}
+        for i in sources.source_intel[:12]
+    ]
     lines.append(
-        f"\nTop cited sources found while researching this brand's category:\n"
-        f"{json.dumps([c.model_dump(by_alias=True) for c in top_domains], indent=2)}"
+        "\nIndependent sources that buyers' own questions surfaced (searched without the brand; brand and "
+        f"competitor mentions measured on each page):\n{json.dumps(source_rows, indent=2) if source_rows else 'none found'}"
     )
     lines.append(
         "\nProduce the competitor diagnosis, a concrete opportunities list, and the brand-strength radar."
     )
     return "\n".join(lines)
+
+
+def _parse_each(raw: object, model: type) -> list:
+    out = []
+    for entry in raw if isinstance(raw, list) else []:
+        if not isinstance(entry, dict):
+            continue
+        try:
+            out.append(model(**entry))
+        except Exception:  # noqa: BLE001 - skip one bad entry, keep the rest
+            logger.warning("skipping malformed %s entry: %r", model.__name__, entry)
+    return out
 
 
 async def generate_insights(
@@ -191,7 +226,7 @@ async def generate_insights(
     try:
         result = await call_structured(
             api_key=api_key,
-            model=settings.anthropic_fast_model,
+            model=settings.anthropic_quality_model,
             system=_SYSTEM,
             user=_user_prompt(
                 brand=brand,
@@ -233,18 +268,16 @@ async def generate_insights(
             brand_wins=_clean_list(result.get("brandWins")),
             gaps=_clean_list(result.get("gaps")),
         )
-        opportunities_raw = result.get("opportunities", [])
-        opportunities = [
-            Opportunity(**o) for o in (opportunities_raw if isinstance(opportunities_raw, list) else []) if isinstance(o, dict)
-        ]
+        # Validated entry by entry: one malformed opportunity (a bad enum
+        # value) used to raise and empty the whole diagnosis/radar with it.
+        opportunities = _parse_each(result.get("opportunities"), Opportunity)
         # The Opportunities view promises "ranked by impact" — the model's
         # own generation order doesn't reliably match that, so enforce it
         # deterministically rather than trust output order.
         opportunities.sort(key=lambda o: _IMPACT_RANK.get(o.impact, 0), reverse=True)
-        radar_raw = result.get("radarCategories", [])
-        radar = [
-            RadarCategory(**r) for r in (radar_raw if isinstance(radar_raw, list) else []) if isinstance(r, dict)
-        ]
+        radar = _parse_each(result.get("radarCategories"), RadarCategory)
+        for r in radar:
+            r.score = max(0, min(100, r.score))
         return diagnosis, opportunities, radar
     except Exception:
         logger.exception("insights generation failed, returning empty insights")
