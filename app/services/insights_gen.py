@@ -31,6 +31,7 @@ from app.models import (
     Sources,
 )
 from app.services.anthropic_client import call_structured
+from app.services.common import clean_str_list
 
 logger = logging.getLogger("hearsay.insights")
 
@@ -251,22 +252,12 @@ async def generate_insights(
             # schema — is exactly what gets cut when that happens.
             max_tokens=4096,
         )
-        # Forced tool-call output isn't a hard type guarantee (same defensive
-        # posture as detect.py/category_gen.py — an array field has come back
-        # as a comma-joined string before, which iterating naively would
-        # silently shred into one entry per character) — a malformed
-        # opportunity or radar entry must not crash the whole job, so
-        # parsing failures fall through to the same fail-open empty result
-        # as a call failure.
-        def _clean_list(raw: object) -> list[str]:
-            if not isinstance(raw, list):
-                return []
-            return [v for v in raw if isinstance(v, str)]
-
+        # Tool output isn't a hard type guarantee; anything unparseable falls
+        # through to the same fail-open empty result as a call failure.
         diagnosis = CompetitorDiagnosis(
-            rival_wins=_clean_list(result.get("rivalWins")),
-            brand_wins=_clean_list(result.get("brandWins")),
-            gaps=_clean_list(result.get("gaps")),
+            rival_wins=clean_str_list(result.get("rivalWins")),
+            brand_wins=clean_str_list(result.get("brandWins")),
+            gaps=clean_str_list(result.get("gaps")),
         )
         # Validated entry by entry: one malformed opportunity (a bad enum
         # value) used to raise and empty the whole diagnosis/radar with it.

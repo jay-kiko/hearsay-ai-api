@@ -11,11 +11,8 @@ from __future__ import annotations
 from collections import Counter
 
 from app.models import Competitor, Overview, PersonaExchange, PersonaResult, Product, ScoreComponent, Sentiment, Sources
+from app.services.scoring import SENTIMENT_MULTIPLIER, rank_score
 
-# Mirrors scoring._SENTIMENT_MULTIPLIER — duplicated rather than imported
-# since that name is private to scoring.py and this is a small, stable
-# constant; keep the two in sync if the weighting ever changes.
-_SENTIMENT_WEIGHT = {Sentiment.positive: 1.0, Sentiment.neutral: 0.7, Sentiment.negative: 0.35}
 
 
 def _all_exchanges(results: dict[str, PersonaResult]) -> list[PersonaExchange]:
@@ -137,7 +134,7 @@ def build_score_breakdown(
 
     ranked = [ex.rank for ex in mentioned_exchanges if ex.rank is not None]
     avg_rank = round(sum(ranked) / len(ranked)) if ranked else None
-    ranking_score = max(0, 100 - (avg_rank - 1) * 20) if avg_rank else 0
+    ranking_score = rank_score(avg_rank) if avg_rank else 0
 
     sentiment_counts = Counter(ex.sentiment for ex in mentioned_exchanges)
     pos, neu, neg = (
@@ -146,7 +143,7 @@ def build_score_breakdown(
         sentiment_counts.get(Sentiment.negative, 0),
     )
     sentiment_score = (
-        round(sum(_SENTIMENT_WEIGHT[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts * 100)
+        round(sum(SENTIMENT_MULTIPLIER[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts * 100)
         if mentioned_prompts
         else 0
     )

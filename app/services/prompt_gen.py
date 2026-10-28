@@ -17,6 +17,7 @@ import logging
 from app.config import get_settings
 from app.models import Competitor, PersonaIn
 from app.services.anthropic_client import call_structured
+from app.services.common import DEFAULT_BUYER_CONTEXT, persona_payload
 from app.services.scoring import find_mentions
 
 logger = logging.getLogger("hearsay.prompt_gen")
@@ -91,9 +92,6 @@ _SYSTEM = (
     "pull in a different buyer type's motivation just because the buyer context mentions it."
 )
 
-_DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
-
-
 def _user_prompt(
     brand: str,
     industry: str,
@@ -103,17 +101,6 @@ def _user_prompt(
     personas: list[PersonaIn],
     count: int,
 ) -> str:
-    persona_payload = [
-        {
-            "personaId": p.id,
-            "title": p.title,
-            "description": p.desc,
-            "role": p.role,
-            "pains": p.pains,
-            "criteria": p.criteria,
-        }
-        for p in personas
-    ]
     lines = [
         f"Industry: {industry}",
         f"Buyer context: {buyer_context}",
@@ -128,7 +115,7 @@ def _user_prompt(
         f"prompts takes a different angle and a different shape; no two prompts in the whole output "
         f"open the same way."
     )
-    lines.append(f"\nPersonas:\n{json.dumps(persona_payload, indent=2)}")
+    lines.append(f"\nPersonas:\n{json.dumps(persona_payload(personas), indent=2)}")
     return "\n".join(lines)
 
 
@@ -179,7 +166,7 @@ async def generate_prompts(
         model=settings.anthropic_quality_model,
         system=_SYSTEM,
         user=_user_prompt(
-            brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count
+            brand, industry, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count
         ),
         tool_name=_TOOL_NAME,
         tool_description="Return the written prompts for every persona.",
@@ -250,17 +237,6 @@ def _seed_user_prompt(
     personas: list[PersonaIn],
     seed_prompt: str,
 ) -> str:
-    persona_payload = [
-        {
-            "personaId": p.id,
-            "title": p.title,
-            "description": p.desc,
-            "role": p.role,
-            "pains": p.pains,
-            "criteria": p.criteria,
-        }
-        for p in personas
-    ]
     lines = [
         f"Industry: {industry}",
         f"Buyer context: {buyer_context}",
@@ -271,7 +247,7 @@ def _seed_user_prompt(
         lines.append(f"Market/geography to ground prompts in: {market}")
     lines.append(f"(Do not mention the brand '{brand}' in any prompt.)")
     lines.append(f"Seed question to adapt: {seed_prompt}")
-    lines.append(f"\nPersonas:\n{json.dumps(persona_payload, indent=2)}")
+    lines.append(f"\nPersonas:\n{json.dumps(persona_payload(personas), indent=2)}")
     return "\n".join(lines)
 
 
@@ -298,7 +274,7 @@ async def adapt_seed_prompt(
         model=settings.anthropic_quality_model,
         system=_SEED_SYSTEM,
         user=_seed_user_prompt(
-            brand, industry, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, seed_prompt
+            brand, industry, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, seed_prompt
         ),
         tool_name=_SEED_TOOL_NAME,
         tool_description="Return the adapted prompt for every persona.",

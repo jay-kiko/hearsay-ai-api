@@ -20,12 +20,10 @@ from dataclasses import dataclass
 from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
+from app.services.common import DEFAULT_BUYER_CONTEXT
 from app.services.scoring import analyze_answer, matched_texts
 
 logger = logging.getLogger("hearsay.pipeline")
-
-_DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
-
 
 def _answer_system(buyer_context: str | None, market: str | None) -> str:
     # The prompt text is the *only* thing this call sees — no brand, no
@@ -38,7 +36,7 @@ def _answer_system(buyer_context: str | None, market: str | None) -> str:
     # reveals this is a test — brand_summary is NOT threaded in here on
     # purpose, since it names the brand directly and this is the one call
     # that must measure whether the brand comes up organically.
-    parts = [f"Real-world context for who's asking and what they're choosing between: {buyer_context or _DEFAULT_BUYER_CONTEXT}"]
+    parts = [f"Real-world context for who's asking and what they're choosing between: {buyer_context or DEFAULT_BUYER_CONTEXT}"]
     if market:
         parts.append(f"Answer as if for someone in this market: {market} — use real local context where relevant.")
     return (

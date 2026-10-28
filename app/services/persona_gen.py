@@ -16,34 +16,33 @@ from uuid import uuid4
 from app.config import get_settings
 from app.models import Competitor, GeneratedPersona
 from app.services.anthropic_client import call_structured
+from app.services.common import DEFAULT_BUYER_CONTEXT
 
 _TOOL_NAME = "write_buyer_personas"
 
-_INPUT_SCHEMA = {
+# One persona's fields, shared by the batch and the custom-expansion schemas.
+_PERSONA_SCHEMA = {
     "type": "object",
     "properties": {
-        "personas": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "title": {"type": "string", "description": "A short, plain persona name of 2-4 words, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
-                    "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
-                    "desc": {
-                        "type": "string",
-                        "description": "One plain sentence, at most 15 words: what this persona is trying to decide.",
-                    },
-                    "role": {"type": "string", "description": "At most 10 words on their position or life context."},
-                    "pains": {"type": "string", "description": "2-3 comma-separated frustrations, 12 words total at most. Short phrases, no sentences."},
-                    "criteria": {
-                        "type": "string",
-                        "description": "2-3 comma-separated things they weigh, 10 words total at most. Short phrases.",
-                    },
-                },
-                "required": ["title", "initials", "desc", "role", "pains", "criteria"],
-            },
-        }
+        "title": {"type": "string", "description": "A short, plain persona name of 2-4 words, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
+        "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
+        "desc": {
+            "type": "string",
+            "description": "One plain sentence, at most 15 words: what this persona is trying to decide.",
+        },
+        "role": {"type": "string", "description": "At most 10 words on their position or life context."},
+        "pains": {"type": "string", "description": "2-3 comma-separated frustrations, 12 words total at most. Short phrases, no sentences."},
+        "criteria": {
+            "type": "string",
+            "description": "2-3 comma-separated things they weigh, 10 words total at most. Short phrases.",
+        },
     },
+    "required": ["title", "initials", "desc", "role", "pains", "criteria"],
+}
+
+_INPUT_SCHEMA = {
+    "type": "object",
+    "properties": {"personas": {"type": "array", "items": _PERSONA_SCHEMA}},
     "required": ["personas"],
 }
 
@@ -80,9 +79,6 @@ _NO_BRANDS_RULE = (
     "researched (a summary of it may be given as background) and not its competitors. Describe the "
     "situation and what the person cares about, not which options they are choosing between."
 )
-
-_DEFAULT_BUYER_CONTEXT = "People and organizations choosing what to use, buy, or work with in this industry."
-
 
 def _user_prompt(
     industry: str,
@@ -124,7 +120,7 @@ async def generate_personas(
         model=settings.anthropic_quality_model,
         system=_SYSTEM + _BREVITY_RULES + _NO_BRANDS_RULE,
         user=_user_prompt(
-            industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market, count
+            industry, competitors, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market, count
         ),
         tool_name=_TOOL_NAME,
         tool_description="Return the written buyer personas.",
@@ -159,24 +155,7 @@ async def generate_personas(
 
 _EXPAND_TOOL_NAME = "write_persona_from_description"
 
-_EXPAND_INPUT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "title": {"type": "string", "description": "A short, plain persona name of 2-4 words, e.g. 'Enterprise CTO' or 'Weekend Leisure Traveler'."},
-        "initials": {"type": "string", "description": "2-3 letter initials derived from the title, e.g. 'EC'."},
-        "desc": {
-            "type": "string",
-            "description": "One plain sentence, at most 15 words: what this persona is trying to decide.",
-        },
-        "role": {"type": "string", "description": "At most 10 words on their position or life context."},
-        "pains": {"type": "string", "description": "2-3 comma-separated frustrations, 12 words total at most. Short phrases, no sentences."},
-        "criteria": {
-            "type": "string",
-            "description": "2-3 comma-separated things they weigh, 10 words total at most. Short phrases.",
-        },
-    },
-    "required": ["title", "initials", "desc", "role", "pains", "criteria"],
-}
+_EXPAND_INPUT_SCHEMA = _PERSONA_SCHEMA
 
 _EXPAND_SYSTEM = (
     "You turn a short user-written description of a buyer persona into one complete, "
@@ -239,7 +218,7 @@ async def expand_custom_persona(
         # competitor list given as context leaked rival names into them.
         system=_EXPAND_SYSTEM + _BREVITY_RULES + _NO_BRANDS_RULE,
         user=_expand_user_prompt(
-            description, industry, competitors, buyer_context or _DEFAULT_BUYER_CONTEXT, brand_summary, market
+            description, industry, competitors, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market
         ),
         tool_name=_EXPAND_TOOL_NAME,
         tool_description="Return the written persona.",

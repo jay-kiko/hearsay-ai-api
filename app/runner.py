@@ -14,7 +14,7 @@ from app.code_store import get_code_store
 from app.config import get_settings
 from app.errors import user_facing_error
 from app.job_store import JobStore
-from app.models import AnalysisComplete, AnalysisRequest, PersonaEvent
+from app.models import AnalysisComplete, AnalysisRequest, Competitor, PersonaEvent, PersonaIn, PersonaResult
 from app.services import aggregation
 from app.services.grounding import run_grounding
 from app.services.insights_gen import generate_insights
@@ -28,15 +28,15 @@ async def _run_one_persona(
     semaphore: asyncio.Semaphore,
     job_store: JobStore,
     job_id: str,
-    persona,
-    prompts,
-    brand,
-    brand_match_names,
-    competitors,
-    buyer_context,
-    market,
-    api_key,
-):
+    persona: PersonaIn,
+    prompts: list[str],
+    brand: str,
+    brand_match_names: list[str],
+    competitors: list[Competitor],
+    buyer_context: str | None,
+    market: str | None,
+    api_key: str,
+) -> tuple[str, PersonaResult | None]:
     job_store.set_persona_status(job_id, persona.id, "running")
     async with semaphore:
         try:

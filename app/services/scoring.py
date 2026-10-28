@@ -13,7 +13,8 @@ from dataclasses import dataclass
 from app.models import Competitor, ResponsePart, Sentiment
 
 _RANK_STEP = 20  # each rank position back costs 20 points, floor 0
-_SENTIMENT_MULTIPLIER = {
+# Also the Sentiment sub-score's weights (aggregation.py): one definition.
+SENTIMENT_MULTIPLIER = {
     Sentiment.positive: 1.0,
     Sentiment.neutral: 0.7,
     Sentiment.negative: 0.35,
@@ -152,11 +153,15 @@ def compute_rank(mentions: list[Mention], brand: str) -> int | None:
     return seen.index(brand.lower()) + 1
 
 
+def rank_score(rank: int) -> int:
+    """0-100 for a 1-indexed position: first is 100, each place back costs 20."""
+    return max(0, 100 - (rank - 1) * _RANK_STEP)
+
+
 def compute_visibility_score(mentioned: bool, rank: int | None, sentiment: Sentiment) -> int:
     if not mentioned or rank is None:
         return 0
-    rank_score = max(0, 100 - (rank - 1) * _RANK_STEP)
-    score = rank_score * _SENTIMENT_MULTIPLIER.get(sentiment, 0.7)
+    score = rank_score(rank) * SENTIMENT_MULTIPLIER.get(sentiment, 0.7)
     return max(0, min(100, round(score)))
 
 

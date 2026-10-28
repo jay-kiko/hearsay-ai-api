@@ -38,6 +38,7 @@ from app.models import (
 from app.services import inventory
 from app.services import source_quality as sq
 from app.services.anthropic_client import call_structured, call_web_search
+from app.services.common import clean_str_list
 from app.services.scoring import count_brand_mentions, find_mentions
 
 logger = logging.getLogger("hearsay.grounding")
@@ -585,13 +586,6 @@ async def run_grounding(
     def _clean_type(raw: object, fallback: str) -> str:
         return raw if isinstance(raw, str) and raw.strip() else fallback
 
-    def _clean_list(raw: object) -> list[str]:
-        # Forced tool calls have returned array-typed fields as comma-joined
-        # strings before — iterating a bare string would shred it per character.
-        if not isinstance(raw, list):
-            return []
-        return [v for v in raw if isinstance(v, str)]
-
     # Only domains the model positively classified as independent are shown.
     # A domain it never classified (outside the enrichment cap, malformed
     # entry, or the call failed) can't be vouched for, so it's dropped rather
@@ -689,7 +683,7 @@ async def run_grounding(
                 category=category,
                 influence=_reach_label(reach, len(asked)),
                 cited=page_count,
-                keywords=_clean_list(entry.get("keywords")),
+                keywords=clean_str_list(entry.get("keywords")),
                 personas=surfaced_by,
                 competitors=list(competitor_evidence),
                 visibility=visibility,
