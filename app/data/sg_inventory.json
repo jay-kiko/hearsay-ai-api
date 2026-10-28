@@ -1,0 +1,8110 @@
+[
+ {
+  "domain": "yahoo.com",
+  "name": "Yahoo! Deutschland | Mail, Wetter, Suche, Politik, Nachrichten, Finanzen, Sport & Videos",
+  "creative": {
+   "Banner": {
+    "bidRequests": 187199064,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   },
+   "Video": {
+    "bidRequests": 606387,
+    "cpmMin": 1.8,
+    "cpmMax": 3.6
+   }
+  },
+  "bidRequests": 187805451,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "news",
+   "finance",
+   "sports",
+   "email portal"
+  ],
+  "app": {
+   "bidRequests": 4422608,
+   "creative": {
+    "Banner": {
+     "bidRequests": 4422608,
+     "cpmMin": 0.58,
+     "cpmMax": 6.04
+    }
+   },
+   "names": [
+    "Yahoo Finance: Stocks & News",
+    "Yahoo Finance: Stocks, Markets",
+    "Yahoo Mail: Email & Planner",
+    "Yahoo Mail: Your Email & Inbox"
+   ]
+  }
+ },
+ {
+  "domain": "dailymotion.com",
+  "name": "Dailymotion",
+  "creative": {
+   "Banner": {
+    "bidRequests": 33643723,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   },
+   "Video": {
+    "bidRequests": 713599,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   },
+   "Native": {
+    "bidRequests": 599318,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 34956640,
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "video streaming",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "asiaone.com",
+  "name": "AsiaOne, Asia's Leading News Portal, Get Latest News at AsiaOne",
+  "creative": {
+   "Banner": {
+    "bidRequests": 30732405,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 30732405,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "lifestyle",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "investing.com",
+  "name": "investing.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 22493580,
+    "cpmMin": 0.9,
+    "cpmMax": 1.8
+   }
+  },
+  "bidRequests": 22493580,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "markets",
+   "stocks",
+   "investing"
+  ],
+  "app": {
+   "bidRequests": 855193,
+   "creative": {
+    "Banner": {
+     "bidRequests": 855193,
+     "cpmMin": 1.0,
+     "cpmMax": 2.0
+    }
+   },
+   "names": [
+    "Investing.com: Stock Market"
+   ]
+  }
+ },
+ {
+  "domain": "radio-singapore.com",
+  "name": "Radio Singapore: Listen Live to Online Radio Stations",
+  "creative": {
+   "Banner": {
+    "bidRequests": 19426530,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 19426530,
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "editorial": false,
+  "region": "singapore",
+  "niches": [
+   "online radio",
+   "music"
+  ]
+ },
+ {
+  "domain": "mydramalist.com",
+  "name": "mydramalist.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 14005842,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 14005842,
+  "category": "entertainment & celebrity",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "asian dramas",
+   "tv reviews",
+   "k-drama"
+  ]
+ },
+ {
+  "domain": "goldprice.org",
+  "name": "Gold Price Charts & Historical Data GoldPrice.org",
+  "creative": {
+   "Banner": {
+    "bidRequests": 11558956,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 11558956,
+  "category": "business & finance news",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "gold prices",
+   "precious metals"
+  ]
+ },
+ {
+  "domain": "ndtv.com",
+  "name": "ndtv.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 10585021,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 10585021,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "india news",
+   "business",
+   "technology"
+  ]
+ },
+ {
+  "domain": "cnn.com",
+  "name": "Breaking News, Latest News and Videos | CNN",
+  "creative": {
+   "Banner": {
+    "bidRequests": 10320511,
+    "cpmMin": 1.16,
+    "cpmMax": 2.32
+   }
+  },
+  "bidRequests": 10320511,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "politics",
+   "business"
+  ]
+ },
+ {
+  "domain": "sohu.com",
+  "name": "搜狐",
+  "creative": {
+   "Banner": {
+    "bidRequests": 9135189,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 9135189,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "chinese news",
+   "entertainment",
+   "portal"
+  ]
+ },
+ {
+  "domain": "speedtest.net",
+  "name": "Speedtest by Ookla The Global Broadband Speed Test",
+  "creative": {
+   "Banner": {
+    "bidRequests": 8767472,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 8767472,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "internet speed test",
+   "broadband"
+  ],
+  "app": {
+   "bidRequests": 1464987,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1464987,
+     "cpmMin": 0.38,
+     "cpmMax": 1.04
+    }
+   },
+   "names": [
+    "Speedtest by Ookla"
+   ]
+  }
+ },
+ {
+  "domain": "startuphappy.com",
+  "name": "Start Up Happy",
+  "creative": {
+   "Banner": {
+    "bidRequests": 8399185,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 8399185,
+  "category": "business & finance news",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "startups",
+   "entrepreneurship",
+   "small business"
+  ]
+ },
+ {
+  "domain": "vesselfinder.com",
+  "name": "Ship & Container Tracking VesselFinder",
+  "creative": {
+   "Banner": {
+    "bidRequests": 7271003,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 7271003,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ship tracking",
+   "maritime"
+  ]
+ },
+ {
+  "domain": "koreaboo.com",
+  "name": "Koreaboo breaking k pop news, photos and viral videos",
+  "creative": {
+   "Banner": {
+    "bidRequests": 6590968,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 6590968,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "k-pop",
+   "korean celebrities"
+  ]
+ },
+ {
+  "domain": "9gag.com",
+  "name": "9GAG Best Funny Memes and Breaking News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 5935769,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 5935769,
+  "category": "entertainment & celebrity",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "memes",
+   "humor",
+   "viral content"
+  ]
+ },
+ {
+  "domain": "zerogpt.com",
+  "name": "AI Detector Trusted AI Checker for ChatGPT, GPT 6 & Gemini",
+  "creative": {
+   "Banner": {
+    "bidRequests": 5866131,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 5866131,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ai detection",
+   "writing tools"
+  ]
+ },
+ {
+  "domain": "dailymail.co.uk",
+  "name": "UK Home | Daily Mail Online",
+  "creative": {
+   "Banner": {
+    "bidRequests": 5378352,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 5378352,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uk news",
+   "celebrity",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "petmoniker.com",
+  "name": "Pet Moniker Find The Perfect Name For Your Pet",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4920693,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 4920693,
+  "category": "lifestyle & fashion",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "pet names",
+   "pets",
+   "pet care"
+  ]
+ },
+ {
+  "domain": "livescore.com",
+  "name": "livescore.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4878575,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 4878575,
+  "category": "sports",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "live scores",
+   "football"
+  ],
+  "app": {
+   "bidRequests": 7063482,
+   "creative": {
+    "Banner": {
+     "bidRequests": 7063482,
+     "cpmMin": 0.66,
+     "cpmMax": 2.24
+    }
+   },
+   "names": [
+    "LiveScore: Live Sports Scores"
+   ]
+  }
+ },
+ {
+  "domain": "online-stopwatch.com",
+  "name": "Online Stopwatch",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4799693,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 4799693,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "stopwatch",
+   "timers"
+  ]
+ },
+ {
+  "domain": "sethlui.com",
+  "name": "sethlui.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4674323,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 4674323,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore food",
+   "restaurant reviews",
+   "hawker food"
+  ]
+ },
+ {
+  "domain": "variety.com",
+  "name": "Variety Entertainment news, film reviews, awards, film festivals, box office, entertainment industry conferences",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4627718,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 4627718,
+  "category": "entertainment & celebrity",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "film",
+   "tv",
+   "entertainment industry"
+  ]
+ },
+ {
+  "domain": "eenadu.net",
+  "name": "Latest Telugu News | Breaking News Telugu | Telugu News Today | News in Telugu Eenadu",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4459045,
+    "cpmMin": 0.14,
+    "cpmMax": 0.28
+   }
+  },
+  "bidRequests": 4459045,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "telugu news",
+   "india"
+  ]
+ },
+ {
+  "domain": "oneindia.com",
+  "name": "News, Latest News, Today's News Headlines, Breaking News, LIVE News Oneindia",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4316095,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 4316095,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "india news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "fandom.com",
+  "name": "fandom.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4284436,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 4284436,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "fan wikis",
+   "gaming",
+   "tv and film"
+  ]
+ },
+ {
+  "domain": "reuters.com",
+  "name": "reuters.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4168728,
+    "cpmMin": 0.62,
+    "cpmMax": 1.24
+   }
+  },
+  "bidRequests": 4168728,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "business",
+   "markets"
+  ]
+ },
+ {
+  "domain": "aljazeera.com",
+  "name": "play",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4109712,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 4109712,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "middle east",
+   "politics"
+  ]
+ },
+ {
+  "domain": "cambridge.org",
+  "name": "cambridge.org",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4087331,
+    "cpmMin": 0.14,
+    "cpmMax": 0.28
+   }
+  },
+  "bidRequests": 4087331,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "dictionary",
+   "academic publishing"
+  ]
+ },
+ {
+  "domain": "w3schools.com",
+  "name": "W3Schools Online Web Tutorials",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4038017,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 4038017,
+  "category": "technology",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "web development",
+   "programming tutorials"
+  ]
+ },
+ {
+  "domain": "goal.com",
+  "name": "goal.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3953626,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 3953626,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "football",
+   "transfers"
+  ]
+ },
+ {
+  "domain": "jugantor.com",
+  "name": "jugantor.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3774608,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 3774608,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "bangla news",
+   "bangladesh"
+  ]
+ },
+ {
+  "domain": "allkpop.com",
+  "name": "allkpop.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3657512,
+    "cpmMin": 1.02,
+    "cpmMax": 2.04
+   }
+  },
+  "bidRequests": 3657512,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "k-pop",
+   "korean entertainment"
+  ]
+ },
+ {
+  "domain": "indiatimes.com",
+  "name": "Indiatimes: Latest in Lifestyle, Health, Fashion, and Wellness",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3652663,
+    "cpmMin": 0.96,
+    "cpmMax": 1.92
+   }
+  },
+  "bidRequests": 3652663,
+  "category": "lifestyle & fashion",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "lifestyle",
+   "health",
+   "fashion"
+  ]
+ },
+ {
+  "domain": "oilprice.com",
+  "name": "Crude Oil Prices Today | OilPrice.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3625208,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 3625208,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "energy",
+   "oil markets",
+   "commodities"
+  ]
+ },
+ {
+  "domain": "channelnewsasia.com",
+  "name": "Breaking News and Analysis on Asia and the World | Real Time Coverage out of Asia and Singapore CNA",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3618739,
+    "cpmMin": 1.08,
+    "cpmMax": 2.16
+   }
+  },
+  "bidRequests": 3618739,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "asia news",
+   "business"
+  ]
+ },
+ {
+  "domain": "sofascore.com",
+  "name": "sofascore.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3553479,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 3553479,
+  "category": "sports",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "live scores",
+   "sports stats"
+  ],
+  "app": {
+   "bidRequests": 447337,
+   "creative": {
+    "Banner": {
+     "bidRequests": 447337,
+     "cpmMin": 3.88,
+     "cpmMax": 7.76
+    }
+   },
+   "names": [
+    "Sofascore: Live Sports Scores"
+   ]
+  }
+ },
+ {
+  "domain": "gulfnews.com",
+  "name": "Gulf News: Latest UAE news, Dubai news, Business, travel news, Dubai Gold rate, prayer time, cinema",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3544614,
+    "cpmMin": 0.9,
+    "cpmMax": 1.8
+   }
+  },
+  "bidRequests": 3544614,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uae news",
+   "business",
+   "travel"
+  ]
+ },
+ {
+  "domain": "buzzfeed.com",
+  "name": "BuzzFeed",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3432111,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 3432111,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "quizzes",
+   "pop culture",
+   "shopping lists"
+  ]
+ },
+ {
+  "domain": "poki.com",
+  "name": "poki.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3245929,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 3245929,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "browser games",
+   "casual games"
+  ]
+ },
+ {
+  "domain": "onlinealarmkur.com",
+  "name": "Online Alarm Kur",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3229460,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 3229460,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "online alarm clock",
+   "timers"
+  ]
+ },
+ {
+  "domain": "hollywoodreporter.com",
+  "name": "The Hollywood Reporter – Movie news, TV news, awards news, lifestyle news, business news and more from The Hollywood Reporter.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3187126,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 3187126,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "film news",
+   "tv news",
+   "awards",
+   "entertainment business"
+  ]
+ },
+ {
+  "domain": "thisisanfield.com",
+  "name": "thisisanfield.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3151076,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 3151076,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "liverpool fc",
+   "football news"
+  ]
+ },
+ {
+  "domain": "photopea.com",
+  "name": "Photopea | Online Photo Editor",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3113169,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 3113169,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "photo editing",
+   "graphic design"
+  ]
+ },
+ {
+  "domain": "etnet.com.hk",
+  "name": "etnet 經濟通|香港新聞財經資訊和生活平台",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3039735,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 3039735,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "hong kong stocks",
+   "financial news",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "gsmarena.com",
+  "name": "GSMArena.com mobile phone reviews, news, specifications and more...",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3039616,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 3039616,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "smartphones",
+   "phone reviews",
+   "specifications"
+  ]
+ },
+ {
+  "domain": "theonlinecitizen.com",
+  "name": "theonlinecitizen.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3026787,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 3026787,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore politics",
+   "current affairs"
+  ]
+ },
+ {
+  "domain": "summonersky.com",
+  "name": "summonersky.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3020566,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 3020566,
+  "category": "gaming",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "league of legends",
+   "game guides"
+  ]
+ },
+ {
+  "domain": "businessinsider.com",
+  "name": "Aktuelle News von Business Insider Deutschland",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2862188,
+    "cpmMin": 0.94,
+    "cpmMax": 1.88
+   }
+  },
+  "bidRequests": 2862188,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "business news",
+   "tech",
+   "personal finance"
+  ]
+ },
+ {
+  "domain": "notebookcheck.net",
+  "name": "Expert reviews and news on laptops, smartphones and tech innovations Notebookcheck",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2801712,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 2801712,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "laptops",
+   "smartphones",
+   "tech reviews"
+  ]
+ },
+ {
+  "domain": "amvgg.com",
+  "name": "Adopt Me Values Your #1 source for Adopt Me Value List & Calculator",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2700024,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 2700024,
+  "category": "gaming",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "roblox",
+   "adopt me values"
+  ]
+ },
+ {
+  "domain": "neoseeker.com",
+  "name": "neoseeker.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2592281,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 2592281,
+  "category": "gaming",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "game guides",
+   "walkthroughs",
+   "gaming forums"
+  ]
+ },
+ {
+  "domain": "tomsguide.com",
+  "name": "Tom's Guide | Tech Product Reviews, Top Picks and How To",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2589648,
+    "cpmMin": 1.06,
+    "cpmMax": 2.12
+   }
+  },
+  "bidRequests": 2589648,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadgets",
+   "product reviews",
+   "how-to"
+  ]
+ },
+ {
+  "domain": "mirror.co.uk",
+  "name": "The Mirror: The Heart of Britain",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2475264,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 2475264,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uk news",
+   "celebrity",
+   "sport"
+  ]
+ },
+ {
+  "domain": "deadline.com",
+  "name": "Deadline – Hollywood Entertainment Breaking News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2425154,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 2425154,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "hollywood news",
+   "film",
+   "tv industry"
+  ]
+ },
+ {
+  "domain": "wiki.gg",
+  "name": "wiki.gg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2396135,
+    "cpmMin": 1.06,
+    "cpmMax": 2.12
+   }
+  },
+  "bidRequests": 2396135,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "game wikis",
+   "game reference"
+  ]
+ },
+ {
+  "domain": "financialhorse.com",
+  "name": "Financial Horse",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2359124,
+    "cpmMin": 2.38,
+    "cpmMax": 4.76
+   }
+  },
+  "bidRequests": 2359124,
+  "category": "business & finance news",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "personal finance",
+   "investing",
+   "singapore stocks"
+  ]
+ },
+ {
+  "domain": "time.is",
+  "name": "Time.is exakte Zeit, für jegliche Zeitzone",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2346078,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 2346078,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "world clock",
+   "time zones"
+  ]
+ },
+ {
+  "domain": "drugs.com",
+  "name": "Drugs.com – Know More. Be Sure.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2344094,
+    "cpmMin": 1.18,
+    "cpmMax": 2.36
+   }
+  },
+  "bidRequests": 2344094,
+  "category": "health & wellness",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "medication information",
+   "drug interactions",
+   "health"
+  ]
+ },
+ {
+  "domain": "msn.com",
+  "name": "MSN",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2310604,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 2310604,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "news aggregation",
+   "lifestyle",
+   "finance"
+  ]
+ },
+ {
+  "domain": "unilad.com",
+  "name": "Latest News, Entertainment Stories And Viral Videos UNILAD",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2281647,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 2281647,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "viral news",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "malaysiakini.com",
+  "name": "Malaysiakini",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2271692,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 2271692,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "forbes.com",
+  "name": "forbes.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2270428,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 2270428,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "business",
+   "investing",
+   "leadership"
+  ]
+ },
+ {
+  "domain": "flightradar24.com",
+  "name": "flightradar24.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2238244,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 2238244,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "flight tracking",
+   "aviation"
+  ]
+ },
+ {
+  "domain": "straitstimes.com",
+  "name": "The Straits Times Breaking news, Singapore news, Asia and world news & multimedia",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2207985,
+    "cpmMin": 1.36,
+    "cpmMax": 2.72
+   }
+  },
+  "bidRequests": 2207985,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "asia news",
+   "world news"
+  ],
+  "app": {
+   "bidRequests": 474704,
+   "creative": {
+    "Banner": {
+     "bidRequests": 474704,
+     "cpmMin": 0.1,
+     "cpmMax": 0.2
+    }
+   },
+   "names": [
+    "The Straits Times"
+   ]
+  }
+ },
+ {
+  "domain": "programiz.com",
+  "name": "programiz.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2127610,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 2127610,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "programming tutorials",
+   "coding"
+  ]
+ },
+ {
+  "domain": "aviationa2z.com",
+  "name": "Aviation A2Z Latest Aviation News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2126035,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 2126035,
+  "category": "travel",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "aviation news",
+   "airlines"
+  ]
+ },
+ {
+  "domain": "mothership.sg",
+  "name": "Mothership.SG News from Singapore, Asia and around the world.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2124417,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 2124417,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "lifestyle",
+   "viral stories"
+  ]
+ },
+ {
+  "domain": "recipetineats.com",
+  "name": "RecipeTin Eats A Food Blog Serving Up Quick & Easy Dinner Recipes",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2091419,
+    "cpmMin": 1.34,
+    "cpmMax": 2.68
+   }
+  },
+  "bidRequests": 2091419,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "recipes",
+   "home cooking"
+  ]
+ },
+ {
+  "domain": "independent.co.uk",
+  "name": "independent.co.uk",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2073181,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 2073181,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uk news",
+   "world news",
+   "culture"
+  ]
+ },
+ {
+  "domain": "wenxuecity.com",
+  "name": "文学城 | 即时滚动新闻, 本地新闻, 热点论坛, 博客 wenxuecity.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1975823,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 1975823,
+  "category": "regional non-English news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese-language news",
+   "forums",
+   "blogs"
+  ]
+ },
+ {
+  "domain": "nypost.com",
+  "name": "New York Post – Breaking News, Top Headlines, Photos & Videos",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1972087,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 1972087,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us news",
+   "celebrity",
+   "sports"
+  ]
+ },
+ {
+  "domain": "shicheng.news",
+  "name": "shicheng.news",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1960857,
+    "cpmMin": 0.08,
+    "cpmMax": 0.16
+   }
+  },
+  "bidRequests": 1960857,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese-language news",
+   "overseas chinese"
+  ]
+ },
+ {
+  "domain": "chinapress.com.my",
+  "name": "chinapress.com.my",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1913607,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 1913607,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia chinese news",
+   "local news"
+  ],
+  "app": {
+   "bidRequests": 776551,
+   "creative": {
+    "Banner": {
+     "bidRequests": 776551,
+     "cpmMin": 0.58,
+     "cpmMax": 1.16
+    }
+   },
+   "names": [
+    "中国报 App 最热大马新闻"
+   ]
+  }
+ },
+ {
+  "domain": "tvtropes.org",
+  "name": "tvtropes.org",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1891174,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 1891174,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "tv tropes",
+   "media analysis",
+   "fiction"
+  ]
+ },
+ {
+  "domain": "carousell.sg",
+  "name": "carousell.sg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1806447,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 1806447,
+  "category": "shopping & classifieds",
+  "siteType": "marketplace",
+  "editorial": false,
+  "region": "singapore",
+  "niches": [
+   "classifieds",
+   "secondhand goods"
+  ]
+ },
+ {
+  "domain": "lingojam.com",
+  "name": "lingojam.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1798944,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 1798944,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "text generators",
+   "translators"
+  ]
+ },
+ {
+  "domain": "littledayout.com",
+  "name": "Little Day Out Best Family friendly Activities, Places, Events for Kids and Families in Singapore Little Day Out",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1770079,
+    "cpmMin": 2.32,
+    "cpmMax": 4.64
+   }
+  },
+  "bidRequests": 1770079,
+  "category": "parenting & family",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "family activities",
+   "kids events",
+   "parenting"
+  ]
+ },
+ {
+  "domain": "bloxd.io",
+  "name": "Bloxd.io Play Free Online Games!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1761867,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 1761867,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "browser games",
+   "block building"
+  ]
+ },
+ {
+  "domain": "dawn.com",
+  "name": "dawn.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1753017,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 1753017,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "pakistan news",
+   "world news"
+  ]
+ },
+ {
+  "domain": "fragrantica.com",
+  "name": "Perfumes and Colognes Magazine, Perfume Reviews and Online Community—Fragrantica.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1751559,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 1751559,
+  "category": "lifestyle & fashion",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "perfume reviews",
+   "fragrance community"
+  ]
+ },
+ {
+  "domain": "greatandhra.com",
+  "name": "GreatAndhra | Telugu News, Politics and Movies GreatAndhra",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1750984,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 1750984,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "telugu cinema",
+   "andhra politics",
+   "indian news"
+  ]
+ },
+ {
+  "domain": "taiwanobsessed.com",
+  "name": "Home Taiwan Obsessed",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1741847,
+    "cpmMin": 1.46,
+    "cpmMax": 2.92
+   }
+  },
+  "bidRequests": 1741847,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "taiwan travel",
+   "travel guides",
+   "food"
+  ]
+ },
+ {
+  "domain": "wowhead.com",
+  "name": "wowhead.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1741172,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 1741172,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world of warcraft",
+   "game guides",
+   "mmorpg"
+  ]
+ },
+ {
+  "domain": "tracker.gg",
+  "name": "tracker.gg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1726949,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 1726949,
+  "category": "gaming",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "game stats",
+   "esports",
+   "player tracking"
+  ]
+ },
+ {
+  "domain": "merriam-webster.com",
+  "name": "merriam-webster.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1726251,
+    "cpmMin": 1.26,
+    "cpmMax": 2.52
+   }
+  },
+  "bidRequests": 1726251,
+  "category": "education & reference",
+  "siteType": "reference",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "dictionary",
+   "thesaurus",
+   "word definitions"
+  ]
+ },
+ {
+  "domain": "thestar.com.my",
+  "name": "The Star | Malaysia News: National, Regional and World News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1722983,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 1722983,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia news",
+   "business",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "silverprice.org",
+  "name": "Gold Price Charts & Historical Data GoldPrice.org",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1721345,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 1721345,
+  "category": "business & finance news",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "precious metals prices",
+   "silver",
+   "gold"
+  ]
+ },
+ {
+  "domain": "thestreet.com",
+  "name": "thestreet.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1709689,
+    "cpmMin": 1.68,
+    "cpmMax": 3.36
+   }
+  },
+  "bidRequests": 1709689,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "investing",
+   "stock markets",
+   "personal finance"
+  ]
+ },
+ {
+  "domain": "crazygames.com",
+  "name": "crazygames.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1705025,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 1705025,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "browser games",
+   "casual games"
+  ]
+ },
+ {
+  "domain": "apnews.com",
+  "name": "apnews.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1693121,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 1693121,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "politics",
+   "breaking news"
+  ]
+ },
+ {
+  "domain": "manchestereveningnews.co.uk",
+  "name": "Manchester Evening News: Number one for news, opinion, sport & celebrity news",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1690120,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 1690120,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uk local news",
+   "football",
+   "celebrity"
+  ]
+ },
+ {
+  "domain": "aov-news.com",
+  "name": "aov-news.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1686133,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 1686133,
+  "category": "gaming",
+  "siteType": "blog",
+  "region": "regional (asia)",
+  "editorial": true,
+  "niches": [
+   "Arena of Valor",
+   "mobile gaming news",
+   "MOBA guides"
+  ]
+ },
+ {
+  "domain": "amomama.com",
+  "name": "amomama.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1684885,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 1684885,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "celebrity news",
+   "viral stories",
+   "family"
+  ]
+ },
+ {
+  "domain": "britannica.com",
+  "name": "britannica.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1677622,
+    "cpmMin": 0.98,
+    "cpmMax": 1.96
+   }
+  },
+  "bidRequests": 1677622,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "encyclopedia",
+   "history",
+   "science"
+  ]
+ },
+ {
+  "domain": "techradar.com",
+  "name": "TechRadar | Dein Technik Kaufberater",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1675816,
+    "cpmMin": 1.2,
+    "cpmMax": 2.4
+   }
+  },
+  "bidRequests": 1675816,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadgets",
+   "tech reviews",
+   "buying guides"
+  ]
+ },
+ {
+  "domain": "unitedinfocus.com",
+  "name": "Manchester United News | United In Focus",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1661924,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 1661924,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "manchester united",
+   "football news",
+   "transfers"
+  ]
+ },
+ {
+  "domain": "billboard.com",
+  "name": "Billboard – Music Charts, News, Photos & Video",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1653144,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 1653144,
+  "category": "entertainment & celebrity",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "music charts",
+   "music news",
+   "celebrity"
+  ]
+ },
+ {
+  "domain": "tutorialspoint.com",
+  "name": "Coding Practice Problems & Tutorials | TutorialsPoint",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1646908,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 1646908,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "programming tutorials",
+   "coding",
+   "software"
+  ]
+ },
+ {
+  "domain": "kalerkantho.com",
+  "name": "kalerkantho.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1628151,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 1628151,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "bangladesh news",
+   "bengali news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "preparetravelplans.com",
+  "name": "Prepare Travel Plans Make Your Trip Planning Easier",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1581807,
+    "cpmMin": 1.8,
+    "cpmMax": 3.6
+   }
+  },
+  "bidRequests": 1581807,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "trip planning",
+   "travel tips",
+   "destinations"
+  ]
+ },
+ {
+  "domain": "2048game.com",
+  "name": "2048 Game Play 2048 Game Online",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1567730,
+    "cpmMin": 0.62,
+    "cpmMax": 1.24
+   }
+  },
+  "bidRequests": 1567730,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "puzzle games",
+   "browser games"
+  ]
+ },
+ {
+  "domain": "downdetector.sg",
+  "name": "downdetector.sg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1566963,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 1566963,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "singapore",
+  "niches": [
+   "service outages",
+   "status monitoring"
+  ]
+ },
+ {
+  "domain": "ign.com",
+  "name": "IGN Deutschland",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1544434,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 1544434,
+  "category": "gaming",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "video game news",
+   "game reviews",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "mathrubhumi.com",
+  "name": "Mathrubhumi: Latest Malayalam News | മലയാളം വാർത്തകൾ | Kerala News | Breaking News Malayalam | മാതൃഭൂമി News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1523027,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 1523027,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "kerala news",
+   "malayalam news",
+   "indian news"
+  ]
+ },
+ {
+  "domain": "traderie.com",
+  "name": "traderie.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1513390,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 1513390,
+  "category": "gaming",
+  "siteType": "marketplace",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "in-game item trading",
+   "game economies"
+  ]
+ },
+ {
+  "domain": "bbc.com",
+  "name": "bbc.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1505402,
+    "cpmMin": 1.16,
+    "cpmMax": 2.32
+   }
+  },
+  "bidRequests": 1505402,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "business",
+   "culture"
+  ],
+  "app": {
+   "bidRequests": 1461588,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1461588,
+     "cpmMin": 0.74,
+     "cpmMax": 3.76
+    }
+   },
+   "names": [
+    "BBC: World News & Stories"
+   ]
+  }
+ },
+ {
+  "domain": "usatoday.com",
+  "name": "Latest World & National News & Headlines USATODAY.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1503171,
+    "cpmMin": 0.98,
+    "cpmMax": 1.96
+   }
+  },
+  "bidRequests": 1503171,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us news",
+   "sports",
+   "product reviews"
+  ]
+ },
+ {
+  "domain": "ultimate-guitar.com",
+  "name": "ULTIMATE GUITAR TABS 1M+ songs catalog with free Chords, Guitar Tabs, Bass Tabs, Ukulele Chords and Guitar Pro Tabs!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1493171,
+    "cpmMin": 4.3,
+    "cpmMax": 8.6
+   }
+  },
+  "bidRequests": 1493171,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "guitar tabs",
+   "chords",
+   "music"
+  ]
+ },
+ {
+  "domain": "biblegateway.com",
+  "name": "BibleGateway.com: A searchable online Bible in over 150 versions and 50 languages.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1469873,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 1469873,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "bible",
+   "religion",
+   "scripture lookup"
+  ]
+ },
+ {
+  "domain": "macrumors.com",
+  "name": "MacRumors: Apple News and Rumors",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1469390,
+    "cpmMin": 1.18,
+    "cpmMax": 2.36
+   }
+  },
+  "bidRequests": 1469390,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "apple news",
+   "gadgets",
+   "tech forums"
+  ]
+ },
+ {
+  "domain": "creaders.net",
+  "name": "万维读者网首页（电脑版）",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1436612,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 1436612,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese-language news",
+   "overseas chinese",
+   "forums"
+  ]
+ },
+ {
+  "domain": "perchance.org",
+  "name": "perchance.org",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1423005,
+    "cpmMin": 0.2,
+    "cpmMax": 0.4
+   }
+  },
+  "bidRequests": 1423005,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "random generators",
+   "ai generators"
+  ]
+ },
+ {
+  "domain": "kprofiles.com",
+  "name": "kprofiles.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1408577,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 1408577,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "k-pop",
+   "idol profiles",
+   "korean entertainment"
+  ]
+ },
+ {
+  "domain": "feathermc.com",
+  "name": "Feather Client",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1406780,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 1406780,
+  "category": "gaming",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "minecraft client",
+   "game mods"
+  ]
+ },
+ {
+  "domain": "worldofbuzz.com",
+  "name": "WORLD OF BUZZ | Discover Great Stories Daily",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1397063,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 1397063,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia viral news",
+   "lifestyle",
+   "trending stories"
+  ]
+ },
+ {
+  "domain": "fortune.com",
+  "name": "Fortune Fortune 500 Daily & Breaking Business News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1391446,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 1391446,
+  "category": "business & finance news",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "business news",
+   "companies",
+   "finance"
+  ]
+ },
+ {
+  "domain": "thewoksoflife.com",
+  "name": "thewoksoflife.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1391199,
+    "cpmMin": 1.36,
+    "cpmMax": 2.72
+   }
+  },
+  "bidRequests": 1391199,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese recipes",
+   "home cooking",
+   "asian food"
+  ]
+ },
+ {
+  "domain": "tomshardware.com",
+  "name": "Tom's Hardware: For The Hardcore PC Enthusiast",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1390270,
+    "cpmMin": 1.38,
+    "cpmMax": 2.76
+   }
+  },
+  "bidRequests": 1390270,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "pc hardware",
+   "tech reviews",
+   "gaming pcs"
+  ]
+ },
+ {
+  "domain": "tftacademy.com",
+  "name": "TFT Academy | Best TFT Comps curated by Dishsoap and Frodan, Updated daily",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1389521,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 1389521,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "teamfight tactics",
+   "game strategy",
+   "comps guides"
+  ]
+ },
+ {
+  "domain": "liveonlineradio.net",
+  "name": "Live Online Radio Listen Popular Online Radio Station",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1365131,
+    "cpmMin": 0.64,
+    "cpmMax": 1.28
+   }
+  },
+  "bidRequests": 1365131,
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "online radio",
+   "streaming"
+  ]
+ },
+ {
+  "domain": "beebom.com",
+  "name": "Beebom Video Game News, Codes, Guides, and Reviews",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1332352,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 1332352,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "video game guides",
+   "tech news",
+   "gadget reviews"
+  ]
+ },
+ {
+  "domain": "huaren.us",
+  "name": "huaren.us",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1321037,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 1321037,
+  "category": "other",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese-american community",
+   "lifestyle discussion",
+   "family"
+  ]
+ },
+ {
+  "domain": "dinamani.com",
+  "name": "Tamil News Online | தமிழ் செய்திகள் | Tamil News Paper | Latest Tamil News | Today news in Tamil",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1301659,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 1301659,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Tamil news",
+   "Indian politics",
+   "Tamil Nadu"
+  ]
+ },
+ {
+  "domain": "news18.com",
+  "name": "news18.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1278517,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 1278517,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Indian news",
+   "politics",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "medal.tv",
+  "name": "Record, Edit, and Share Your Game Clips & Gameplay Medal | Medal.tv",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1275752,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 1275752,
+  "category": "gaming",
+  "siteType": "video or audio",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "game clips",
+   "gameplay recording"
+  ]
+ },
+ {
+  "domain": "salary.sg",
+  "name": "salary.sg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1274534,
+    "cpmMin": 0.88,
+    "cpmMax": 1.76
+   }
+  },
+  "bidRequests": 1274534,
+  "category": "business & finance news",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "personal finance",
+   "salaries",
+   "CPF",
+   "investing"
+  ]
+ },
+ {
+  "domain": "sportskeeda.com",
+  "name": "sportskeeda.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1251537,
+    "cpmMin": 0.78,
+    "cpmMax": 1.56
+   }
+  },
+  "bidRequests": 1251537,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "sports news",
+   "esports",
+   "wrestling",
+   "football"
+  ]
+ },
+ {
+  "domain": "anandabazar.com",
+  "name": "anandabazar.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1244043,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 1244043,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Bengali news",
+   "West Bengal",
+   "Indian news"
+  ]
+ },
+ {
+  "domain": "mzamin.com",
+  "name": "mzamin.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1235860,
+    "cpmMin": 0.8,
+    "cpmMax": 1.6
+   }
+  },
+  "bidRequests": 1235860,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Bangladesh news",
+   "Bengali news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "goodreturns.in",
+  "name": "Share Market Tips, BSE/NSE India, Gold Rate, Mutual Funds, Finance & Currency News Goodreturns",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1232693,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 1232693,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Indian stock market",
+   "gold rates",
+   "mutual funds",
+   "personal finance"
+  ]
+ },
+ {
+  "domain": "accuweather.com",
+  "name": "accuweather.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1231444,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 1231444,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "weather forecasts"
+  ]
+ },
+ {
+  "domain": "pokemongohub.net",
+  "name": "pokemongohub.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1229513,
+    "cpmMin": 0.9,
+    "cpmMax": 1.8
+   }
+  },
+  "bidRequests": 1229513,
+  "category": "gaming",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "Pokemon GO",
+   "game guides",
+   "mobile gaming"
+  ]
+ },
+ {
+  "domain": "aol.com",
+  "name": "News, Politics, Sports, Mail & Latest Headlines AOL.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1207592,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 1207592,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "news",
+   "politics",
+   "sports",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "economictimes.com",
+  "name": "Business News Live, Share Market News Read Latest Finance News, IPO, Mutual Funds News The Economic Times",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1198328,
+    "cpmMin": 2.02,
+    "cpmMax": 4.04
+   }
+  },
+  "bidRequests": 1198328,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "business news",
+   "stock market",
+   "IPOs",
+   "Indian economy"
+  ]
+ },
+ {
+  "domain": "chatib.us",
+  "name": "chatib.us",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1194409,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 1194409,
+  "category": "other",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "anonymous chat"
+  ]
+ },
+ {
+  "domain": "bharian.com.my",
+  "name": "bharian.com.my",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1181994,
+    "cpmMin": 0.08,
+    "cpmMax": 0.16
+   }
+  },
+  "bidRequests": 1181994,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Malay news",
+   "Malaysia",
+   "politics"
+  ]
+ },
+ {
+  "domain": "bulbagarden.net",
+  "name": "bulbagarden.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1161396,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 1161396,
+  "category": "gaming",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "Pokemon",
+   "fan community",
+   "game wiki"
+  ]
+ },
+ {
+  "domain": "citationmachine.net",
+  "name": "Citation Machine®: Format & Generate APA, MLA, & Chicago",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1141252,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 1141252,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "citation generator",
+   "academic writing"
+  ]
+ },
+ {
+  "domain": "racingnews365.com",
+  "name": "F1 news, live F1, results & standings | RacingNews365",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1135722,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 1135722,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "Formula 1",
+   "motorsport"
+  ]
+ },
+ {
+  "domain": "foodiesg.com",
+  "name": "foodiesg.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1121363,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 1121363,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "Singapore food",
+   "restaurant reviews",
+   "hawker food"
+  ]
+ },
+ {
+  "domain": "sinchew.com.my",
+  "name": "sinchew.com.my",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1118925,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 1118925,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Chinese-language news",
+   "Malaysia"
+  ]
+ },
+ {
+  "domain": "dailythanthi.com",
+  "name": "Tamil News | தமிழ் செய்திகள் | Latest Tamil News Live| Today Breaking News & Headlines",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1118071,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 1118071,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Tamil news",
+   "Tamil Nadu",
+   "Indian news"
+  ]
+ },
+ {
+  "domain": "viber.com",
+  "name": "Home | Viber",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1117433,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 1117433,
+  "category": "technology",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "messaging app"
+  ],
+  "app": {
+   "bidRequests": 2423543,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2423543,
+     "cpmMin": 0.8,
+     "cpmMax": 1.6
+    }
+   },
+   "names": [
+    "Rakuten Viber Messenger"
+   ]
+  }
+ },
+ {
+  "domain": "glance.com",
+  "name": "glance.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1099147,
+    "cpmMin": 2.4,
+    "cpmMax": 4.8
+   }
+  },
+  "bidRequests": 1099147,
+  "category": "technology",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "lock screen content",
+   "mobile platform"
+  ]
+ },
+ {
+  "domain": "emojipedia.org",
+  "name": "📙 Emojipedia — 😃 Home of Emoji Meanings 💁👌🎍😍",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1094156,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 1094156,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "emoji meanings"
+  ]
+ },
+ {
+  "domain": "pcmag.com",
+  "name": "pcmag.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1089259,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 1089259,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadget reviews",
+   "software",
+   "consumer tech"
+  ]
+ },
+ {
+  "domain": "edhrec.com",
+  "name": "EDHREC",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1085737,
+    "cpmMin": 1.0,
+    "cpmMax": 2.0
+   }
+  },
+  "bidRequests": 1085737,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "Magic: The Gathering",
+   "Commander decks",
+   "card games"
+  ]
+ },
+ {
+  "domain": "wccftech.com",
+  "name": "wccftech.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1071687,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 1071687,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "PC hardware",
+   "gaming tech",
+   "gadgets"
+  ]
+ },
+ {
+  "domain": "geeky-gadgets.com",
+  "name": "geeky-gadgets.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1065231,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 1065231,
+  "category": "technology",
+  "siteType": "blog",
+  "region": "global",
+  "editorial": true,
+  "niches": [
+   "gadgets",
+   "consumer tech",
+   "product launches",
+   "tech deals"
+  ]
+ },
+ {
+  "domain": "trilltrill.jp",
+  "name": "TRILL【トリル】｜国内最大級のライフスタイル情報メディア",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1064817,
+    "cpmMin": 0.86,
+    "cpmMax": 1.72
+   }
+  },
+  "bidRequests": 1064817,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Japanese lifestyle",
+   "beauty",
+   "fashion"
+  ]
+ },
+ {
+  "domain": "finviz.com",
+  "name": "Finviz Stock Screener",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1042634,
+    "cpmMin": 1.04,
+    "cpmMax": 2.08
+   }
+  },
+  "bidRequests": 1042634,
+  "category": "business & finance news",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "stock screener",
+   "market data"
+  ]
+ },
+ {
+  "domain": "geeksforgeeks.org",
+  "name": "GeeksforGeeks | Your All in One Learning Portal",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1034959,
+    "cpmMin": 0.9,
+    "cpmMax": 1.8
+   }
+  },
+  "bidRequests": 1034959,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "programming tutorials",
+   "computer science",
+   "coding interviews"
+  ]
+ },
+ {
+  "domain": "wheelofnames.com",
+  "name": "Wheel of Names",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1027707,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 1027707,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "random picker"
+  ]
+ },
+ {
+  "domain": "flightaware.com",
+  "name": "FlightAware Flight Tracker / Flight Status",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1010104,
+    "cpmMin": 0.62,
+    "cpmMax": 1.24
+   }
+  },
+  "bidRequests": 1010104,
+  "category": "travel",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "flight tracking",
+   "flight status"
+  ]
+ },
+ {
+  "domain": "khaleejtimes.com",
+  "name": "Khaleej Times Dubai News, UAE News, Gulf, News, Latest news, Arab news, Gulf News, Dubai Labour News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1009857,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 1009857,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "UAE news",
+   "Gulf news",
+   "business"
+  ]
+ },
+ {
+  "domain": "footyheadlines.com",
+  "name": "Footy Headlines",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1006644,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 1006644,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "football kits",
+   "football boots",
+   "sportswear"
+  ]
+ },
+ {
+  "domain": "manoramaonline.com",
+  "name": "Manorama Online: Malayalam Breaking News | Kerala Local News | Politics | Videos | Podcasts | Business | Sports | Movie | Lifestyle | Malayala Manorama News Paper",
+  "creative": {
+   "Banner": {
+    "bidRequests": 992373,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 992373,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "Malayalam news",
+   "Kerala",
+   "Indian news"
+  ]
+ },
+ {
+  "domain": "whowhatwear.com",
+  "name": "Celebrity Style and Fashion Trend Coverage | Who What Wear",
+  "creative": {
+   "Banner": {
+    "bidRequests": 988509,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 988509,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "fashion trends",
+   "celebrity style",
+   "shopping"
+  ]
+ },
+ {
+  "domain": "flaticon.com",
+  "name": "flaticon.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 988216,
+    "cpmMin": 1.04,
+    "cpmMax": 2.08
+   }
+  },
+  "bidRequests": 988216,
+  "category": "utilities & tools",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "icons",
+   "graphic assets"
+  ]
+ },
+ {
+  "domain": "runrepeat.com",
+  "name": "1,000+ shoes reviewed and cut in half | RunRepeat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 977679,
+    "cpmMin": 3.72,
+    "cpmMax": 7.44
+   }
+  },
+  "bidRequests": 977679,
+  "category": "sports",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "running shoes",
+   "shoe reviews",
+   "sneakers"
+  ]
+ },
+ {
+  "domain": "weather.com",
+  "name": "Nationaler und lokaler Wetterradar, tägliche Vorhersage, Orkane und Informationen von The Weather Channel und weather.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 967148,
+    "cpmMin": 1.32,
+    "cpmMax": 2.64
+   }
+  },
+  "bidRequests": 967148,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "weather forecasts",
+   "weather radar"
+  ]
+ },
+ {
+  "domain": "thingiverse.com",
+  "name": "Thingiverse The community for Open Hardware",
+  "creative": {
+   "Banner": {
+    "bidRequests": 960381,
+    "cpmMin": 0.78,
+    "cpmMax": 1.56
+   }
+  },
+  "bidRequests": 960381,
+  "category": "technology",
+  "siteType": "forum or community",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "3D printing",
+   "3D models"
+  ]
+ },
+ {
+  "domain": "whattocooktoday.com",
+  "name": "What To Cook Today Tried and True Asian Recipes & Tutorials",
+  "creative": {
+   "Banner": {
+    "bidRequests": 943559,
+    "cpmMin": 1.3,
+    "cpmMax": 2.6
+   }
+  },
+  "bidRequests": 943559,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "Asian recipes",
+   "home cooking"
+  ]
+ },
+ {
+  "domain": "bd-pratidin.com",
+  "name": "bd-pratidin.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 937051,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 937051,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "region": "regional (asia)",
+  "editorial": true,
+  "niches": [
+   "Bangladesh news",
+   "Bengali-language news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "ezgif.com",
+  "name": "Ezgif free online animated GIF editor",
+  "creative": {
+   "Banner": {
+    "bidRequests": 936100,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 936100,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "gif editing",
+   "image conversion",
+   "video tools"
+  ]
+ },
+ {
+  "domain": "thedailybeast.com",
+  "name": "The Daily Beast: The Latest in Politics, Media & Entertainment News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 935130,
+    "cpmMin": 0.88,
+    "cpmMax": 1.76
+   }
+  },
+  "bidRequests": 935130,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us politics",
+   "media",
+   "entertainment news"
+  ]
+ },
+ {
+  "domain": "thepeoplesperson.com",
+  "name": "The Peoples Person | Manchester United News & Transfers Man United News And Transfer News | The Peoples Person",
+  "creative": {
+   "Banner": {
+    "bidRequests": 932065,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 932065,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "manchester united",
+   "football transfers"
+  ]
+ },
+ {
+  "domain": "quizlet.com",
+  "name": "quizlet.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 920859,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 920859,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "flashcards",
+   "study tools",
+   "exam prep"
+  ]
+ },
+ {
+  "domain": "brightside.me",
+  "name": "brightside.me",
+  "creative": {
+   "Banner": {
+    "bidRequests": 915708,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 915708,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "viral stories",
+   "life hacks",
+   "relationships"
+  ]
+ },
+ {
+  "domain": "supercarblondie.com",
+  "name": "Supercar Blondie – Automotive, Tech, Luxury & Lifestyle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 913263,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 913263,
+  "category": "automotive",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "supercars",
+   "luxury lifestyle",
+   "tech"
+  ]
+ },
+ {
+  "domain": "futbin.com",
+  "name": "futbin.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 911860,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 911860,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ea fc ultimate team",
+   "player prices",
+   "squad builder"
+  ],
+  "app": {
+   "bidRequests": 433100,
+   "creative": {
+    "Banner": {
+     "bidRequests": 433100,
+     "cpmMin": 0.8,
+     "cpmMax": 1.6
+    }
+   },
+   "names": [
+    "FUTBIN FC 27 Evolutions & More"
+   ]
+  }
+ },
+ {
+  "domain": "girleatworld.net",
+  "name": "Girl Eat World A girl's adventure in food and travel around the world",
+  "creative": {
+   "Banner": {
+    "bidRequests": 905303,
+    "cpmMin": 1.8,
+    "cpmMax": 3.6
+   }
+  },
+  "bidRequests": 905303,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "food travel",
+   "travel guides",
+   "itineraries"
+  ]
+ },
+ {
+  "domain": "ibancalculator.com",
+  "name": "ibancalculator.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 899217,
+    "cpmMin": 1.58,
+    "cpmMax": 3.16
+   }
+  },
+  "bidRequests": 899217,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "iban validation",
+   "banking codes"
+  ]
+ },
+ {
+  "domain": "soccersuck.com",
+  "name": "#### ได้รู้ความจริง ได้ยิ่งกว่าฟุตบอล อ่าน soccersuck.com####",
+  "creative": {
+   "Banner": {
+    "bidRequests": 894518,
+    "cpmMin": 0.08,
+    "cpmMax": 0.16
+   }
+  },
+  "bidRequests": 894518,
+  "category": "regional non-English news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "thai football",
+   "football news",
+   "fan discussion"
+  ]
+ },
+ {
+  "domain": "manilatimes.net",
+  "name": "The Manila Times | News | Opinion | Philippines | Asia | World",
+  "creative": {
+   "Banner": {
+    "bidRequests": 891613,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 891613,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "philippines news",
+   "opinion",
+   "business"
+  ]
+ },
+ {
+  "domain": "quora.com",
+  "name": "quora.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 889230,
+    "cpmMin": 0.88,
+    "cpmMax": 1.76
+   }
+  },
+  "bidRequests": 889230,
+  "category": "education & reference",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "q&a",
+   "advice",
+   "product recommendations"
+  ]
+ },
+ {
+  "domain": "whathifi.com",
+  "name": "What Hi Fi? | Tech news and reviews",
+  "creative": {
+   "Banner": {
+    "bidRequests": 882583,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 882583,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "audio equipment",
+   "tvs",
+   "home cinema"
+  ]
+ },
+ {
+  "domain": "astro-seek.com",
+  "name": "astro-seek.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 880357,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 880357,
+  "category": "other",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "astrology",
+   "horoscopes",
+   "birth chart calculator"
+  ]
+ },
+ {
+  "domain": "stomp.sg",
+  "name": "Stomp: Singapore Viral News & Community Stories from SG",
+  "creative": {
+   "Banner": {
+    "bidRequests": 879776,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 879776,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "viral news",
+   "citizen journalism",
+   "singapore community"
+  ]
+ },
+ {
+  "domain": "football365.com",
+  "name": "Football365 Football news, transfers, tables, stats, fixtures and results",
+  "creative": {
+   "Banner": {
+    "bidRequests": 877399,
+    "cpmMin": 1.74,
+    "cpmMax": 3.48
+   }
+  },
+  "bidRequests": 877399,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "premier league",
+   "football transfers",
+   "opinion"
+  ]
+ },
+ {
+  "domain": "pockettactics.com",
+  "name": "Pocket Tactics",
+  "creative": {
+   "Banner": {
+    "bidRequests": 876613,
+    "cpmMin": 0.96,
+    "cpmMax": 1.92
+   }
+  },
+  "bidRequests": 876613,
+  "category": "gaming",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "mobile games",
+   "game guides",
+   "game reviews"
+  ]
+ },
+ {
+  "domain": "newsweek.com",
+  "name": "Newsweek Latest Breaking News, US, World, Politics, Business, Tech and Videos.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 848050,
+    "cpmMin": 1.64,
+    "cpmMax": 3.28
+   }
+  },
+  "bidRequests": 848050,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us news",
+   "world politics",
+   "business"
+  ]
+ },
+ {
+  "domain": "football.london",
+  "name": "Football.London Latest news, comment, pictures from London clubs",
+  "creative": {
+   "Banner": {
+    "bidRequests": 845911,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 845911,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "london football clubs",
+   "premier league"
+  ]
+ },
+ {
+  "domain": "whatismyipaddress.com",
+  "name": "whatismyipaddress.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 843831,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 843831,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ip lookup",
+   "network tools"
+  ]
+ },
+ {
+  "domain": "inquirer.net",
+  "name": "Latest Philippines Headlines, Breaking News, Media & Sports News | Inquirer.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 841952,
+    "cpmMin": 0.62,
+    "cpmMax": 1.24
+   }
+  },
+  "bidRequests": 841952,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "philippines news",
+   "entertainment",
+   "sports"
+  ]
+ },
+ {
+  "domain": "vnexpress.net",
+  "name": "Báo VnExpress Báo tiếng Việt nhiều người xem nhất",
+  "creative": {
+   "Banner": {
+    "bidRequests": 839814,
+    "cpmMin": 1.66,
+    "cpmMax": 3.32
+   }
+  },
+  "bidRequests": 839814,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "vietnam news",
+   "business",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "guangming.com.my",
+  "name": "光明日报 – 每一天的好朋友",
+  "creative": {
+   "Banner": {
+    "bidRequests": 839615,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 839615,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysian chinese news",
+   "local news"
+  ]
+ },
+ {
+  "domain": "taiwanderers.com",
+  "name": "taiwanderers.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 834647,
+    "cpmMin": 1.68,
+    "cpmMax": 3.36
+   }
+  },
+  "bidRequests": 834647,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "taiwan travel",
+   "travel guides",
+   "food"
+  ]
+ },
+ {
+  "domain": "interestingengineering.com",
+  "name": "Interesting Engineering | Engineering, Tech and Science News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 822305,
+    "cpmMin": 1.4,
+    "cpmMax": 2.8
+   }
+  },
+  "bidRequests": 822305,
+  "category": "science & culture",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "engineering",
+   "tech innovation",
+   "science"
+  ]
+ },
+ {
+  "domain": "sammobile.com",
+  "name": "SamMobile Your source for all Samsung news",
+  "creative": {
+   "Banner": {
+    "bidRequests": 817520,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 817520,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "samsung",
+   "smartphones",
+   "android"
+  ]
+ },
+ {
+  "domain": "militarnyi.com",
+  "name": "militarnyi.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 815970,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 815970,
+  "category": "other",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "military news",
+   "defense",
+   "ukraine war"
+  ]
+ },
+ {
+  "domain": "skysports.com",
+  "name": "Sky Sports Sports News, Transfers, Scores | Watch Live Sport",
+  "creative": {
+   "Banner": {
+    "bidRequests": 815920,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 815920,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "football",
+   "cricket",
+   "f1"
+  ]
+ },
+ {
+  "domain": "nomadette.com",
+  "name": "Home Nomadette",
+  "creative": {
+   "Banner": {
+    "bidRequests": 812225,
+    "cpmMin": 1.44,
+    "cpmMax": 2.88
+   }
+  },
+  "bidRequests": 812225,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore recipes",
+   "food",
+   "travel"
+  ]
+ },
+ {
+  "domain": "zdnet.com",
+  "name": "News and Advice on the World's Latest Innovations | ZDNET ZDNET",
+  "creative": {
+   "Banner": {
+    "bidRequests": 807244,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 807244,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "tech news",
+   "product reviews",
+   "enterprise it"
+  ]
+ },
+ {
+  "domain": "si.com",
+  "name": "si.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 804866,
+    "cpmMin": 1.34,
+    "cpmMax": 2.68
+   }
+  },
+  "bidRequests": 804866,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us sports",
+   "nfl",
+   "nba"
+  ]
+ },
+ {
+  "domain": "famousbirthdays.com",
+  "name": "Famous Birthdays: Today’s Celebrity Birthdays",
+  "creative": {
+   "Banner": {
+    "bidRequests": 794050,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 794050,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "celebrity profiles",
+   "birthdays"
+  ]
+ },
+ {
+  "domain": "boredpanda.com",
+  "name": "Bored Panda The Only Magazine For Pandas",
+  "creative": {
+   "Banner": {
+    "bidRequests": 791309,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 791309,
+  "category": "entertainment & celebrity",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "viral content",
+   "humor",
+   "art"
+  ]
+ },
+ {
+  "domain": "nickkembel.com",
+  "name": "Home Nickkembel Travels",
+  "creative": {
+   "Banner": {
+    "bidRequests": 791005,
+    "cpmMin": 1.42,
+    "cpmMax": 2.84
+   }
+  },
+  "bidRequests": 791005,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "taiwan travel",
+   "travel guides",
+   "food"
+  ]
+ },
+ {
+  "domain": "malaymail.com",
+  "name": "Malay Mail | Breaking News, Malaysia, World, Lifestyle News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 787353,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 787353,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia news",
+   "lifestyle",
+   "world news"
+  ]
+ },
+ {
+  "domain": "gearpatrol.com",
+  "name": "gearpatrol.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 785974,
+    "cpmMin": 1.98,
+    "cpmMax": 3.96
+   }
+  },
+  "bidRequests": 785974,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "men's gear",
+   "product reviews",
+   "style"
+  ]
+ },
+ {
+  "domain": "liquipedia.net",
+  "name": "liquipedia.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 784622,
+    "cpmMin": 1.44,
+    "cpmMax": 2.88
+   }
+  },
+  "bidRequests": 784622,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "esports wiki",
+   "tournaments"
+  ]
+ },
+ {
+  "domain": "hmetro.com.my",
+  "name": "Harian Metro | Berita Malaysia dan berita dunia terkini",
+  "creative": {
+   "Banner": {
+    "bidRequests": 780933,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 780933,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malay news",
+   "malaysia",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "sciencealert.com",
+  "name": "ScienceAlert : The Best in Science News And Amazing Breakthroughs",
+  "creative": {
+   "Banner": {
+    "bidRequests": 770027,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 770027,
+  "category": "science & culture",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "science news",
+   "space",
+   "health research"
+  ]
+ },
+ {
+  "domain": "invoice-generator.com",
+  "name": "Free Invoice Generator",
+  "creative": {
+   "Banner": {
+    "bidRequests": 764225,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 764225,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "invoicing",
+   "small business tools"
+  ]
+ },
+ {
+  "domain": "test-english.com",
+  "name": "test-english.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 757094,
+    "cpmMin": 0.14,
+    "cpmMax": 0.28
+   }
+  },
+  "bidRequests": 757094,
+  "category": "education & reference",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "English learning",
+   "grammar exercises",
+   "language tests"
+  ]
+ },
+ {
+  "domain": "garticphone.com",
+  "name": "garticphone.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 756383,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 756383,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "drawing game",
+   "party game"
+  ]
+ },
+ {
+  "domain": "dailyinqilab.com",
+  "name": "dailyinqilab.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 754936,
+    "cpmMin": 0.64,
+    "cpmMax": 1.28
+   }
+  },
+  "bidRequests": 754936,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "bangladesh news",
+   "bengali news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "downdetector.com",
+  "name": "downdetector.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 752908,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 752908,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "service outages",
+   "status monitoring"
+  ]
+ },
+ {
+  "domain": "24timezones.com",
+  "name": "World Clock — current time around the world",
+  "creative": {
+   "Banner": {
+    "bidRequests": 752800,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 752800,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "world clock",
+   "time zones"
+  ]
+ },
+ {
+  "domain": "stocktwits.com",
+  "name": "stocktwits.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 748661,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 748661,
+  "category": "business & finance news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "stock trading",
+   "investing",
+   "crypto"
+  ]
+ },
+ {
+  "domain": "visualcapitalist.com",
+  "name": "Visual Capitalist",
+  "creative": {
+   "Banner": {
+    "bidRequests": 745369,
+    "cpmMin": 0.94,
+    "cpmMax": 1.88
+   }
+  },
+  "bidRequests": 745369,
+  "category": "business & finance news",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "data visualization",
+   "markets",
+   "economics"
+  ]
+ },
+ {
+  "domain": "groundbanks.net",
+  "name": "GroundBanks Advanced Level Financial Solutions",
+  "creative": {
+   "Banner": {
+    "bidRequests": 744109,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 744109,
+  "category": "business & finance news",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "personal finance",
+   "banking"
+  ]
+ },
+ {
+  "domain": "cnet.com",
+  "name": "CNET: Product reviews, advice, how tos and the latest news CNET",
+  "creative": {
+   "Banner": {
+    "bidRequests": 736755,
+    "cpmMin": 0.62,
+    "cpmMax": 1.24
+   }
+  },
+  "bidRequests": 736755,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadgets",
+   "product reviews",
+   "tech news"
+  ]
+ },
+ {
+  "domain": "siliconcanals.com",
+  "name": "Silicon Canals | Technology, Power and Human Behaviour",
+  "creative": {
+   "Banner": {
+    "bidRequests": 735977,
+    "cpmMin": 2.78,
+    "cpmMax": 5.56
+   }
+  },
+  "bidRequests": 735977,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "startups",
+   "tech",
+   "european tech"
+  ]
+ },
+ {
+  "domain": "theguardian.com",
+  "name": "Latest news, sport and opinion from the Guardian",
+  "creative": {
+   "Banner": {
+    "bidRequests": 735423,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 735423,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "politics",
+   "opinion",
+   "sport"
+  ]
+ },
+ {
+  "domain": "hindustantimes.com",
+  "name": "Hindustan Times: Breaking News, Latest News, India News, World News & Cricket Today's Headlines | Hindustan Times",
+  "creative": {
+   "Banner": {
+    "bidRequests": 734030,
+    "cpmMin": 1.08,
+    "cpmMax": 2.16
+   }
+  },
+  "bidRequests": 734030,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "india news",
+   "cricket",
+   "world news"
+  ]
+ },
+ {
+  "domain": "8world.com",
+  "name": "8视界 新加坡最值得信赖的新闻平台，为您提供最全面的中文新闻 8world",
+  "creative": {
+   "Banner": {
+    "bidRequests": 724080,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 724080,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "chinese-language news",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "metatft.com",
+  "name": "MetaTFT Discover the TFT Meta with stats and data",
+  "creative": {
+   "Banner": {
+    "bidRequests": 722205,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 722205,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "teamfight tactics",
+   "game stats"
+  ]
+ },
+ {
+  "domain": "express.co.uk",
+  "name": "Latest UK and World News, Sport and Comment | Express.co.uk",
+  "creative": {
+   "Banner": {
+    "bidRequests": 721527,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 721527,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "uk news",
+   "sport",
+   "celebrity"
+  ]
+ },
+ {
+  "domain": "tetr.io",
+  "name": "TETR.IO",
+  "creative": {
+   "Banner": {
+    "bidRequests": 721430,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 721430,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "tetris",
+   "online games"
+  ]
+ },
+ {
+  "domain": "percentagecalculator.net",
+  "name": "Percentage Calculator",
+  "creative": {
+   "Banner": {
+    "bidRequests": 717870,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 717870,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "calculators",
+   "math"
+  ]
+ },
+ {
+  "domain": "randomwordgenerator.com",
+  "name": "randomwordgenerator.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 711930,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 711930,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "word generator",
+   "writing tools"
+  ]
+ },
+ {
+  "domain": "5v5world.co",
+  "name": "5v5world.co",
+  "creative": {
+   "Banner": {
+    "bidRequests": 703852,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 703852,
+  "category": "other",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "unknown"
+  ]
+ },
+ {
+  "domain": "sallysbakingaddiction.com",
+  "name": "sallysbakingaddiction.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 696321,
+    "cpmMin": 1.22,
+    "cpmMax": 2.44
+   }
+  },
+  "bidRequests": 696321,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "baking",
+   "recipes",
+   "desserts"
+  ]
+ },
+ {
+  "domain": "centredevils.co.uk",
+  "name": "centredevils the latest Manchester United news and transfers",
+  "creative": {
+   "Banner": {
+    "bidRequests": 694592,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 694592,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "manchester united",
+   "football transfers"
+  ]
+ },
+ {
+  "domain": "pixnet.net",
+  "name": "痞客邦PIXNET 掌握最新熱門話題貼文、短影音，讓生活充滿靈感!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 686582,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 686582,
+  "category": "lifestyle & fashion",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "taiwan blogs",
+   "lifestyle",
+   "food",
+   "travel"
+  ]
+ },
+ {
+  "domain": "cari.com.my",
+  "name": "cari.com.my",
+  "creative": {
+   "Banner": {
+    "bidRequests": 679657,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 679657,
+  "category": "regional non-English news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia forum",
+   "chinese-language",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "imagetotext.info",
+  "name": "Image to Text (Extract Text From Image)",
+  "creative": {
+   "Banner": {
+    "bidRequests": 676933,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 676933,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ocr",
+   "image conversion"
+  ]
+ },
+ {
+  "domain": "japantimes.co.jp",
+  "name": "The Japan Times News On Japan, Business News, Opinion, Sports, Entertainment And More",
+  "creative": {
+   "Banner": {
+    "bidRequests": 673874,
+    "cpmMin": 0.24,
+    "cpmMax": 0.48
+   }
+  },
+  "bidRequests": 673874,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "japan news",
+   "business",
+   "culture"
+  ]
+ },
+ {
+  "domain": "businesstimes.com.sg",
+  "name": "The Business Times Singapore Business News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 673009,
+    "cpmMin": 1.3,
+    "cpmMax": 2.6
+   }
+  },
+  "bidRequests": 673009,
+  "category": "business & finance news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore business",
+   "markets",
+   "property",
+   "personal finance"
+  ]
+ },
+ {
+  "domain": "chess-results.com",
+  "name": "Chess Results Server Chess results.com Homepage",
+  "creative": {
+   "Banner": {
+    "bidRequests": 668041,
+    "cpmMin": 0.2,
+    "cpmMax": 0.4
+   }
+  },
+  "bidRequests": 668041,
+  "category": "sports",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "chess tournaments",
+   "results"
+  ]
+ },
+ {
+  "domain": "wikihow.com",
+  "name": "wikiHow: How to instructions you can trust.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 667095,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 667095,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "how-to guides",
+   "diy",
+   "life tips"
+  ]
+ },
+ {
+  "domain": "hotcopper.com.au",
+  "name": "hotcopper.com.au",
+  "creative": {
+   "Banner": {
+    "bidRequests": 663677,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 663677,
+  "category": "business & finance news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "asx stocks",
+   "investing discussion"
+  ]
+ },
+ {
+  "domain": "digitalcameraworld.com",
+  "name": "Camera news, reviews and features",
+  "creative": {
+   "Banner": {
+    "bidRequests": 656825,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 656825,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "cameras",
+   "photography gear",
+   "reviews"
+  ]
+ },
+ {
+  "domain": "convertcase.net",
+  "name": "Convert Case | Convert upper case to lower case, lower case to upper case and more!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 655972,
+    "cpmMin": 1.4,
+    "cpmMax": 2.8
+   }
+  },
+  "bidRequests": 655972,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "text tools",
+   "case converter"
+  ]
+ },
+ {
+  "domain": "gametora.com",
+  "name": "gametora.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 652926,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 652926,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "umamusume",
+   "game database",
+   "gacha games"
+  ]
+ },
+ {
+  "domain": "yourtango.com",
+  "name": "YourTango | Opening Hearts, Building Relationships, Spreading Love",
+  "creative": {
+   "Banner": {
+    "bidRequests": 652094,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 652094,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "relationships",
+   "dating",
+   "astrology"
+  ]
+ },
+ {
+  "domain": "vlr.gg",
+  "name": "Valorant esports coverage | VLR.gg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 647028,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 647028,
+  "category": "gaming",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "valorant esports",
+   "esports news"
+  ]
+ },
+ {
+  "domain": "basketball-gm.com",
+  "name": "Basketball GM Free online single player basketball management simulation video game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 645503,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 645503,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "sports management game",
+   "basketball"
+  ]
+ },
+ {
+  "domain": "limitlesstcg.com",
+  "name": "Pokémon TCG tournament results, decklists, articles and more – Limitless",
+  "creative": {
+   "Banner": {
+    "bidRequests": 644877,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 644877,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "pokemon tcg",
+   "tournament results",
+   "decklists"
+  ]
+ },
+ {
+  "domain": "detik.com",
+  "name": "detikcom Informasi Berita Terkini dan Terbaru Hari Ini",
+  "creative": {
+   "Banner": {
+    "bidRequests": 643940,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 643940,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "indonesia news",
+   "entertainment",
+   "finance"
+  ]
+ },
+ {
+  "domain": "indiatoday.in",
+  "name": "Latest News, Breaking News Today Entertainment, Cricket, Business, Politics India Today",
+  "creative": {
+   "Banner": {
+    "bidRequests": 634327,
+    "cpmMin": 2.66,
+    "cpmMax": 5.32
+   }
+  },
+  "bidRequests": 634327,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "india news",
+   "cricket",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "mvnrepository.com",
+  "name": "mvnrepository.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 632872,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 632872,
+  "category": "technology",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "java libraries",
+   "maven",
+   "software development"
+  ]
+ },
+ {
+  "domain": "indianexpress.com",
+  "name": "indianexpress.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 631743,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 631743,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "india news",
+   "politics",
+   "explainers"
+  ]
+ },
+ {
+  "domain": "petapixel.com",
+  "name": "PetaPixel | Photography and Camera News, Reviews, and Inspiration",
+  "creative": {
+   "Banner": {
+    "bidRequests": 625631,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 625631,
+  "category": "technology",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "photography",
+   "camera reviews",
+   "gear news"
+  ]
+ },
+ {
+  "domain": "walkon.com",
+  "name": "WalkOn.com | Latest Liverpool News and Transfers",
+  "creative": {
+   "Banner": {
+    "bidRequests": 622336,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 622336,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "liverpool fc",
+   "football transfers"
+  ]
+ },
+ {
+  "domain": "fmscout.com",
+  "name": "fmscout.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 621980,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 621980,
+  "category": "gaming",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "football manager",
+   "game guides",
+   "football tactics"
+  ]
+ },
+ {
+  "domain": "jetpunk.com",
+  "name": "jetpunk.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 616507,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 616507,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "trivia quizzes",
+   "geography quizzes"
+  ]
+ },
+ {
+  "domain": "loveandlemons.com",
+  "name": "Love and Lemons Healthy, whole food, vegan and vegetarian recipes",
+  "creative": {
+   "Banner": {
+    "bidRequests": 614721,
+    "cpmMin": 1.34,
+    "cpmMax": 2.68
+   }
+  },
+  "bidRequests": 614721,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "vegetarian recipes",
+   "healthy cooking",
+   "vegan food"
+  ]
+ },
+ {
+  "domain": "skyscanner.com.sg",
+  "name": "Compare Cheap Flights & Book Air Tickets to Everywhere | Skyscanner",
+  "creative": {
+   "Banner": {
+    "bidRequests": 612943,
+    "cpmMin": 2.34,
+    "cpmMax": 4.68
+   }
+  },
+  "bidRequests": 612943,
+  "category": "travel",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "flight comparison",
+   "travel deals",
+   "travel guides"
+  ]
+ },
+ {
+  "domain": "singaporeuncensored.com",
+  "name": "singaporeuncensored.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 606143,
+    "cpmMin": 0.04,
+    "cpmMax": 0.08
+   }
+  },
+  "bidRequests": 606143,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "local opinion",
+   "current affairs"
+  ]
+ },
+ {
+  "domain": "goonernews.com",
+  "name": "GoonerNews.com | Latest Arsenal News and Transfers",
+  "creative": {
+   "Banner": {
+    "bidRequests": 606098,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 606098,
+  "category": "sports",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "arsenal fc",
+   "football transfers",
+   "premier league"
+  ]
+ },
+ {
+  "domain": "bcbay.com",
+  "name": "温哥华港湾首页（电脑版）",
+  "creative": {
+   "Banner": {
+    "bidRequests": 605218,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 605218,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "vancouver chinese community",
+   "canada news",
+   "chinese-language news"
+  ]
+ },
+ {
+  "domain": "chess.com",
+  "name": "Chess.com Play Chess Online Free Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 603702,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 603702,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "online chess",
+   "chess puzzles"
+  ]
+ },
+ {
+  "domain": "bgr.com",
+  "name": "BGR | Industry Leading Insights In Tech And Entertainment",
+  "creative": {
+   "Banner": {
+    "bidRequests": 603111,
+    "cpmMin": 2.12,
+    "cpmMax": 4.24
+   }
+  },
+  "bidRequests": 603111,
+  "category": "technology",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadgets",
+   "smartphones",
+   "entertainment news"
+  ]
+ },
+ {
+  "domain": "nytimes.com",
+  "name": "nytimes.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 601566,
+    "cpmMin": 0.86,
+    "cpmMax": 1.72
+   }
+  },
+  "bidRequests": 601566,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "politics",
+   "culture"
+  ]
+ },
+ {
+  "domain": "militarywatchmagazine.com",
+  "name": "militarywatchmagazine.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 599879,
+    "cpmMin": 0.86,
+    "cpmMax": 1.72
+   }
+  },
+  "bidRequests": 599879,
+  "category": "general news",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "defence",
+   "military technology",
+   "geopolitics"
+  ]
+ },
+ {
+  "domain": "lihkg.com",
+  "name": "LIHKG 討論區",
+  "creative": {
+   "Banner": {
+    "bidRequests": 598546,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 598546,
+  "category": "other",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "hong kong discussion",
+   "current affairs",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "misstamchiak.com",
+  "name": "misstamchiak.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 595837,
+    "cpmMin": 0.14,
+    "cpmMax": 0.28
+   }
+  },
+  "bidRequests": 595837,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore food reviews",
+   "hawker food",
+   "restaurants"
+  ]
+ },
+ {
+  "domain": "milelion.com",
+  "name": "The MileLion | Travel Better for Less",
+  "creative": {
+   "Banner": {
+    "bidRequests": 593731,
+    "cpmMin": 0.08,
+    "cpmMax": 0.16
+   }
+  },
+  "bidRequests": 593731,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "air miles",
+   "credit cards",
+   "premium travel"
+  ]
+ },
+ {
+  "domain": "tvbs.com.tw",
+  "name": "TVBS官方網站",
+  "creative": {
+   "Banner": {
+    "bidRequests": 592883,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 592883,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "taiwan news",
+   "tv news",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "webmd.com",
+  "name": "WebMD Better information. Better health.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 590306,
+    "cpmMin": 1.04,
+    "cpmMax": 2.08
+   }
+  },
+  "bidRequests": 590306,
+  "category": "health & wellness",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "medical information",
+   "health conditions",
+   "drugs"
+  ]
+ },
+ {
+  "domain": "time.com",
+  "name": "TIME | Current & Breaking News | National & World Updates",
+  "creative": {
+   "Banner": {
+    "bidRequests": 590145,
+    "cpmMin": 1.7,
+    "cpmMax": 3.4
+   }
+  },
+  "bidRequests": 590145,
+  "category": "general news",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "world news",
+   "politics",
+   "culture"
+  ]
+ },
+ {
+  "domain": "bangkokpost.com",
+  "name": "bangkokpost.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 587265,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 587265,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "thailand news",
+   "business",
+   "travel"
+  ]
+ },
+ {
+  "domain": "elvebredd.com",
+  "name": "elvebredd.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 584473,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 584473,
+  "category": "gaming",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "roblox",
+   "blox fruits trading values"
+  ]
+ },
+ {
+  "domain": "genius.com",
+  "name": "genius.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 582246,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 582246,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "song lyrics",
+   "music"
+  ]
+ },
+ {
+  "domain": "weatherspark.com",
+  "name": "weatherspark.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 580034,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 580034,
+  "category": "utilities & tools",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "weather data",
+   "climate"
+  ]
+ },
+ {
+  "domain": "mytuner-radio.com",
+  "name": "Free Internet Radio & Podcasts Listen Online | myTuner Radio",
+  "creative": {
+   "Banner": {
+    "bidRequests": 580033,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 580033,
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "internet radio",
+   "podcasts"
+  ]
+ },
+ {
+  "domain": "scitechdaily.com",
+  "name": "scitechdaily.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 579936,
+    "cpmMin": 1.56,
+    "cpmMax": 3.12
+   }
+  },
+  "bidRequests": 579936,
+  "category": "science & culture",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "science news",
+   "technology",
+   "health research"
+  ]
+ },
+ {
+  "domain": "baeldung.com",
+  "name": "baeldung.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 579000,
+    "cpmMin": 0.86,
+    "cpmMax": 1.72
+   }
+  },
+  "bidRequests": 579000,
+  "category": "technology",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "java programming",
+   "spring framework",
+   "software tutorials"
+  ]
+ },
+ {
+  "domain": "calculatorsoup.com",
+  "name": "Calculators | Calculator Soup",
+  "creative": {
+   "Banner": {
+    "bidRequests": 574553,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 574553,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "online calculators",
+   "math"
+  ]
+ },
+ {
+  "domain": "teamtalk.com",
+  "name": "TEAMtalk | Football transfers, transfer news, rumours and stats",
+  "creative": {
+   "Banner": {
+    "bidRequests": 572759,
+    "cpmMin": 1.32,
+    "cpmMax": 2.64
+   }
+  },
+  "bidRequests": 572759,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "football transfers",
+   "premier league",
+   "football news"
+  ]
+ },
+ {
+  "domain": "politico.com",
+  "name": "politico.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 565605,
+    "cpmMin": 1.86,
+    "cpmMax": 3.72
+   }
+  },
+  "bidRequests": 565605,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us politics",
+   "policy"
+  ]
+ },
+ {
+  "domain": "maangchi.com",
+  "name": "maangchi.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 564544,
+    "cpmMin": 1.26,
+    "cpmMax": 2.52
+   }
+  },
+  "bidRequests": 564544,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "korean recipes",
+   "home cooking"
+  ]
+ },
+ {
+  "domain": "robbreport.com",
+  "name": "Robb Report – The Best Luxury Cars, Jets, Yachts, Travel, Watches",
+  "creative": {
+   "Banner": {
+    "bidRequests": 563694,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 563694,
+  "category": "lifestyle & fashion",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "luxury cars",
+   "watches",
+   "luxury travel",
+   "yachts"
+  ]
+ },
+ {
+  "domain": "washingtonpost.com",
+  "name": "washingtonpost.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 560950,
+    "cpmMin": 0.64,
+    "cpmMax": 1.28
+   }
+  },
+  "bidRequests": 560950,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us news",
+   "politics",
+   "world news"
+  ]
+ },
+ {
+  "domain": "parade.com",
+  "name": "parade.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 557015,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 557015,
+  "category": "entertainment & celebrity",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "celebrity",
+   "lifestyle",
+   "food",
+   "health"
+  ]
+ },
+ {
+  "domain": "thevalue101.com",
+  "name": "thevalue101",
+  "creative": {
+   "Banner": {
+    "bidRequests": 556205,
+    "cpmMin": 0.96,
+    "cpmMax": 1.92
+   }
+  },
+  "bidRequests": 556205,
+  "category": "business & finance news",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "personal finance",
+   "investing",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "earth.com",
+  "name": "Earth and Environmental News, Videos and Images Earth.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 550827,
+    "cpmMin": 1.36,
+    "cpmMax": 2.72
+   }
+  },
+  "bidRequests": 550827,
+  "category": "science & culture",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "environment",
+   "nature",
+   "science news"
+  ]
+ },
+ {
+  "domain": "linguee.com",
+  "name": "Linguee | Dictionary for German, French, Spanish, and more",
+  "creative": {
+   "Banner": {
+    "bidRequests": 547359,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 547359,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "dictionary",
+   "translation"
+  ]
+ },
+ {
+  "domain": "live.com",
+  "name": "live.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 546363,
+    "cpmMin": 0.88,
+    "cpmMax": 1.76
+   }
+  },
+  "bidRequests": 546363,
+  "category": "utilities & tools",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "email",
+   "microsoft account"
+  ]
+ },
+ {
+  "domain": "companiesmarketcap.com",
+  "name": "Companies ranked by Market Cap CompaniesMarketCap.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 545500,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 545500,
+  "category": "business & finance news",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "market capitalisation",
+   "stock data"
+  ]
+ },
+ {
+  "domain": "looptube.io",
+  "name": "Repeat YouTube Videos | LoopTube",
+  "creative": {
+   "Banner": {
+    "bidRequests": 544950,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 544950,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "youtube repeat",
+   "video tool"
+  ]
+ },
+ {
+  "domain": "thetravelintern.com",
+  "name": "thetravelintern.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 543148,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 543148,
+  "category": "travel",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "travel guides",
+   "itineraries",
+   "budget travel"
+  ]
+ },
+ {
+  "domain": "thehindu.com",
+  "name": "thehindu.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 543102,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 543102,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "india news",
+   "politics",
+   "business"
+  ]
+ },
+ {
+  "domain": "wwd.com",
+  "name": "WWD – Women's Wear Daily brings you breaking news about the fashion industry, designers, celebrity trend setters, and extensive coverage of fashion week.",
+  "creative": {
+   "Banner": {
+    "bidRequests": 540319,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 540319,
+  "category": "lifestyle & fashion",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "fashion industry",
+   "designers",
+   "retail",
+   "beauty"
+  ]
+ },
+ {
+  "domain": "timesofisrael.com",
+  "name": "timesofisrael.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 539681,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 539681,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "israel news",
+   "middle east politics",
+   "world news"
+  ]
+ },
+ {
+  "domain": "whoscored.com",
+  "name": "whoscored.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 531685,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 531685,
+  "category": "sports",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "football statistics",
+   "live scores",
+   "player ratings"
+  ]
+ },
+ {
+  "domain": "faceit.com",
+  "name": "faceit.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 523763,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 523763,
+  "category": "gaming",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "esports",
+   "competitive gaming",
+   "matchmaking"
+  ]
+ },
+ {
+  "domain": "rotowire.com",
+  "name": "RotoWire Fantasy Football, Baseball, Basketball and More",
+  "creative": {
+   "Banner": {
+    "bidRequests": 522806,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 522806,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "fantasy sports",
+   "sports betting",
+   "player news"
+  ]
+ },
+ {
+  "domain": "prydwen.gg",
+  "name": "prydwen.gg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 521737,
+    "cpmMin": 2.84,
+    "cpmMax": 5.68
+   }
+  },
+  "bidRequests": 521737,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gacha games",
+   "tier lists",
+   "character guides"
+  ]
+ },
+ {
+  "domain": "newmitbbs.com",
+  "name": "新未名空间 首页",
+  "creative": {
+   "Banner": {
+    "bidRequests": 521434,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 521434,
+  "category": "other",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese diaspora",
+   "overseas chinese community",
+   "discussion"
+  ]
+ },
+ {
+  "domain": "cyclinguptodate.com",
+  "name": "CyclingUpToDate.com Your latest Cycling News, Results, Startlists, Previews, Prize Money, Calendars and Profiles",
+  "creative": {
+   "Banner": {
+    "bidRequests": 518404,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 518404,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "cycling news",
+   "race results",
+   "pro cycling"
+  ]
+ },
+ {
+  "domain": "rapidtables.com",
+  "name": "Online Calculators & Tools RapidTables.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 515908,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 515908,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "calculators",
+   "unit conversion",
+   "math tools"
+  ]
+ },
+ {
+  "domain": "flashscore.com",
+  "name": "Football Live Scores, Latest Football Results | Flashscore.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 513960,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 513960,
+  "category": "sports",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "live scores",
+   "football results",
+   "sports data"
+  ],
+  "app": {
+   "bidRequests": 2256048,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2256048,
+     "cpmMin": 0.86,
+     "cpmMax": 2.36
+    }
+   },
+   "names": [
+    "Flashscore: Ergebnisse & News",
+    "Flashscore: Live Scores & News"
+   ]
+  }
+ },
+ {
+  "domain": "preppykitchen.com",
+  "name": "preppykitchen.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 512938,
+    "cpmMin": 1.22,
+    "cpmMax": 2.44
+   }
+  },
+  "bidRequests": 512938,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "recipes",
+   "baking",
+   "home cooking"
+  ]
+ },
+ {
+  "domain": "tumblr.com",
+  "name": "tumblr.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 512557,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 512557,
+  "category": "other",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "social blogging",
+   "fandom",
+   "art"
+  ]
+ },
+ {
+  "domain": "myinstants.com",
+  "name": "Myinstants | The largest instant sound buttons website in Germany!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 511475,
+    "cpmMin": 1.14,
+    "cpmMax": 2.28
+   }
+  },
+  "bidRequests": 511475,
+  "category": "entertainment & celebrity",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "sound buttons",
+   "memes",
+   "sound effects"
+  ]
+ },
+ {
+  "domain": "colonist.io",
+  "name": "colonist.io",
+  "creative": {
+   "Banner": {
+    "bidRequests": 507932,
+    "cpmMin": 0.2,
+    "cpmMax": 0.4
+   }
+  },
+  "bidRequests": 507932,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "board games",
+   "online strategy games"
+  ]
+ },
+ {
+  "domain": "sudoku.com",
+  "name": "Play Free Sudoku online solve web sudoku puzzles",
+  "creative": {
+   "Banner": {
+    "bidRequests": 506997,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 506997,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "puzzles",
+   "sudoku",
+   "brain games"
+  ]
+ },
+ {
+  "domain": "ladbible.com",
+  "name": "LADbible Redefining Entertainment & News For a Social Generation",
+  "creative": {
+   "Banner": {
+    "bidRequests": 501428,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 501428,
+  "category": "entertainment & celebrity",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "viral news",
+   "entertainment",
+   "pop culture"
+  ]
+ },
+ {
+  "domain": "fut.gg",
+  "name": "EA FC 27 Players, Prices, and Squad Builder FUT.GG",
+  "creative": {
+   "Banner": {
+    "bidRequests": 500619,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 500619,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "ea fc ultimate team",
+   "player prices",
+   "squad builder"
+  ]
+ },
+ {
+  "domain": "backchina.com",
+  "name": "backchina.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 496568,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 496568,
+  "category": "regional non-English news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "chinese news",
+   "overseas chinese",
+   "discussion"
+  ]
+ },
+ {
+  "domain": "az24.vn",
+  "name": "Kết quả xổ số ba miền XS3M XS3MIEN KQXS 3 miền hôm nay",
+  "creative": {
+   "Banner": {
+    "bidRequests": 495118,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 495118,
+  "category": "regional non-English news",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "regional (asia)",
+  "niches": [
+   "vietnam lottery results",
+   "xo so"
+  ]
+ },
+ {
+  "domain": "tipranks.com",
+  "name": "tipranks.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 495015,
+    "cpmMin": 1.28,
+    "cpmMax": 2.56
+   }
+  },
+  "bidRequests": 495015,
+  "category": "business & finance news",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "stock analysis",
+   "analyst ratings",
+   "investing"
+  ]
+ },
+ {
+  "domain": "rollingstone.com",
+  "name": "Rolling Stone – Music, Film, TV and Political News Coverage",
+  "creative": {
+   "Banner": {
+    "bidRequests": 493794,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 493794,
+  "category": "entertainment & celebrity",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "music",
+   "film and tv",
+   "culture",
+   "politics"
+  ]
+ },
+ {
+  "domain": "t3.com",
+  "name": "Smarter Living | T3",
+  "creative": {
+   "Banner": {
+    "bidRequests": 492355,
+    "cpmMin": 1.4,
+    "cpmMax": 2.8
+   }
+  },
+  "bidRequests": 492355,
+  "category": "technology",
+  "siteType": "magazine",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "gadgets",
+   "product reviews",
+   "smart home",
+   "lifestyle tech"
+  ]
+ },
+ {
+  "domain": "gladly.io",
+  "name": "gladly.io",
+  "creative": {
+   "Banner": {
+    "bidRequests": 491248,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 491248,
+  "category": "other",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "online services"
+  ]
+ },
+ {
+  "domain": "wp.pl",
+  "name": "Wirtualna Polska Wszystko co ważne www.wp.pl",
+  "creative": {
+   "Banner": {
+    "bidRequests": 489031,
+    "cpmMin": 1.34,
+    "cpmMax": 2.68
+   }
+  },
+  "bidRequests": 489031,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "polish news",
+   "web portal",
+   "entertainment"
+  ]
+ },
+ {
+  "domain": "17track.net",
+  "name": "17track.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 488196,
+    "cpmMin": 0.18,
+    "cpmMax": 0.36
+   }
+  },
+  "bidRequests": 488196,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "package tracking",
+   "logistics"
+  ]
+ },
+ {
+  "domain": "probuilds.net",
+  "name": "ProBuilds.net",
+  "creative": {
+   "Banner": {
+    "bidRequests": 481351,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 481351,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "league of legends",
+   "champion builds",
+   "pro stats"
+  ]
+ },
+ {
+  "domain": "newsnow.co.uk",
+  "name": "NewsNow: The Independent News Discovery Platform",
+  "creative": {
+   "Banner": {
+    "bidRequests": 477610,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 477610,
+  "category": "general news",
+  "siteType": "other",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "news aggregation",
+   "uk news",
+   "sports news"
+  ]
+ },
+ {
+  "domain": "prothomalo.com",
+  "name": "প্রথম আলো | বাংলা নিউজ পেপার",
+  "creative": {
+   "Banner": {
+    "bidRequests": 477029,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 477029,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "bangladesh news",
+   "bengali news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "neopets.com",
+  "name": "neopets.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 476404,
+    "cpmMin": 0.12,
+    "cpmMax": 0.24
+   }
+  },
+  "bidRequests": 476404,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "virtual pets",
+   "browser games"
+  ]
+ },
+ {
+  "domain": "wionews.com",
+  "name": "wionews.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 475861,
+    "cpmMin": 12.46,
+    "cpmMax": 24.92
+   }
+  },
+  "bidRequests": 475861,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "world news",
+   "india news",
+   "geopolitics"
+  ]
+ },
+ {
+  "domain": "musicca.com",
+  "name": "Musicca – Learn music theory for free",
+  "creative": {
+   "Banner": {
+    "bidRequests": 475529,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 475529,
+  "category": "education & reference",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "music theory",
+   "music education",
+   "virtual instruments"
+  ]
+ },
+ {
+  "domain": "azlyrics.com",
+  "name": "AZLyrics request for access",
+  "creative": {
+   "Banner": {
+    "bidRequests": 475483,
+    "cpmMin": 0.64,
+    "cpmMax": 1.28
+   }
+  },
+  "bidRequests": 475483,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "song lyrics",
+   "music"
+  ]
+ },
+ {
+  "domain": "typing.com",
+  "name": "Learn to Type | Type Better | Type Faster Typing.com Typing.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 474645,
+    "cpmMin": 1.6,
+    "cpmMax": 3.2
+   }
+  },
+  "bidRequests": 474645,
+  "category": "education & reference",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "typing practice",
+   "keyboarding",
+   "digital literacy"
+  ]
+ },
+ {
+  "domain": "livescience.com",
+  "name": "Live Science | Latest science news and articles for those with curious minds",
+  "creative": {
+   "Banner": {
+    "bidRequests": 474410,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 474410,
+  "category": "science & culture",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "science news",
+   "health",
+   "space",
+   "nature"
+  ]
+ },
+ {
+  "domain": "stockcharts.com",
+  "name": "StockCharts | Advanced Charting, Screening & Financial Analysis Tools",
+  "creative": {
+   "Banner": {
+    "bidRequests": 471104,
+    "cpmMin": 1.46,
+    "cpmMax": 2.92
+   }
+  },
+  "bidRequests": 471104,
+  "category": "business & finance news",
+  "siteType": "tool or calculator",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "technical analysis",
+   "stock charts",
+   "market commentary"
+  ]
+ },
+ {
+  "domain": "dpreview.com",
+  "name": "Home | DPReview | Photography News, Gear Reviews & Community",
+  "creative": {
+   "Banner": {
+    "bidRequests": 470388,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 470388,
+  "category": "technology",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "cameras",
+   "photography gear",
+   "lens reviews"
+  ]
+ },
+ {
+  "domain": "playhop.com",
+  "name": "playhop.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 468427,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 468427,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "browser games",
+   "casual games"
+  ]
+ },
+ {
+  "domain": "planetf1.com",
+  "name": "F1 News, Live Race Coverage, Results & Standings | PlanetF1.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 465319,
+    "cpmMin": 1.0,
+    "cpmMax": 2.0
+   }
+  },
+  "bidRequests": 465319,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "formula 1",
+   "motorsport news",
+   "race coverage"
+  ]
+ },
+ {
+  "domain": "says.com",
+  "name": "SAYS Creating content for Malaysia's social media generation",
+  "creative": {
+   "Banner": {
+    "bidRequests": 464185,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 464185,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysia news",
+   "viral stories",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "dotabuff.com",
+  "name": "dotabuff.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 458582,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 458582,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "dota 2 stats",
+   "hero builds",
+   "match data"
+  ]
+ },
+ {
+  "domain": "barchart.com",
+  "name": "barchart.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 451061,
+    "cpmMin": 1.62,
+    "cpmMax": 3.24
+   }
+  },
+  "bidRequests": 451061,
+  "category": "business & finance news",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "market data",
+   "commodities",
+   "stock news"
+  ]
+ },
+ {
+  "domain": "rasamalaysia.com",
+  "name": "rasamalaysia.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 449061,
+    "cpmMin": 1.42,
+    "cpmMax": 2.84
+   }
+  },
+  "bidRequests": 449061,
+  "category": "food & dining",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "asian recipes",
+   "home cooking",
+   "malaysian cuisine"
+  ]
+ },
+ {
+  "domain": "sharejunction.com",
+  "name": "sharejunction.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 447986,
+    "cpmMin": 0.02,
+    "cpmMax": 0.04
+   }
+  },
+  "bidRequests": 447986,
+  "category": "business & finance news",
+  "siteType": "forum or community",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore stocks",
+   "investing",
+   "stock forum"
+  ]
+ },
+ {
+  "domain": "shellshock.io",
+  "name": "Shell Shockers 🍳 Also at shellgame.me",
+  "creative": {
+   "Banner": {
+    "bidRequests": 447891,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 447891,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "browser games",
+   "fps game"
+  ]
+ },
+ {
+  "domain": "mobalytics.gg",
+  "name": "mobalytics.gg",
+  "creative": {
+   "Banner": {
+    "bidRequests": 445938,
+    "cpmMin": 0.14,
+    "cpmMax": 0.28
+   }
+  },
+  "bidRequests": 445938,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "esports guides",
+   "league of legends",
+   "game stats"
+  ]
+ },
+ {
+  "domain": "oxfordlearnersdictionaries.com",
+  "name": "Oxford Learner's Dictionaries | Find definitions, translations, and grammar explanations at Oxford Learner's Dictionaries",
+  "creative": {
+   "Banner": {
+    "bidRequests": 442109,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 442109,
+  "category": "education & reference",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "dictionary",
+   "english learning",
+   "grammar"
+  ]
+ },
+ {
+  "domain": "exceldemy.com",
+  "name": "ExcelDemy Learn Excel & Get Excel Solutions",
+  "creative": {
+   "Banner": {
+    "bidRequests": 439705,
+    "cpmMin": 1.06,
+    "cpmMax": 2.12
+   }
+  },
+  "bidRequests": 439705,
+  "category": "technology",
+  "siteType": "blog",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "excel tutorials",
+   "spreadsheets",
+   "productivity software"
+  ]
+ },
+ {
+  "domain": "zaobao.com.sg",
+  "name": "首页 | 联合早报 享誉新加坡与国际的新闻媒体",
+  "creative": {
+   "Banner": {
+    "bidRequests": 438503,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 438503,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "singapore",
+  "niches": [
+   "singapore news",
+   "chinese-language news",
+   "world news"
+  ]
+ },
+ {
+  "domain": "behindthevoiceactors.com",
+  "name": "behindthevoiceactors.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 438028,
+    "cpmMin": 0.76,
+    "cpmMax": 1.52
+   }
+  },
+  "bidRequests": 438028,
+  "category": "entertainment & celebrity",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "voice actors",
+   "animation",
+   "video game casts"
+  ]
+ },
+ {
+  "domain": "wordfinderx.com",
+  "name": "Word Finder Scrabble and Words With Friends Cheat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 437877,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 437877,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "word games",
+   "scrabble helper"
+  ]
+ },
+ {
+  "domain": "thereviewgeek.com",
+  "name": "thereviewgeek.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 434997,
+    "cpmMin": 1.2,
+    "cpmMax": 2.4
+   }
+  },
+  "bidRequests": 434997,
+  "category": "entertainment & celebrity",
+  "siteType": "review or comparison site",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "tv reviews",
+   "movie reviews",
+   "streaming"
+  ]
+ },
+ {
+  "domain": "websudoku.com",
+  "name": "Web Sudoku Billions of Free Sudoku Puzzles to Play Online",
+  "creative": {
+   "Banner": {
+    "bidRequests": 434082,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 434082,
+  "category": "gaming",
+  "siteType": "game",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "sudoku",
+   "puzzles"
+  ]
+ },
+ {
+  "domain": "gpblog.com",
+  "name": "Always on pole position with the latest Formula 1 and Racing news",
+  "creative": {
+   "Banner": {
+    "bidRequests": 432990,
+    "cpmMin": 0.48,
+    "cpmMax": 0.96
+   }
+  },
+  "bidRequests": 432990,
+  "category": "sports",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "formula 1",
+   "motorsport news"
+  ]
+ },
+ {
+  "domain": "america-focus.com",
+  "name": "Home America Focus",
+  "creative": {
+   "Banner": {
+    "bidRequests": 431756,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 431756,
+  "category": "general news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "global",
+  "niches": [
+   "us news",
+   "entertainment",
+   "lifestyle"
+  ]
+ },
+ {
+  "domain": "sinarharian.com.my",
+  "name": "Sinar Harian Home",
+  "creative": {
+   "Banner": {
+    "bidRequests": 429724,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 429724,
+  "category": "regional non-English news",
+  "siteType": "news publisher",
+  "editorial": true,
+  "region": "regional (asia)",
+  "niches": [
+   "malaysian news",
+   "malay-language news",
+   "politics"
+  ]
+ },
+ {
+  "domain": "pomofocus.io",
+  "name": "Pomodoro Timer Online Pomofocus",
+  "creative": {
+   "Banner": {
+    "bidRequests": 429323,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 429323,
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "pomodoro timer",
+   "productivity"
+  ]
+ },
+ {
+  "domain": "royaleapi.com",
+  "name": "royaleapi.com",
+  "creative": {
+   "Banner": {
+    "bidRequests": 428234,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 428234,
+  "category": "gaming",
+  "siteType": "reference",
+  "editorial": false,
+  "region": "global",
+  "niches": [
+   "clash royale",
+   "game stats",
+   "decks"
+  ]
+ },
+ {
+  "domain": "tunein.com",
+  "name": "TuneIn",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 11736895,
+   "creative": {
+    "Banner": {
+     "bidRequests": 8141074,
+     "cpmMin": 0.6,
+     "cpmMax": 1.36
+    },
+    "Video": {
+     "bidRequests": 3595821,
+     "cpmMin": 1.72,
+     "cpmMax": 3.44
+    }
+   },
+   "names": [
+    "TuneIn Radio: Music & Sports"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "radio streaming",
+   "podcasts",
+   "music"
+  ]
+ },
+ {
+  "domain": "smartnews.com",
+  "name": "SmartNews",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 11974732,
+   "creative": {
+    "Banner": {
+     "bidRequests": 11974732,
+     "cpmMin": 0.34,
+     "cpmMax": 0.72
+    }
+   },
+   "names": [
+    "SmartNews: Breaking News",
+    "SmartNews: Live News & Rewards"
+   ]
+  },
+  "category": "general news",
+  "siteType": "news publisher",
+  "region": "global",
+  "editorial": true,
+  "niches": [
+   "news aggregation",
+   "current affairs"
+  ]
+ },
+ {
+  "domain": "carousell.com",
+  "name": "Carousell",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 10399681,
+   "creative": {
+    "Banner": {
+     "bidRequests": 10399681,
+     "cpmMin": 0.44,
+     "cpmMax": 0.92
+    }
+   },
+   "names": [
+    "Carousell: Sell and Buy",
+    "Carousell: Snap Sell, Chat Buy"
+   ]
+  },
+  "category": "shopping & classifieds",
+  "siteType": "marketplace",
+  "region": "singapore",
+  "editorial": false,
+  "niches": [
+   "classifieds",
+   "secondhand goods",
+   "marketplace"
+  ]
+ },
+ {
+  "domain": "imo.im",
+  "name": "imo.im",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 8374722,
+   "creative": {
+    "Banner": {
+     "bidRequests": 8374722,
+     "cpmMin": 0.82,
+     "cpmMax": 5.44
+    }
+   },
+   "names": [
+    "imo HD Video Calls and Chats",
+    "imo International Calls & Chat",
+    "imo beta video calls and chat"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "other",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "messaging",
+   "video calls"
+  ]
+ },
+ {
+  "domain": "king.com",
+  "name": "King",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 7325069,
+   "creative": {
+    "Video": {
+     "bidRequests": 5863798,
+     "cpmMin": 2.1,
+     "cpmMax": 10.72
+    },
+    "Banner": {
+     "bidRequests": 1461271,
+     "cpmMin": 16.6,
+     "cpmMax": 38.8
+    }
+   },
+   "names": [
+    "Candy Crush Saga",
+    "Candy Crush Soda Saga",
+    "Farm Heroes Saga"
+   ]
+  },
+  "category": "gaming",
+  "siteType": "game",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "casual games",
+   "mobile games"
+  ]
+ },
+ {
+  "domain": "pocketfm.com",
+  "name": "Pocket FM",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 3182073,
+   "creative": {
+    "Banner": {
+     "bidRequests": 3182073,
+     "cpmMin": 1.88,
+     "cpmMax": 3.76
+    }
+   },
+   "names": [
+    "Pocket FM: Audioserien"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "audio series",
+   "audiobooks"
+  ]
+ },
+ {
+  "domain": "peoplefun.com",
+  "name": "PeopleFun",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 3004908,
+   "creative": {
+    "Banner": {
+     "bidRequests": 3004908,
+     "cpmMin": 1.64,
+     "cpmMax": 3.28
+    }
+   },
+   "names": [
+    "Wordscapes"
+   ]
+  },
+  "category": "gaming",
+  "siteType": "game",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "word games",
+   "mobile games"
+  ]
+ },
+ {
+  "domain": "terabox.com",
+  "name": "TeraBox",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2465778,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2465778,
+     "cpmMin": 0.38,
+     "cpmMax": 0.76
+    }
+   },
+   "names": [
+    "TeraBox: 1TB Cloud & AI Space"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "cloud storage",
+   "file sharing"
+  ]
+ },
+ {
+  "domain": "onefootball.com",
+  "name": "OneFootball",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2838650,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2838650,
+     "cpmMin": 1.12,
+     "cpmMax": 2.56
+    }
+   },
+   "names": [
+    "OneFootball Live Soccer scores"
+   ]
+  },
+  "category": "sports",
+  "siteType": "news publisher",
+  "region": "global",
+  "editorial": true,
+  "niches": [
+   "football news",
+   "scores",
+   "transfers"
+  ]
+ },
+ {
+  "domain": "fotmob.com",
+  "name": "FotMob",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2942449,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2942449,
+     "cpmMin": 1.28,
+     "cpmMax": 4.72
+    }
+   },
+   "names": [
+    "FotMob Soccer Live Scores"
+   ]
+  },
+  "category": "sports",
+  "siteType": "reference",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "football scores",
+   "live stats"
+  ]
+ },
+ {
+  "domain": "myfitnesspal.com",
+  "name": "MyFitnessPal",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2780095,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2780095,
+     "cpmMin": 0.4,
+     "cpmMax": 1.8
+    }
+   },
+   "names": [
+    "MyFitnessPal: Calorie Counter"
+   ]
+  },
+  "category": "health & wellness",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "calorie tracking",
+   "fitness",
+   "nutrition"
+  ]
+ },
+ {
+  "domain": "tagged.com",
+  "name": "Tagged (The Meet Group)",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2312025,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2312025,
+     "cpmMin": 0.36,
+     "cpmMax": 0.76
+    }
+   },
+   "names": [
+    "Tagged Dating: Chat & Go Live!",
+    "Tagged Meet, Chat & Dating"
+   ]
+  },
+  "category": "other",
+  "siteType": "forum or community",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "social networking",
+   "dating"
+  ]
+ },
+ {
+  "domain": "webtoons.com",
+  "name": "NAVER WEBTOON",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 2486931,
+   "creative": {
+    "Banner": {
+     "bidRequests": 2486931,
+     "cpmMin": 1.94,
+     "cpmMax": 4.36
+    }
+   },
+   "names": [
+    "WEBTOON",
+    "WEBTOON: Manga, Comics, Manhwa"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "other",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "webcomics",
+   "manhwa"
+  ]
+ },
+ {
+  "domain": "easybrain.com",
+  "name": "Easybrain",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1423905,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1423905,
+     "cpmMin": 16.04,
+     "cpmMax": 32.08
+    }
+   },
+   "names": [
+    "Sudoku.com Number Games"
+   ]
+  },
+  "category": "gaming",
+  "siteType": "game",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "puzzle games",
+   "sudoku"
+  ]
+ },
+ {
+  "domain": "moovit.com",
+  "name": "Moovit",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1681887,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1681887,
+     "cpmMin": 5.58,
+     "cpmMax": 27.0
+    }
+   },
+   "names": [
+    "Moovit: Bus & Public Transit",
+    "Moovit: Bus & Transit Tracker"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "public transit",
+   "navigation"
+  ]
+ },
+ {
+  "domain": "wetv.vip",
+  "name": "Tencent",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1191014,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1191014,
+     "cpmMin": 0.32,
+     "cpmMax": 0.64
+    }
+   },
+   "names": [
+    "WeTV: Asian & Local Drama"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "region": "regional (asia)",
+  "editorial": false,
+  "niches": [
+   "asian dramas",
+   "video streaming"
+  ]
+ },
+ {
+  "domain": "cricbuzz.com",
+  "name": "Cricbuzz",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1067220,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1067220,
+     "cpmMin": 0.58,
+     "cpmMax": 1.16
+    }
+   },
+   "names": [
+    "Cricbuzz Live Cricket Scores"
+   ]
+  },
+  "category": "sports",
+  "siteType": "news publisher",
+  "region": "global",
+  "editorial": true,
+  "niches": [
+   "cricket news",
+   "live scores"
+  ]
+ },
+ {
+  "domain": "timetreeapp.com",
+  "name": "TimeTree, Inc.",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1002884,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1002884,
+     "cpmMin": 4.78,
+     "cpmMax": 9.56
+    }
+   },
+   "names": [
+    "TimeTree Shared Calendar"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "shared calendar",
+   "scheduling"
+  ]
+ },
+ {
+  "domain": "skout.com",
+  "name": "The Meet Group",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 923427,
+   "creative": {
+    "Banner": {
+     "bidRequests": 923427,
+     "cpmMin": 0.36,
+     "cpmMax": 0.72
+    }
+   },
+   "names": [
+    "Skout Meet, Chat, Go Live"
+   ]
+  },
+  "category": "other",
+  "siteType": "forum or community",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "social networking",
+   "dating"
+  ]
+ },
+ {
+  "domain": "opera.com",
+  "name": "Opera",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 1347455,
+   "creative": {
+    "Banner": {
+     "bidRequests": 1347455,
+     "cpmMin": 0.8,
+     "cpmMax": 3.64
+    }
+   },
+   "names": [
+    "Opera Mini: Fast Web Browser",
+    "Opera: Privater VPN Browser"
+   ]
+  },
+  "category": "technology",
+  "siteType": "other",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "web browser",
+   "software"
+  ]
+ },
+ {
+  "domain": "meitu.com",
+  "name": "Meitu",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 862201,
+   "creative": {
+    "Banner": {
+     "bidRequests": 862201,
+     "cpmMin": 0.4,
+     "cpmMax": 0.8
+    }
+   },
+   "names": [
+    "Meitu AI Photo & Video Editor"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "regional (asia)",
+  "editorial": false,
+  "niches": [
+   "photo editing",
+   "beauty camera"
+  ]
+ },
+ {
+  "domain": "mxplayer.in",
+  "name": "MX Media",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 837762,
+   "creative": {
+    "Banner": {
+     "bidRequests": 837762,
+     "cpmMin": 0.54,
+     "cpmMax": 1.08
+    }
+   },
+   "names": [
+    "MX Player"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "video or audio",
+  "region": "regional (asia)",
+  "editorial": false,
+  "niches": [
+   "video streaming",
+   "indian content"
+  ]
+ },
+ {
+  "domain": "muslimpro.com",
+  "name": "Bitsmedia",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 828829,
+   "creative": {
+    "Banner": {
+     "bidRequests": 828829,
+     "cpmMin": 0.38,
+     "cpmMax": 0.76
+    }
+   },
+   "names": [
+    "Muslim Pro: Quran & Athan"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "regional (asia)",
+  "editorial": false,
+  "niches": [
+   "prayer times",
+   "quran",
+   "islamic lifestyle"
+  ]
+ },
+ {
+  "domain": "picsart.com",
+  "name": "Picsart",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 717568,
+   "creative": {
+    "Banner": {
+     "bidRequests": 717568,
+     "cpmMin": 0.26,
+     "cpmMax": 0.52
+    }
+   },
+   "names": [
+    "Picsart AI Photo Editor, Video"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "photo editing",
+   "design"
+  ]
+ },
+ {
+  "domain": "word.tips",
+  "name": "WordTips",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 628411,
+   "creative": {
+    "Banner": {
+     "bidRequests": 628411,
+     "cpmMin": 0.42,
+     "cpmMax": 0.84
+    }
+   },
+   "names": [
+    "Word Finder: Find & make words with these letters"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "word finder",
+   "word games"
+  ]
+ },
+ {
+  "domain": "manuals.plus",
+  "name": "Manuals+",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 537945,
+   "creative": {
+    "Banner": {
+     "bidRequests": 537945,
+     "cpmMin": 5.64,
+     "cpmMax": 11.28
+    }
+   },
+   "names": [
+    "Free PDF Manuals & Guides | Manuals+"
+   ]
+  },
+  "category": "education & reference",
+  "siteType": "reference",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "product manuals",
+   "user guides"
+  ]
+ },
+ {
+  "domain": "truecaller.com",
+  "name": "Truecaller AB",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 535778,
+   "creative": {
+    "Banner": {
+     "bidRequests": 535778,
+     "cpmMin": 0.44,
+     "cpmMax": 0.88
+    }
+   },
+   "names": [
+    "Truecaller: Phone Call Blocker"
+   ]
+  },
+  "category": "utilities & tools",
+  "siteType": "tool or calculator",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "caller id",
+   "spam blocking"
+  ]
+ },
+ {
+  "domain": "goodnovel.com",
+  "name": "GoodNovel",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 533376,
+   "creative": {
+    "Banner": {
+     "bidRequests": 533376,
+     "cpmMin": 3.14,
+     "cpmMax": 6.28
+    }
+   },
+   "names": [
+    "GoodNovel Booktok, Stories"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "other",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "web novels",
+   "romance fiction"
+  ]
+ },
+ {
+  "domain": "sharechat.com",
+  "name": "Mohalla Tech (ShareChat)",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 475112,
+   "creative": {
+    "Banner": {
+     "bidRequests": 475112,
+     "cpmMin": 0.36,
+     "cpmMax": 0.72
+    }
+   },
+   "names": [
+    "ShareChat Status, Video & Live"
+   ]
+  },
+  "category": "regional non-English news",
+  "siteType": "forum or community",
+  "region": "regional (asia)",
+  "editorial": true,
+  "niches": [
+   "social media",
+   "indian languages",
+   "user content"
+  ]
+ },
+ {
+  "domain": "wattpad.com",
+  "name": "Wattpad",
+  "creative": {},
+  "bidRequests": 0,
+  "via": "app",
+  "app": {
+   "bidRequests": 471630,
+   "creative": {
+    "Banner": {
+     "bidRequests": 471630,
+     "cpmMin": 1.86,
+     "cpmMax": 3.72
+    }
+   },
+   "names": [
+    "Wattpad Read & Write Stories"
+   ]
+  },
+  "category": "entertainment & celebrity",
+  "siteType": "forum or community",
+  "region": "global",
+  "editorial": false,
+  "niches": [
+   "user fiction",
+   "web novels"
+  ]
+ }
+]

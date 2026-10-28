@@ -1,0 +1,2565 @@
+[
+ {
+  "id": "tunein.player",
+  "platform": "android",
+  "name": "TuneIn Radio: Music & Sports",
+  "creative": {
+   "Banner": {
+    "bidRequests": 6917468,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   },
+   "Video": {
+    "bidRequests": 3595821,
+    "cpmMin": 1.72,
+    "cpmMax": 3.44
+   }
+  },
+  "bidRequests": 10513289,
+  "publisher": "TuneIn",
+  "category": "video, audio & entertainment",
+  "webDomain": "tunein.com",
+  "webVerified": true
+ },
+ {
+  "id": "579581125",
+  "platform": "ios",
+  "name": "SmartNews: Breaking News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 8164384,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 8164384,
+  "publisher": "SmartNews",
+  "category": "news",
+  "webDomain": "smartnews.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.thecarousell.Carousell",
+  "platform": "android",
+  "name": "Carousell: Sell and Buy",
+  "creative": {
+   "Banner": {
+    "bidRequests": 7401022,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 7401022,
+  "publisher": "Carousell",
+  "category": "shopping & classifieds",
+  "webDomain": "carousell.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.livescore",
+  "platform": "android",
+  "name": "LiveScore: Live Sports Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 5763591,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 5763591,
+  "publisher": "LiveScore",
+  "category": "sports",
+  "webDomain": "livescore.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.appmind.radios.sg",
+  "platform": "android",
+  "name": "Radio Singapore online radio",
+  "creative": {
+   "Banner": {
+    "bidRequests": 5278403,
+    "cpmMin": 3.58,
+    "cpmMax": 7.16
+   }
+  },
+  "bidRequests": 5278403,
+  "publisher": "AppMind",
+  "category": "video, audio & entertainment",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.vitastudio.mahjong",
+  "platform": "android",
+  "name": "Vita Mahjong",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3894980,
+    "cpmMin": 1.48,
+    "cpmMax": 2.96
+   },
+   "Native": {
+    "bidRequests": 1196202,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 5091182,
+  "publisher": "Vita Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.imo.android.imoim",
+  "platform": "android",
+  "name": "imo International Calls & Chat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 4185212,
+    "cpmMin": 1.24,
+    "cpmMax": 2.48
+   }
+  },
+  "bidRequests": 4185212,
+  "publisher": "imo.im",
+  "category": "messaging & social",
+  "webDomain": "imo.im",
+  "webVerified": true
+ },
+ {
+  "id": "jp.gocro.smartnews.android",
+  "platform": "android",
+  "name": "SmartNews: Live News & Rewards",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3810348,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 3810348,
+  "publisher": "SmartNews",
+  "category": "news",
+  "webDomain": "smartnews.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.king.candycrushsaga",
+  "platform": "android",
+  "name": "Candy Crush Saga",
+  "creative": {
+   "Video": {
+    "bidRequests": 2926068,
+    "cpmMin": 4.04,
+    "cpmMax": 8.08
+   },
+   "Banner": {
+    "bidRequests": 861249,
+    "cpmMin": 19.4,
+    "cpmMax": 38.8
+   }
+  },
+  "bidRequests": 3787317,
+  "publisher": "King",
+  "category": "game",
+  "webDomain": "king.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.block.juggle",
+  "platform": "android",
+  "name": "Block Blast!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3616033,
+    "cpmMin": 2.42,
+    "cpmMax": 4.84
+   }
+  },
+  "bidRequests": 3616033,
+  "publisher": "Hungry Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.radio.pocketfm",
+  "platform": "android",
+  "name": "Pocket FM: Audioserien",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3182073,
+    "cpmMin": 1.88,
+    "cpmMax": 3.76
+   }
+  },
+  "bidRequests": 3182073,
+  "publisher": "Pocket FM",
+  "category": "video, audio & entertainment",
+  "webDomain": "pocketfm.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.peoplefun.wordcross",
+  "platform": "android",
+  "name": "Wordscapes",
+  "creative": {
+   "Banner": {
+    "bidRequests": 3004908,
+    "cpmMin": 1.64,
+    "cpmMax": 3.28
+   }
+  },
+  "bidRequests": 3004908,
+  "publisher": "PeopleFun",
+  "category": "game",
+  "webDomain": "peoplefun.com",
+  "webVerified": true
+ },
+ {
+  "id": "548607187",
+  "platform": "ios",
+  "name": "Carousell: Snap Sell, Chat Buy",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2998659,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 2998659,
+  "publisher": "Carousell",
+  "category": "shopping & classifieds",
+  "webDomain": "carousell.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.yahoo.mobile.client.android.mail",
+  "platform": "android",
+  "name": "Yahoo Mail: Email & Planner",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2667626,
+    "cpmMin": 2.24,
+    "cpmMax": 4.48
+   }
+  },
+  "bidRequests": 2667626,
+  "publisher": "Yahoo",
+  "category": "utilities",
+  "webDomain": "yahoo.com",
+  "webVerified": true
+ },
+ {
+  "id": "droom.sleepIfUCan",
+  "platform": "android",
+  "name": "Alarmy Alarm Clock & Sleep",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1731173,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   },
+   "Video": {
+    "bidRequests": 767796,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 2498969,
+  "publisher": "Delight Room",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.dubox.drive",
+  "platform": "android",
+  "name": "TeraBox: 1TB Cloud & AI Space",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2465778,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 2465778,
+  "publisher": "TeraBox",
+  "category": "utilities",
+  "webDomain": "terabox.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.viber.voip",
+  "platform": "android",
+  "name": "Rakuten Viber Messenger",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2423543,
+    "cpmMin": 0.8,
+    "cpmMax": 1.6
+   }
+  },
+  "bidRequests": 2423543,
+  "publisher": "Rakuten Viber",
+  "category": "messaging & social",
+  "webDomain": "viber.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.oakever.tiletrip",
+  "platform": "android",
+  "name": "Tile Explorer Triple Match",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1780273,
+    "cpmMin": 2.12,
+    "cpmMax": 4.24
+   },
+   "Native": {
+    "bidRequests": 440560,
+    "cpmMin": 1.54,
+    "cpmMax": 3.08
+   }
+  },
+  "bidRequests": 2220833,
+  "publisher": "Oakever Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.pixel.art.coloring.color.number",
+  "platform": "android",
+  "name": "Happy Color®: Color by Number",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2209341,
+    "cpmMin": 1.62,
+    "cpmMax": 3.24
+   }
+  },
+  "bidRequests": 2209341,
+  "publisher": "X-Flow",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.nttdocomo.android.mymagazine",
+  "platform": "android",
+  "name": "SmartNews for docomo（旧マイマガジン）",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2206845,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 2206845,
+  "publisher": "NTT Docomo",
+  "category": "news",
+  "webDomain": "docomo.ne.jp",
+  "webVerified": false
+ },
+ {
+  "id": "1617391485",
+  "platform": "ios",
+  "name": "Block Blast！",
+  "creative": {
+   "Banner": {
+    "bidRequests": 2099973,
+    "cpmMin": 1.34,
+    "cpmMax": 2.68
+   }
+  },
+  "bidRequests": 2099973,
+  "publisher": "Hungry Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "553834731",
+  "platform": "ios",
+  "name": "Candy Crush Saga",
+  "creative": {
+   "Video": {
+    "bidRequests": 1442134,
+    "cpmMin": 5.12,
+    "cpmMax": 10.24
+   },
+   "Banner": {
+    "bidRequests": 600022,
+    "cpmMin": 16.6,
+    "cpmMax": 33.2
+   }
+  },
+  "bidRequests": 2042156,
+  "publisher": "King",
+  "category": "game",
+  "webDomain": "king.com",
+  "webVerified": true
+ },
+ {
+  "id": "de.motain.iliga",
+  "platform": "android",
+  "name": "OneFootball Live Soccer scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1913730,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 1913730,
+  "publisher": "OneFootball",
+  "category": "sports",
+  "webDomain": "onefootball.com",
+  "webVerified": true
+ },
+ {
+  "id": "6482849843",
+  "platform": "ios",
+  "name": "Goods Puzzle: Sort Challenge™",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1848824,
+    "cpmMin": 4.32,
+    "cpmMax": 8.64
+   }
+  },
+  "bidRequests": 1848824,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.imo.android.imoimhd",
+  "platform": "android",
+  "name": "imo HD Video Calls and Chats",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1840771,
+    "cpmMin": 2.42,
+    "cpmMax": 4.84
+   }
+  },
+  "bidRequests": 1840771,
+  "publisher": "imo.im",
+  "category": "messaging & social",
+  "webDomain": "imo.im",
+  "webVerified": true
+ },
+ {
+  "id": "com.mobilefootie.wc2010",
+  "platform": "android",
+  "name": "FotMob Soccer Live Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1742293,
+    "cpmMin": 1.28,
+    "cpmMax": 2.56
+   }
+  },
+  "bidRequests": 1742293,
+  "publisher": "FotMob",
+  "category": "sports",
+  "webDomain": "fotmob.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.myfitnesspal.android",
+  "platform": "android",
+  "name": "MyFitnessPal: Calorie Counter",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1733376,
+    "cpmMin": 0.9,
+    "cpmMax": 1.8
+   }
+  },
+  "bidRequests": 1733376,
+  "publisher": "MyFitnessPal",
+  "category": "health & fitness",
+  "webDomain": "myfitnesspal.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.fc.goods.sort.matching.puzzle.triplemaster",
+  "platform": "android",
+  "name": "Goods Puzzle: Sort Challenge™",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1639405,
+    "cpmMin": 1.38,
+    "cpmMax": 2.76
+   }
+  },
+  "bidRequests": 1639405,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "336435697",
+  "platform": "ios",
+  "name": "imo International Calls & Chat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1574310,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 1574310,
+  "publisher": "imo.im",
+  "category": "messaging & social",
+  "webDomain": "imo.im",
+  "webVerified": true
+ },
+ {
+  "id": "kidultlovin.word.zen",
+  "platform": "android",
+  "name": "Zen Word® Relax Puzzle Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1556270,
+    "cpmMin": 0.68,
+    "cpmMax": 1.36
+   }
+  },
+  "bidRequests": 1556270,
+  "publisher": "Kidult Lovin",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.taggedapp",
+  "platform": "android",
+  "name": "Tagged Meet, Chat & Dating",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1548169,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 1548169,
+  "publisher": "Tagged (The Meet Group)",
+  "category": "messaging & social",
+  "webDomain": "tagged.com",
+  "webVerified": true
+ },
+ {
+  "id": "eu.livesport.FlashScore_com",
+  "platform": "android",
+  "name": "Flashscore: Ergebnisse & News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1494622,
+    "cpmMin": 0.86,
+    "cpmMax": 1.72
+   }
+  },
+  "bidRequests": 1494622,
+  "publisher": "Livesport",
+  "category": "sports",
+  "webDomain": "flashscore.com",
+  "webVerified": true
+ },
+ {
+  "id": "894546091",
+  "platform": "ios",
+  "name": "WEBTOON: Manga, Comics, Manhwa",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1454584,
+    "cpmMin": 1.94,
+    "cpmMax": 3.88
+   }
+  },
+  "bidRequests": 1454584,
+  "publisher": "NAVER WEBTOON",
+  "category": "video, audio & entertainment",
+  "webDomain": "webtoons.com",
+  "webVerified": true
+ },
+ {
+  "id": "1193508329",
+  "platform": "ios",
+  "name": "Sudoku.com Number Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1423905,
+    "cpmMin": 16.04,
+    "cpmMax": 32.08
+   }
+  },
+  "bidRequests": 1423905,
+  "publisher": "Easybrain",
+  "category": "game",
+  "webDomain": "easybrain.com",
+  "webVerified": true
+ },
+ {
+  "id": "6498883328",
+  "platform": "ios",
+  "name": "Tile Explorer: Tiles Clear!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1388944,
+    "cpmMin": 3.28,
+    "cpmMax": 6.56
+   }
+  },
+  "bidRequests": 1388944,
+  "publisher": "Oakever Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "easy.sudoku.puzzle.solver.free",
+  "platform": "android",
+  "name": "Sudoku Classic Sudoku Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1336523,
+    "cpmMin": 1.88,
+    "cpmMax": 3.76
+   }
+  },
+  "bidRequests": 1336523,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6468921495",
+  "platform": "ios",
+  "name": "Vita Mahjong",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1320084,
+    "cpmMin": 12.4,
+    "cpmMax": 24.8
+   }
+  },
+  "bidRequests": 1320084,
+  "publisher": "Vita Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "356928178",
+  "platform": "ios",
+  "name": "LiveScore: Live Sports Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1299891,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 1299891,
+  "publisher": "LiveScore",
+  "category": "sports",
+  "webDomain": "livescore.com",
+  "webVerified": true
+ },
+ {
+  "id": "366247306",
+  "platform": "ios",
+  "name": "▻Sudoku Classic Brain Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1232613,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 1232613,
+  "publisher": "Finger Arts",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "418987775",
+  "platform": "ios",
+  "name": "TuneIn Radio: Music & Sports",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1223606,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 1223606,
+  "publisher": "TuneIn",
+  "category": "video, audio & entertainment",
+  "webDomain": "tunein.com",
+  "webVerified": true
+ },
+ {
+  "id": "and.matchgames.zenblossom",
+  "platform": "android",
+  "name": "Zen Blossom: Flower Tile Match",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1217940,
+    "cpmMin": 3.66,
+    "cpmMax": 7.32
+   }
+  },
+  "bidRequests": 1217940,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.tranzmate",
+  "platform": "android",
+  "name": "Moovit: Bus & Public Transit",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1216808,
+    "cpmMin": 13.5,
+    "cpmMax": 27.0
+   }
+  },
+  "bidRequests": 1216808,
+  "publisher": "Moovit",
+  "category": "travel & transport",
+  "webDomain": "moovit.com",
+  "webVerified": true
+ },
+ {
+  "id": "488575683",
+  "platform": "ios",
+  "name": "FotMob Soccer Live Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1200156,
+    "cpmMin": 2.36,
+    "cpmMax": 4.72
+   }
+  },
+  "bidRequests": 1200156,
+  "publisher": "FotMob AS",
+  "category": "sports",
+  "webDomain": "fotmob.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.tencent.qqlivei18n",
+  "platform": "android",
+  "name": "WeTV: Asian & Local Drama",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1191014,
+    "cpmMin": 0.32,
+    "cpmMax": 0.64
+   }
+  },
+  "bidRequests": 1191014,
+  "publisher": "Tencent",
+  "category": "video, audio & entertainment",
+  "webDomain": "wetv.vip",
+  "webVerified": true
+ },
+ {
+  "id": "com.screw3d.match.nuts.bolts.pin.jam.away.puzzle",
+  "platform": "android",
+  "name": "3D Bolt Master®: Screw Master®",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1147096,
+    "cpmMin": 0.98,
+    "cpmMax": 1.96
+   }
+  },
+  "bidRequests": 1147096,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6747875092",
+  "platform": "ios",
+  "name": "Yarn Fever! Unravel Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1101944,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 1101944,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.cricbuzz.android",
+  "platform": "android",
+  "name": "Cricbuzz Live Cricket Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1067220,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 1067220,
+  "publisher": "Cricbuzz",
+  "category": "sports",
+  "webDomain": "cricbuzz.com",
+  "webVerified": true
+ },
+ {
+  "id": "341232718",
+  "platform": "ios",
+  "name": "MyFitnessPal: Calorie Counter",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1046719,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 1046719,
+  "publisher": "MyFitnessPal, Inc.",
+  "category": "health & fitness",
+  "webDomain": "myfitnesspal.com",
+  "webVerified": true
+ },
+ {
+  "id": "sorting.games.goods.sort.triple.match3d.puzzle.stuff",
+  "platform": "android",
+  "name": "Goods Puzzle: 3D Sorting Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1043089,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 1043089,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.naver.linewebtoon",
+  "platform": "android",
+  "name": "WEBTOON",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1032347,
+    "cpmMin": 2.18,
+    "cpmMax": 4.36
+   }
+  },
+  "bidRequests": 1032347,
+  "publisher": "NAVER WEBTOON",
+  "category": "video, audio & entertainment",
+  "webDomain": "webtoons.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.gimica.solitaireverse",
+  "platform": "android",
+  "name": "Solitaire Verse",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1025178,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 1025178,
+  "publisher": "Gimica GmbH",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.awesome.puzzlehexasort",
+  "platform": "android",
+  "name": "Color Slide Hexa Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1024001,
+    "cpmMin": 2.14,
+    "cpmMax": 4.28
+   }
+  },
+  "bidRequests": 1024001,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "in.playsimple.wordsearch",
+  "platform": "android",
+  "name": "Word Search Explorer",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1014345,
+    "cpmMin": 7.34,
+    "cpmMax": 14.68
+   }
+  },
+  "bidRequests": 1014345,
+  "publisher": "PlaySimple Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "works.jubilee.timetree",
+  "platform": "android",
+  "name": "TimeTree Shared Calendar",
+  "creative": {
+   "Banner": {
+    "bidRequests": 1002884,
+    "cpmMin": 4.78,
+    "cpmMax": 9.56
+   }
+  },
+  "bidRequests": 1002884,
+  "publisher": "TimeTree, Inc.",
+  "category": "utilities",
+  "webDomain": "timetreeapp.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.gamovation.tileclub",
+  "platform": "android",
+  "name": "Tile Club Match Puzzle Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 974677,
+    "cpmMin": 1.28,
+    "cpmMax": 2.56
+   }
+  },
+  "bidRequests": 974677,
+  "publisher": "Gamovation",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.fugo.wow",
+  "platform": "android",
+  "name": "Words of Wonders: Crossword",
+  "creative": {
+   "Banner": {
+    "bidRequests": 961027,
+    "cpmMin": 1.92,
+    "cpmMax": 3.84
+   }
+  },
+  "bidRequests": 961027,
+  "publisher": "Fugo Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "382002079",
+  "platform": "ios",
+  "name": "OneFootball Live Soccer scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 924920,
+    "cpmMin": 1.28,
+    "cpmMax": 2.56
+   }
+  },
+  "bidRequests": 924920,
+  "publisher": "OneFootball GmbH",
+  "category": "sports",
+  "webDomain": "onefootball.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.skout.android",
+  "platform": "android",
+  "name": "Skout Meet, Chat, Go Live",
+  "creative": {
+   "Banner": {
+    "bidRequests": 923427,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 923427,
+  "publisher": "The Meet Group",
+  "category": "messaging & social",
+  "webDomain": "skout.com",
+  "webVerified": true
+ },
+ {
+  "id": "1207472156",
+  "platform": "ios",
+  "name": "Wordscapes Word Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 910646,
+    "cpmMin": 1.52,
+    "cpmMax": 3.04
+   }
+  },
+  "bidRequests": 910646,
+  "publisher": "PeopleFun",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.eyecon.global",
+  "platform": "android",
+  "name": "Eyecon Caller ID & Spam Block",
+  "creative": {
+   "Banner": {
+    "bidRequests": 908341,
+    "cpmMin": 1.08,
+    "cpmMax": 2.16
+   }
+  },
+  "bidRequests": 908341,
+  "publisher": "Eyecon",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.opera.mini.native",
+  "platform": "android",
+  "name": "Opera Mini: Fast Web Browser",
+  "creative": {
+   "Banner": {
+    "bidRequests": 891161,
+    "cpmMin": 1.82,
+    "cpmMax": 3.64
+   }
+  },
+  "bidRequests": 891161,
+  "publisher": "Opera",
+  "category": "utilities",
+  "webDomain": "opera.com",
+  "webVerified": true
+ },
+ {
+  "id": "364147881",
+  "platform": "ios",
+  "name": "BBC: World News & Stories",
+  "creative": {
+   "Banner": {
+    "bidRequests": 888172,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 888172,
+  "publisher": "BBC",
+  "category": "news",
+  "webDomain": "bbc.com",
+  "webVerified": true
+ },
+ {
+  "id": "6746246179",
+  "platform": "ios",
+  "name": "Foodie Sizzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 871477,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 871477,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "416048305",
+  "platform": "ios",
+  "name": "Meitu AI Photo & Video Editor",
+  "creative": {
+   "Banner": {
+    "bidRequests": 862201,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 862201,
+  "publisher": "Meitu",
+  "category": "other",
+  "webDomain": "meitu.com",
+  "webVerified": true
+ },
+ {
+  "id": "1163786766",
+  "platform": "ios",
+  "name": "Alarmy Loud alarm clock",
+  "creative": {
+   "Banner": {
+    "bidRequests": 861279,
+    "cpmMin": 1.18,
+    "cpmMax": 2.36
+   }
+  },
+  "bidRequests": 861279,
+  "publisher": "Delight Room",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.fusionmedia.investing",
+  "platform": "android",
+  "name": "Investing.com: Stock Market",
+  "creative": {
+   "Banner": {
+    "bidRequests": 855193,
+    "cpmMin": 1.0,
+    "cpmMax": 2.0
+   }
+  },
+  "bidRequests": 855193,
+  "publisher": "Fusion Media (Investing.com)",
+  "category": "finance",
+  "webDomain": "investing.com",
+  "webVerified": true
+ },
+ {
+  "id": "398129933",
+  "platform": "ios",
+  "name": "Calculator₊",
+  "creative": {
+   "Banner": {
+    "bidRequests": 853797,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 853797,
+  "publisher": "Unknown",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.davidbin.sgpools",
+  "platform": "android",
+  "name": "Live Singapore Football",
+  "creative": {
+   "Banner": {
+    "bidRequests": 844546,
+    "cpmMin": 8.76,
+    "cpmMax": 17.52
+   }
+  },
+  "bidRequests": 844546,
+  "publisher": "davidbin",
+  "category": "sports",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.mxtech.videoplayer.ad",
+  "platform": "android",
+  "name": "MX Player",
+  "creative": {
+   "Banner": {
+    "bidRequests": 837762,
+    "cpmMin": 0.54,
+    "cpmMax": 1.08
+   }
+  },
+  "bidRequests": 837762,
+  "publisher": "MX Media",
+  "category": "video, audio & entertainment",
+  "webDomain": "mxplayer.in",
+  "webVerified": true
+ },
+ {
+  "id": "com.zm.crossmath",
+  "platform": "android",
+  "name": "Math Crossword — Number puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 832690,
+    "cpmMin": 0.4,
+    "cpmMax": 0.8
+   }
+  },
+  "bidRequests": 832690,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "388389451",
+  "platform": "ios",
+  "name": "Muslim Pro: Quran & Athan",
+  "creative": {
+   "Banner": {
+    "bidRequests": 828829,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 828829,
+  "publisher": "Bitsmedia",
+  "category": "other",
+  "webDomain": "muslimpro.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.easybrain.sudoku.android",
+  "platform": "android",
+  "name": "Sudoku.com Sudoku Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 822903,
+    "cpmMin": 10.92,
+    "cpmMax": 21.84
+   }
+  },
+  "bidRequests": 822903,
+  "publisher": "Easybrain",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.netshort.abroad",
+  "platform": "android",
+  "name": "NetShort Popular Dramas & TV",
+  "creative": {
+   "Banner": {
+    "bidRequests": 799991,
+    "cpmMin": 19.9,
+    "cpmMax": 39.8
+   }
+  },
+  "bidRequests": 799991,
+  "publisher": "NetShort",
+  "category": "video, audio & entertainment",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1442749804",
+  "platform": "ios",
+  "name": "Sudoku Brain Puzzle Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 793125,
+    "cpmMin": 2.28,
+    "cpmMax": 4.56
+   }
+  },
+  "bidRequests": 793125,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "org.zwanoo.android.speedtest",
+  "platform": "android",
+  "name": "Speedtest by Ookla",
+  "creative": {
+   "Banner": {
+    "bidRequests": 789041,
+    "cpmMin": 0.52,
+    "cpmMax": 1.04
+   }
+  },
+  "bidRequests": 789041,
+  "publisher": "Ookla",
+  "category": "utilities",
+  "webDomain": "speedtest.net",
+  "webVerified": true
+ },
+ {
+  "id": "com.arrow.out",
+  "platform": "android",
+  "name": "Point Out: Color Escape Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 780155,
+    "cpmMin": 7.98,
+    "cpmMax": 15.96
+   }
+  },
+  "bidRequests": 780155,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1557392270",
+  "platform": "ios",
+  "name": "Zen Color Color By Number",
+  "creative": {
+   "Banner": {
+    "bidRequests": 776856,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 776856,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.appasia.chinapress",
+  "platform": "android",
+  "name": "中国报 App 最热大马新闻",
+  "creative": {
+   "Banner": {
+    "bidRequests": 776551,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 776551,
+  "publisher": "China Press (中国报)",
+  "category": "news",
+  "webDomain": "chinapress.com.my",
+  "webVerified": true
+ },
+ {
+  "id": "com.imo.android.imoimbeta",
+  "platform": "android",
+  "name": "imo beta video calls and chat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 774429,
+    "cpmMin": 2.72,
+    "cpmMax": 5.44
+   }
+  },
+  "bidRequests": 774429,
+  "publisher": "imo.im",
+  "category": "messaging & social",
+  "webDomain": "imo.im",
+  "webVerified": true
+ },
+ {
+  "id": "358899126",
+  "platform": "ios",
+  "name": "Tagged Dating: Chat & Go Live!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 763856,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 763856,
+  "publisher": "The Meet Group (Tagged)",
+  "category": "messaging & social",
+  "webDomain": "tagged.com",
+  "webVerified": true
+ },
+ {
+  "id": "766443283",
+  "platform": "ios",
+  "name": "Flashscore: Live Scores & News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 761426,
+    "cpmMin": 1.18,
+    "cpmMax": 2.36
+   }
+  },
+  "bidRequests": 761426,
+  "publisher": "Livesport s.r.o.",
+  "category": "sports",
+  "webDomain": "flashscore.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.mathbrain.sudoku",
+  "platform": "android",
+  "name": "Sudoku Blast!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 759299,
+    "cpmMin": 2.2,
+    "cpmMax": 4.4
+   }
+  },
+  "bidRequests": 759299,
+  "publisher": "MathBrain",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.abi.skewer.sort",
+  "platform": "android",
+  "name": "Foodie Sizzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 729059,
+    "cpmMin": 0.28,
+    "cpmMax": 0.56
+   }
+  },
+  "bidRequests": 729059,
+  "publisher": "ABI Global",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1602508478",
+  "platform": "ios",
+  "name": "Word Search Explorer®",
+  "creative": {
+   "Banner": {
+    "bidRequests": 722605,
+    "cpmMin": 8.32,
+    "cpmMax": 16.64
+   }
+  },
+  "bidRequests": 722605,
+  "publisher": "PlaySimple Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.picsart.studio",
+  "platform": "android",
+  "name": "Picsart AI Photo Editor, Video",
+  "creative": {
+   "Banner": {
+    "bidRequests": 717568,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 717568,
+  "publisher": "Picsart",
+  "category": "utilities",
+  "webDomain": "picsart.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.pieyel.scrabble",
+  "platform": "android",
+  "name": "Scrabble® GO – Fun with Words!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 702177,
+    "cpmMin": 2.24,
+    "cpmMax": 4.48
+   }
+  },
+  "bidRequests": 702177,
+  "publisher": "Scopely",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1369521645",
+  "platform": "ios",
+  "name": "Words of Wonders: Crossword",
+  "creative": {
+   "Banner": {
+    "bidRequests": 700058,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 700058,
+  "publisher": "Fugo Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.yolo.hiddenobjects",
+  "platform": "android",
+  "name": "Find Hidden Objects Spot It!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 689265,
+    "cpmMin": 1.98,
+    "cpmMax": 3.96
+   }
+  },
+  "bidRequests": 689265,
+  "publisher": "YOLO Game Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.hitappsgames.wordsolitaire",
+  "platform": "android",
+  "name": "Solitaire Associations Journey",
+  "creative": {
+   "Banner": {
+    "bidRequests": 678253,
+    "cpmMin": 0.66,
+    "cpmMax": 1.32
+   }
+  },
+  "bidRequests": 678253,
+  "publisher": "Hitapps",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "300704847",
+  "platform": "ios",
+  "name": "Speedtest by Ookla",
+  "creative": {
+   "Banner": {
+    "bidRequests": 675946,
+    "cpmMin": 0.38,
+    "cpmMax": 0.76
+   }
+  },
+  "bidRequests": 675946,
+  "publisher": "Ookla",
+  "category": "utilities",
+  "webDomain": "speedtest.net",
+  "webVerified": true
+ },
+ {
+  "id": "328412701",
+  "platform": "ios",
+  "name": "Yahoo Finance: Stocks, Markets",
+  "creative": {
+   "Banner": {
+    "bidRequests": 674250,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 674250,
+  "publisher": "Yahoo",
+  "category": "finance",
+  "webDomain": "yahoo.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.gimica.blockbuster",
+  "platform": "android",
+  "name": "Blockbuster: Arcade",
+  "creative": {
+   "Banner": {
+    "bidRequests": 673872,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 673872,
+  "publisher": "Gimica GmbH",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "sudoku.puzzle.free.game.brain",
+  "platform": "android",
+  "name": "Sudoku Classic Sudoku Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 672836,
+    "cpmMin": 0.84,
+    "cpmMax": 1.68
+   }
+  },
+  "bidRequests": 672836,
+  "publisher": "Beetles Games Studio",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.bigcake.android.mahjongmatch",
+  "platform": "android",
+  "name": "Daily Mahjong Match",
+  "creative": {
+   "Banner": {
+    "bidRequests": 669210,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 669210,
+  "publisher": "Bigcake",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.ibragunduz.applockpro",
+  "platform": "android",
+  "name": "AppLock Pro App Lock & Guard",
+  "creative": {
+   "Banner": {
+    "bidRequests": 664696,
+    "cpmMin": 1.36,
+    "cpmMax": 2.72
+   }
+  },
+  "bidRequests": 664696,
+  "publisher": "Ibrahim Gunduz",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6739069151",
+  "platform": "ios",
+  "name": "Crossword Go!",
+  "creative": {
+   "Banner": {
+    "bidRequests": 659469,
+    "cpmMin": 3.1,
+    "cpmMax": 6.2
+   }
+  },
+  "bidRequests": 659469,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.yahoo.mobile.client.android.finance",
+  "platform": "android",
+  "name": "Yahoo Finance: Stocks & News",
+  "creative": {
+   "Banner": {
+    "bidRequests": 653366,
+    "cpmMin": 3.02,
+    "cpmMax": 6.04
+   }
+  },
+  "bidRequests": 653366,
+  "publisher": "Yahoo",
+  "category": "finance",
+  "webDomain": "yahoo.com",
+  "webVerified": true
+ },
+ {
+  "id": "1407852246",
+  "platform": "ios",
+  "name": "Happy Color® – Coloring Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 637609,
+    "cpmMin": 2.3,
+    "cpmMax": 4.6
+   }
+  },
+  "bidRequests": 637609,
+  "publisher": "X-Flow",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.easybrain.jigsaw.puzzles",
+  "platform": "android",
+  "name": "Jigsaw Puzzles Puzzle Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 631027,
+    "cpmMin": 7.56,
+    "cpmMax": 15.12
+   }
+  },
+  "bidRequests": 631027,
+  "publisher": "Easybrain",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "word.tips",
+  "platform": "android",
+  "name": "Word Finder: Find & make words with these letters",
+  "creative": {
+   "Banner": {
+    "bidRequests": 628411,
+    "cpmMin": 0.42,
+    "cpmMax": 0.84
+   }
+  },
+  "bidRequests": 628411,
+  "publisher": "WordTips",
+  "category": "education & reference",
+  "webDomain": "word.tips",
+  "webVerified": true
+ },
+ {
+  "id": "1324604053",
+  "platform": "ios",
+  "name": "Jigsaw Puzzles Puzzle Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 614732,
+    "cpmMin": 6.0,
+    "cpmMax": 12.0
+   }
+  },
+  "bidRequests": 614732,
+  "publisher": "Easybrain",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.gamovation.mahjongclub",
+  "platform": "android",
+  "name": "Mahjong Club Solitaire Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 612640,
+    "cpmMin": 1.06,
+    "cpmMax": 2.12
+   }
+  },
+  "bidRequests": 612640,
+  "publisher": "Gamovation",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6743385713",
+  "platform": "ios",
+  "name": "Wool Crush™ Escape Traffic Jam",
+  "creative": {
+   "Banner": {
+    "bidRequests": 611910,
+    "cpmMin": 17.02,
+    "cpmMax": 34.04
+   }
+  },
+  "bidRequests": 611910,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1660171117",
+  "platform": "ios",
+  "name": "Zen Word® Relax Puzzle Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 610829,
+    "cpmMin": 2.5,
+    "cpmMax": 5.0
+   }
+  },
+  "bidRequests": 610829,
+  "publisher": "Oakever Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.live.live4d",
+  "platform": "android",
+  "name": "Live Lottery",
+  "creative": {
+   "Banner": {
+    "bidRequests": 608084,
+    "cpmMin": 0.22,
+    "cpmMax": 0.44
+   }
+  },
+  "bidRequests": 608084,
+  "publisher": "Live4D",
+  "category": "other",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "and.lihuhu.mahjongtriple3d",
+  "platform": "android",
+  "name": "Mahjong Triple 3D Tile Match",
+  "creative": {
+   "Banner": {
+    "bidRequests": 599700,
+    "cpmMin": 6.56,
+    "cpmMax": 13.12
+   }
+  },
+  "bidRequests": 599700,
+  "publisher": "lihuhu",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.dencreak.dlcalculator",
+  "platform": "android",
+  "name": "ClevCalc Calculator",
+  "creative": {
+   "Banner": {
+    "bidRequests": 580919,
+    "cpmMin": 0.72,
+    "cpmMax": 1.44
+   }
+  },
+  "bidRequests": 580919,
+  "publisher": "Dencreak",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "bbc.mobile.news.ww",
+  "platform": "android",
+  "name": "BBC: World News & Stories",
+  "creative": {
+   "Banner": {
+    "bidRequests": 573416,
+    "cpmMin": 1.88,
+    "cpmMax": 3.76
+   }
+  },
+  "bidRequests": 573416,
+  "publisher": "BBC",
+  "category": "news",
+  "webDomain": "bbc.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.gamovation.sudoku",
+  "platform": "android",
+  "name": "Sudoku Game Daily Puzzles",
+  "creative": {
+   "Banner": {
+    "bidRequests": 557985,
+    "cpmMin": 0.7,
+    "cpmMax": 1.4
+   }
+  },
+  "bidRequests": 557985,
+  "publisher": "Gamovation",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1544750895",
+  "platform": "ios",
+  "name": "CHAI: Social AI Platform Chat",
+  "creative": {
+   "Banner": {
+    "bidRequests": 555333,
+    "cpmMin": 15.74,
+    "cpmMax": 31.48
+   }
+  },
+  "bidRequests": 555333,
+  "publisher": "Chai Research Corp.",
+  "category": "messaging & social",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.camerasideas.instashot",
+  "platform": "android",
+  "name": "Video Editor & Maker InShot",
+  "creative": {
+   "Banner": {
+    "bidRequests": 552152,
+    "cpmMin": 0.92,
+    "cpmMax": 1.84
+   }
+  },
+  "bidRequests": 552152,
+  "publisher": "InShot Inc.",
+  "category": "video, audio & entertainment",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.easybrain.block.puzzle.games",
+  "platform": "android",
+  "name": "Blockudoku®: Block Puzzle Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 549595,
+    "cpmMin": 9.26,
+    "cpmMax": 18.52
+   }
+  },
+  "bidRequests": 549595,
+  "publisher": "Easybrain",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.tripledot.tile.dynasty",
+  "platform": "android",
+  "name": "Mahjong Tile Dynasty",
+  "creative": {
+   "Banner": {
+    "bidRequests": 538057,
+    "cpmMin": 0.74,
+    "cpmMax": 1.48
+   }
+  },
+  "bidRequests": 538057,
+  "publisher": "Tripledot Studios",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "manuals.plus",
+  "platform": "android",
+  "name": "Free PDF Manuals & Guides | Manuals+",
+  "creative": {
+   "Banner": {
+    "bidRequests": 537945,
+    "cpmMin": 5.64,
+    "cpmMax": 11.28
+   }
+  },
+  "bidRequests": 537945,
+  "publisher": "Manuals+",
+  "category": "education & reference",
+  "webDomain": "manuals.plus",
+  "webVerified": true
+ },
+ {
+  "id": "com.truecaller",
+  "platform": "android",
+  "name": "Truecaller: Phone Call Blocker",
+  "creative": {
+   "Banner": {
+    "bidRequests": 535778,
+    "cpmMin": 0.44,
+    "cpmMax": 0.88
+   }
+  },
+  "bidRequests": 535778,
+  "publisher": "Truecaller AB",
+  "category": "utilities",
+  "webDomain": "truecaller.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.read.goodnovel",
+  "platform": "android",
+  "name": "GoodNovel Booktok, Stories",
+  "creative": {
+   "Banner": {
+    "bidRequests": 533376,
+    "cpmMin": 3.14,
+    "cpmMax": 6.28
+   }
+  },
+  "bidRequests": 533376,
+  "publisher": "GoodNovel",
+  "category": "video, audio & entertainment",
+  "webDomain": "goodnovel.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.openmygame.games.android.sudokumaster",
+  "platform": "android",
+  "name": "Sudoku Master® Sudoku Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 524743,
+    "cpmMin": 0.5,
+    "cpmMax": 1.0
+   }
+  },
+  "bidRequests": 524743,
+  "publisher": "OpenMyGame",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "grill.sort.food.games.match.puzzle",
+  "platform": "android",
+  "name": "Grill Sort Food Sort Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 519458,
+    "cpmMin": 13.24,
+    "cpmMax": 26.48
+   }
+  },
+  "bidRequests": 519458,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "in.playsimple.wordbingo",
+  "platform": "android",
+  "name": "Word Roll",
+  "creative": {
+   "Banner": {
+    "bidRequests": 518982,
+    "cpmMin": 2.06,
+    "cpmMax": 4.12
+   }
+  },
+  "bidRequests": 518982,
+  "publisher": "PlaySimple Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6738771575",
+  "platform": "ios",
+  "name": "3D Bolt Master®: Screw Master®",
+  "creative": {
+   "Banner": {
+    "bidRequests": 518162,
+    "cpmMin": 0.58,
+    "cpmMax": 1.16
+   }
+  },
+  "bidRequests": 518162,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "math.puzzle.games.crossmath.number.puzzles.free",
+  "platform": "android",
+  "name": "Crossmath® Math Puzzle Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 517259,
+    "cpmMin": 0.56,
+    "cpmMax": 1.12
+   }
+  },
+  "bidRequests": 517259,
+  "publisher": "Crossmath Math Puzzle Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.digitalchemy.calculator.freedecimal",
+  "platform": "android",
+  "name": "Calculator Plus with History",
+  "creative": {
+   "Banner": {
+    "bidRequests": 514600,
+    "cpmMin": 14.2,
+    "cpmMax": 28.4
+   }
+  },
+  "bidRequests": 514600,
+  "publisher": "Digitalchemy",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "puzzle.yarn.fever.unravel.puzzle",
+  "platform": "android",
+  "name": "Yarn Fever! Unravel Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 511367,
+    "cpmMin": 0.8,
+    "cpmMax": 1.6
+   }
+  },
+  "bidRequests": 511367,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.flyingwhalegames.carout",
+  "platform": "android",
+  "name": "Car Out! Traffic Parking Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 510110,
+    "cpmMin": 1.54,
+    "cpmMax": 3.08
+   }
+  },
+  "bidRequests": 510110,
+  "publisher": "Flying Whale Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.chinesechess.xiangqi.battle",
+  "platform": "android",
+  "name": "Chinese Chess: CoTuong/XiangQi",
+  "creative": {
+   "Banner": {
+    "bidRequests": 501662,
+    "cpmMin": 0.82,
+    "cpmMax": 1.64
+   }
+  },
+  "bidRequests": 501662,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.king.farmheroessaga",
+  "platform": "android",
+  "name": "Farm Heroes Saga",
+  "creative": {
+   "Video": {
+    "bidRequests": 500765,
+    "cpmMin": 2.1,
+    "cpmMax": 4.2
+   }
+  },
+  "bidRequests": 500765,
+  "publisher": "King",
+  "category": "game",
+  "webDomain": "king.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.king.candycrushsodasaga",
+  "platform": "android",
+  "name": "Candy Crush Soda Saga",
+  "creative": {
+   "Video": {
+    "bidRequests": 499757,
+    "cpmMin": 5.36,
+    "cpmMax": 10.72
+   }
+  },
+  "bidRequests": 499757,
+  "publisher": "King",
+  "category": "game",
+  "webDomain": "king.com",
+  "webVerified": true
+ },
+ {
+  "id": "850417475",
+  "platform": "ios",
+  "name": "Candy Crush Soda Saga",
+  "creative": {
+   "Video": {
+    "bidRequests": 495074,
+    "cpmMin": 3.16,
+    "cpmMax": 6.32
+   }
+  },
+  "bidRequests": 495074,
+  "publisher": "King",
+  "category": "game",
+  "webDomain": "king.com",
+  "webVerified": true
+ },
+ {
+  "id": "6749456493",
+  "platform": "ios",
+  "name": "Brilliant Sort™ Diamond Puzzle",
+  "creative": {
+   "Banner": {
+    "bidRequests": 493006,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 493006,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.gamovation.triplemahjong",
+  "platform": "android",
+  "name": "Mahjong Triple Match 3 Tile",
+  "creative": {
+   "Banner": {
+    "bidRequests": 489754,
+    "cpmMin": 1.54,
+    "cpmMax": 3.08
+   }
+  },
+  "bidRequests": 489754,
+  "publisher": "Gamovation",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.workpail.inkpad.notepad.notes",
+  "platform": "android",
+  "name": "Inkpad Notepad & To do list",
+  "creative": {
+   "Banner": {
+    "bidRequests": 480804,
+    "cpmMin": 0.16,
+    "cpmMax": 0.32
+   }
+  },
+  "bidRequests": 480804,
+  "publisher": "Workpail",
+  "category": "utilities",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "in.mohalla.sharechat",
+  "platform": "android",
+  "name": "ShareChat Status, Video & Live",
+  "creative": {
+   "Banner": {
+    "bidRequests": 475112,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 475112,
+  "publisher": "Mohalla Tech (ShareChat)",
+  "category": "messaging & social",
+  "webDomain": "sharechat.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.buuuk.st",
+  "platform": "android",
+  "name": "The Straits Times",
+  "creative": {
+   "Banner": {
+    "bidRequests": 474704,
+    "cpmMin": 0.1,
+    "cpmMax": 0.2
+   }
+  },
+  "bidRequests": 474704,
+  "publisher": "SPH Media",
+  "category": "news",
+  "webDomain": "straitstimes.com",
+  "webVerified": true
+ },
+ {
+  "id": "306310789",
+  "platform": "ios",
+  "name": "Wattpad Read & Write Stories",
+  "creative": {
+   "Banner": {
+    "bidRequests": 471630,
+    "cpmMin": 1.86,
+    "cpmMax": 3.72
+   }
+  },
+  "bidRequests": 471630,
+  "publisher": "Wattpad",
+  "category": "education & reference",
+  "webDomain": "wattpad.com",
+  "webVerified": true
+ },
+ {
+  "id": "498477945",
+  "platform": "ios",
+  "name": "Moovit: Bus & Transit Tracker",
+  "creative": {
+   "Banner": {
+    "bidRequests": 465079,
+    "cpmMin": 5.58,
+    "cpmMax": 11.16
+   }
+  },
+  "bidRequests": 465079,
+  "publisher": "Moovit",
+  "category": "travel & transport",
+  "webDomain": "moovit.com",
+  "webVerified": true
+ },
+ {
+  "id": "in.playsimple.tripcross",
+  "platform": "android",
+  "name": "Crossword Jam",
+  "creative": {
+   "Banner": {
+    "bidRequests": 463433,
+    "cpmMin": 2.96,
+    "cpmMax": 5.92
+   }
+  },
+  "bidRequests": 463433,
+  "publisher": "PlaySimple Games",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1563215345",
+  "platform": "ios",
+  "name": "Word Roll Fun Word Game",
+  "creative": {
+   "Banner": {
+    "bidRequests": 460318,
+    "cpmMin": 2.84,
+    "cpmMax": 5.68
+   }
+  },
+  "bidRequests": 460318,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "6499306806",
+  "platform": "ios",
+  "name": "Goods Puzzle: 3D Sorting Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 456836,
+    "cpmMin": 0.46,
+    "cpmMax": 0.92
+   }
+  },
+  "bidRequests": 456836,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.opera.browser",
+  "platform": "android",
+  "name": "Opera: Privater VPN Browser",
+  "creative": {
+   "Banner": {
+    "bidRequests": 456294,
+    "cpmMin": 0.8,
+    "cpmMax": 1.6
+   }
+  },
+  "bidRequests": 456294,
+  "publisher": "Opera",
+  "category": "utilities",
+  "webDomain": "opera.com",
+  "webVerified": true
+ },
+ {
+  "id": "net.uploss.bible",
+  "platform": "android",
+  "name": "Grace365: Bible Affirmations",
+  "creative": {
+   "Banner": {
+    "bidRequests": 455442,
+    "cpmMin": 0.3,
+    "cpmMax": 0.6
+   }
+  },
+  "bidRequests": 455442,
+  "publisher": "Uploss",
+  "category": "other",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.sorting.games.match3d.goods.triple.puzzle",
+  "platform": "android",
+  "name": "Goods 3D Sorting: Match Games",
+  "creative": {
+   "Banner": {
+    "bidRequests": 449089,
+    "cpmMin": 0.36,
+    "cpmMax": 0.72
+   }
+  },
+  "bidRequests": 449089,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.wood.bolt.wordle.screw.nuts.puzzle",
+  "platform": "android",
+  "name": "Woodle Screw® Pin Nuts & Bolts",
+  "creative": {
+   "Banner": {
+    "bidRequests": 447791,
+    "cpmMin": 0.6,
+    "cpmMax": 1.2
+   }
+  },
+  "bidRequests": 447791,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.sofascore.results",
+  "platform": "android",
+  "name": "Sofascore: Live Sports Scores",
+  "creative": {
+   "Banner": {
+    "bidRequests": 447337,
+    "cpmMin": 3.88,
+    "cpmMax": 7.76
+   }
+  },
+  "bidRequests": 447337,
+  "publisher": "Sofascore",
+  "category": "sports",
+  "webDomain": "sofascore.com",
+  "webVerified": true
+ },
+ {
+  "id": "com.tapcolor.color.coloring.number.paint.free",
+  "platform": "android",
+  "name": "Color Oasis Color by Number",
+  "creative": {
+   "Banner": {
+    "bidRequests": 445979,
+    "cpmMin": 0.26,
+    "cpmMax": 0.52
+   }
+  },
+  "bidRequests": 445979,
+  "publisher": "Tapcolor",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.fbig.words",
+  "platform": "android",
+  "name": "Word Galaxy Challenge",
+  "creative": {
+   "Banner": {
+    "bidRequests": 439785,
+    "cpmMin": 2.46,
+    "cpmMax": 4.92
+   }
+  },
+  "bidRequests": 439785,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "com.playit.videoplayer",
+  "platform": "android",
+  "name": "PLAYit All in One Video Player",
+  "creative": {
+   "Banner": {
+    "bidRequests": 438359,
+    "cpmMin": 1.12,
+    "cpmMax": 2.24
+   }
+  },
+  "bidRequests": 438359,
+  "publisher": "PLAYit",
+  "category": "video, audio & entertainment",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "1080465358",
+  "platform": "ios",
+  "name": "FUTBIN FC 27 Evolutions & More",
+  "creative": {
+   "Banner": {
+    "bidRequests": 433100,
+    "cpmMin": 0.8,
+    "cpmMax": 1.6
+   }
+  },
+  "bidRequests": 433100,
+  "publisher": "FUTBIN",
+  "category": "other",
+  "webDomain": "futbin.com",
+  "webVerified": true
+ },
+ {
+  "id": "500962489",
+  "platform": "ios",
+  "name": "Spider ▻ Solitaire",
+  "creative": {
+   "Banner": {
+    "bidRequests": 427931,
+    "cpmMin": 0.34,
+    "cpmMax": 0.68
+   }
+  },
+  "bidRequests": 427931,
+  "publisher": "Unknown",
+  "category": "game",
+  "webDomain": "",
+  "webVerified": false
+ },
+ {
+  "id": "577586159",
+  "platform": "ios",
+  "name": "Yahoo Mail: Your Email & Inbox",
+  "creative": {
+   "Banner": {
+    "bidRequests": 427366,
+    "cpmMin": 1.56,
+    "cpmMax": 3.12
+   }
+  },
+  "bidRequests": 427366,
+  "publisher": "Yahoo",
+  "category": "messaging & social",
+  "webDomain": "yahoo.com",
+  "webVerified": true
+ }
+]
