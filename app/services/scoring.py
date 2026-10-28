@@ -110,11 +110,11 @@ def find_mentions(
     return merged
 
 
-def matched_texts(name: str, text: str) -> list[str]:
-    """Every substring of `text` that the matcher would count as `name`, as
-    written in the text — the same rule find_mentions applies."""
+def name_matches(name: str, text: str) -> list[tuple[int, str]]:
+    """(position, text as written) for every place the matcher would count
+    `name` in `text` — the same rule find_mentions applies."""
     pattern = _pattern_for(name)
-    return [m.group(0) for m in pattern.finditer(text)] if pattern else []
+    return [(m.start(), m.group(0)) for m in pattern.finditer(text)] if pattern else []
 
 
 def count_brand_mentions(text: str, brand: str, brand_match_names: list[str] | None = None) -> int:

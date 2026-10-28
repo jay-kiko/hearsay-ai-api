@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from collections import Counter
 from dataclasses import dataclass
 
@@ -21,7 +22,7 @@ from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.common import DEFAULT_BUYER_CONTEXT
-from app.services.scoring import analyze_answer, matched_texts
+from app.services.scoring import analyze_answer, name_matches
 
 logger = logging.getLogger("hearsay.pipeline")
 
@@ -129,32 +130,64 @@ def _sentiment_system(brand: str, brand_match_names: list[str], competitors: lis
 
 
 _MIN_ALIAS_LEN = 3
+_ARTICLES = {"the", "a", "an"}
+_SENTENCE_BREAKS = ".!?:;\n-*•#>|"
 
 
-def verified_alias(candidate: object, answer: str, other_entities: list[str]) -> str | None:
-    """A model-suggested product/model name, accepted only if the answer really
-    names it. Without this check a generic word ("cruise") became a brand alias
-    and turned a Royal Caribbean answer into mentioned=True, rank 1 (invariant 2:
-    a model never fills a measured field).
+def _head_word(alias: str) -> str:
+    """The distinctive first word of a name: 'disney' for 'Disney Cruise
+    Line', 'ordinary' for 'The Ordinary'."""
+    words = [w for w in re.findall(r"[a-z0-9]+", alias.lower()) if w not in _ARTICLES]
+    return words[0] if words else ""
 
-    Accepted when the candidate appears in the answer under the same matching
-    rule as every other mention, at least one occurrence is written like a name
-    (has a capital letter or digit, so "cruise" is out but "Disney Wish" and
-    "Redmi Note 13" are in), and it doesn't overlap another entity's name (which
-    would steal that entity's mention)."""
+
+def _starts_sentence(text: str, position: int) -> bool:
+    before = text[:position].rstrip(" \t")
+    return not before or before[-1] in _SENTENCE_BREAKS
+
+
+def _written_like_a_name(answer: str, position: int, occurrence: str) -> bool:
+    """A digit, a capital past the first letter ('iPhone', 'Note 13'), or a
+    leading capital where grammar doesn't force one. 'Cruise' opening a
+    sentence or a bullet is just a word."""
+    if any(ch.isdigit() for ch in occurrence) or any(ch.isupper() for ch in occurrence[1:]):
+        return True
+    return occurrence[:1].isupper() and not _starts_sentence(answer, position)
+
+
+def _overlaps(a: str, b: str) -> bool:
+    return bool(name_matches(a, b) or name_matches(b, a))
+
+
+def verified_alias(candidate: object, answer: str, own_names: list[str], other_entities: list[str]) -> str | None:
+    """A model-suggested product/model name for an entity, accepted only if
+    the answer really names it and it plausibly belongs to that entity.
+    Without this, a generic word ("cruise") or a rival's unlisted product
+    ("Icon of the Seas") became a brand alias and turned a Royal Caribbean
+    answer into mentioned=True, rank 1 (invariant 2: a model never fills a
+    measured field).
+
+    Accepted when the candidate:
+      * appears in the answer under the same matching rule as every mention,
+        at least once written like a name (see _written_like_a_name);
+      * shares the head word of one of the entity's known names ('Disney
+        Wish' for 'Disney Cruise Line', 'Redmi Note 13' for alias 'Redmi') —
+        a product sold under an unrelated name is left to the detect-time
+        alias list rather than taken on the model's word;
+      * doesn't overlap another entity's name as a whole word (which would
+        steal that entity's mention)."""
     if not isinstance(candidate, str):
         return None
     name = candidate.strip()
     if len(name) < _MIN_ALIAS_LEN:
         return None
-    occurrences = matched_texts(name, answer)
-    if not any(any(ch.isupper() or ch.isdigit() for ch in occ) for occ in occurrences):
+    if not any(_written_like_a_name(answer, pos, occ) for pos, occ in name_matches(name, answer)):
         return None
-    lowered = name.lower()
-    for other in other_entities:
-        other_l = other.strip().lower()
-        if other_l and (other_l in lowered or lowered in other_l):
-            return None
+    heads = {_head_word(n) for n in own_names} - {""}
+    if not heads & set(re.findall(r"[a-z0-9]+", name.lower())):
+        return None
+    if any(other.strip() and _overlaps(name, other) for other in other_entities):
+        return None
     return name
 
 
@@ -174,10 +207,13 @@ def _apply_competitor_mentions(
         if not isinstance(entry, dict):
             continue
         name = str(entry.get("competitor", "")).strip()
+        claimed = next((c for c in competitors if c.name.lower() == name.lower()), None)
+        if claimed is None:
+            continue
         others = brand_names + [
-            alias for c in competitors if c.name.lower() != name.lower() for alias in (c.name, *c.match_names)
+            alias for c in competitors if c is not claimed for alias in (c.name, *c.match_names)
         ]
-        text = verified_alias(entry.get("mentionText"), answer, others)
+        text = verified_alias(entry.get("mentionText"), answer, [claimed.name, *claimed.match_names], others)
         if name and text:
             extra_by_name.setdefault(name.lower(), []).append(text)
 
@@ -250,7 +286,9 @@ async def _analyze_one_prompt(
     # and on top of the static detect-time aliases, never instead of them.
     effective_match_names = list(brand_match_names or [brand])
     competitor_names = [alias for c in competitors for alias in (c.name, *c.match_names)]
-    mention_text = verified_alias(sentiment_result.get("mentionText"), answer_text, competitor_names)
+    mention_text = verified_alias(
+        sentiment_result.get("mentionText"), answer_text, [brand, *effective_match_names], competitor_names
+    )
     if mention_text and mention_text.lower() not in (n.lower() for n in effective_match_names):
         effective_match_names.append(mention_text)
 

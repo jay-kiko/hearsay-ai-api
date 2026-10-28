@@ -11,18 +11,29 @@ RC = Competitor(name="Royal Caribbean", match_names=["Royal Caribbean"])
 
 
 @pytest.mark.parametrize(
-    "candidate, expected",
+    "candidate, answer, expected",
     [
-        ("cruise", None),  # generic word, never written like a name
-        ("Disney Wish", "Disney Wish"),  # a real product name in the answer
-        ("Disney Treasure", None),  # not in the answer
-        ("Royal Caribbean", None),  # another entity's name
-        ("Ro", None),  # too short
-        (None, None),
+        ("cruise", ANSWER, None),  # generic word, never written like a name
+        ("Disney Wish", ANSWER, "Disney Wish"),  # a real product name sharing the brand's head word
+        ("Disney Treasure", ANSWER, None),  # not in the answer
+        ("Royal Caribbean", ANSWER, None),  # another entity's name
+        ("Ro", ANSWER, None),  # too short
+        (None, ANSWER, None),
+        # a rival's unlisted ship: in the answer, written like a name, but not the brand's
+        ("Icon of the Seas", "Royal Caribbean's Icon of the Seas suits families.", None),
+        # capitalised only because it opens a sentence / a bullet
+        ("Cruise", "Cruise lines from Singapore: Royal Caribbean.", None),
+        ("Cruise", "Options:\n- Cruise packages with Royal Caribbean", None),
+        ("Disney", "Many pick Disney for kids.", "Disney"),
     ],
 )
-def test_verified_alias(candidate, expected):
-    assert verified_alias(candidate, ANSWER, ["Royal Caribbean"]) == expected
+def test_verified_alias(candidate, answer, expected):
+    assert verified_alias(candidate, answer, ["Disney Cruise Line"], ["Royal Caribbean"]) == expected
+
+
+def test_overlap_check_is_whole_word():
+    # 'Dis' inside 'Disney' is not an overlap with a rival called 'Dis'.
+    assert verified_alias("Disney Wish", ANSWER, ["Disney Cruise Line"], ["Dis"]) == "Disney Wish"
 
 
 def _fake_calls(monkeypatch, answer: str, sentiment: dict):
