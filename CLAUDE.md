@@ -55,6 +55,35 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 7. **Sources are found like a buyer, never by brand lookup.** The source search and its relevance filter never see the brand or competitor names; a search that names one is dropped. Thin results get a `coverageNote`, never a silent fallback.
 8. **Counts agree.** Overview, Presence and the breakdown all use prompt-level counts (see commits a2c37a0, 3c57800).
 
+## Writing style for generated text
+
+Applies to everything a model writes that a client reads: personas, buyer
+prompts, categories, the brand summary, insights. The wording is the product,
+so a change to any of these prompts follows these rules and is checked with
+the evals.
+
+- **Sound like a person, not a deck.** Short plain sentences, concrete details
+  (a number, a place, a budget, what went wrong) over abstract qualities.
+- **Length is capped in the tool schema**, per field ("at most 12 words"), not
+  only in the instructions. Add a cap when you add a field.
+- **No stock AI phrasing.** No filler openers ("It is important to",
+  "Consider"), no jargon ("leverage", "seamless", "holistic", "robust",
+  "ensure", "tailored", "navigate"), no em dashes, no lists of three adjectives.
+- **Never repeat.** Every item makes a distinct point: no two prompts open
+  the same way or reuse a shape within a persona, no insight restates another
+  under a different heading, and fewer distinct items beat padded ones.
+- **Numbers come from the data.** Generated text quotes the same prompt-level
+  counts and measured source data the UI shows, never its own estimate.
+- **Brand-neutral where it feeds measurement.** Personas and prompts never
+  name the brand or a competitor (invariants 4 and 5).
+
+Deliberately exempt: the per-prompt answer call (`pipeline._answer_system`).
+It is the signal being measured, so its style is the assistant's own.
+Mechanical calls (sentiment, relevance, origin) return structured fields only.
+
+Check with `evals.metrics` (length, repeated openers, stock phrases, leakage),
+then read a sample: the metrics can't tell you a line sounds human.
+
 ## Model tiers (`app/config.py`)
 
 Choose per call by: *does its output directly shape what a client sees?* and *how often does it run?*

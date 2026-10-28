@@ -187,3 +187,11 @@ async def test_prompt_output_budget_scales_and_extra_prompts_are_cut(monkeypatch
                                             personas=personas, prompts_per_persona=10)
     assert seen["max_tokens"] > 2048
     assert all(len(p) == 10 for p in out.values())
+
+
+def test_insights_ask_for_distinct_points_without_a_padding_floor():
+    from app.services import insights_gen
+
+    assert "distinct point" in insights_gen._SYSTEM and "rather than padding" in insights_gen._SYSTEM
+    description = insights_gen._INPUT_SCHEMA["properties"]["opportunities"]["description"]
+    assert "4-6" not in description and "at least 2" in description

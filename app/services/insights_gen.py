@@ -73,7 +73,9 @@ _INPUT_SCHEMA = {
                 },
                 "required": ["title", "type", "impact", "effort", "detail", "action"],
             },
-            "description": "4-6 concrete, specific opportunities grounded in this run's actual data — never generic advice.",
+            # Not "4-6": a floor that high pushed the model to pad with reworded
+            # repeats when the data only supported two or three real points.
+            "description": "Up to 6 (at least 2) concrete, specific opportunities grounded in this run's actual data, each a distinct fix — never generic advice.",
         },
         "radarCategories": {
             "type": "array",
@@ -117,7 +119,9 @@ _SYSTEM = (
     "if no source list is given, don't produce those types. Write like a sharp colleague, not a consultant "
     "deck: short, plain sentences with the specific number or example up front. No filler openers "
     "('It is important to', 'Consider'), no jargon ('leverage', 'ensure', 'robust', 'holistic', "
-    "'synergy'), no em dashes."
+    "'synergy'), no em dashes. Every item must make a distinct point. A gap must not restate a rivalWin, an "
+    "opportunity must not just reword a gap, and no two opportunities may share the same underlying fix. If "
+    "the data only supports a few distinct points, return fewer items rather than padding."
 )
 
 
