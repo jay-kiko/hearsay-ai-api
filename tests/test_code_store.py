@@ -64,3 +64,31 @@ async def test_redemptions_from_before_outcomes_existed_are_not_refunded(tmp_pat
     assert await s.refund_stale(older_than_seconds=-1) == 0
     assert await s.status("AAAA-BBBB") == "exhausted"
     await s.close()
+
+
+async def test_a_half_finished_outcome_migration_is_completed_on_the_next_boot(tmp_path):
+    """The column was added but the crash came before old rows were marked."""
+    path = tmp_path / "half.db"
+    async with aiosqlite.connect(path) as db:
+        await db.executescript(
+            "CREATE TABLE access_codes (code TEXT PRIMARY KEY, created_at TEXT NOT NULL, uses_total INTEGER NOT NULL,"
+            " uses_remaining INTEGER NOT NULL, prompt_calls INTEGER NOT NULL DEFAULT 0, revoked INTEGER NOT NULL DEFAULT 0);"
+            "CREATE TABLE code_redemptions (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT NOT NULL,"
+            " job_id TEXT NOT NULL, redeemed_at TEXT NOT NULL, outcome TEXT);"
+            "INSERT INTO access_codes VALUES ('AAAA-BBBB', 'x', 1, 0, 0, 0);"
+            "INSERT INTO code_redemptions (code, job_id, redeemed_at) VALUES ('AAAA-BBBB', 'old', '2020-01-01T00:00:00+00:00');"
+        )
+        await db.commit()
+    s = CodeStore(str(path))
+    await s.connect()
+    assert await s.refund_stale(older_than_seconds=0) == 0
+    await s.close()
+    s = CodeStore(str(path))  # and a second boot doesn't re-mark new rows
+    await s.connect()
+    [code] = await s.mint(1)
+    await s.redeem(code, "new")
+    await s.close()
+    s = CodeStore(str(path))
+    await s.connect()
+    assert await s.refund_stale(older_than_seconds=-1) == 1
+    await s.close()

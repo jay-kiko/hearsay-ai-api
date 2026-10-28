@@ -50,6 +50,11 @@ CREATE TABLE IF NOT EXISTS code_redemptions (
 """
 
 
+# PRAGMA user_version once code_redemptions.outcome exists and older rows
+# have been marked legacy.
+_OUTCOMES_SCHEMA_VERSION = 1
+
+
 def _generate_code() -> str:
     chars = "".join(secrets.choice(_ALPHABET) for _ in range(8))
     return f"{chars[:4]}-{chars[4:]}"
@@ -91,14 +96,33 @@ class CodeStore:
             await self._conn.execute("ALTER TABLE access_codes ADD COLUMN revoked INTEGER NOT NULL DEFAULT 0")
         except aiosqlite.OperationalError:
             pass  # column already present
-        try:
-            await self._conn.execute("ALTER TABLE code_redemptions ADD COLUMN outcome TEXT")
-            # Rows from before outcomes were tracked must not read as jobs lost
-            # mid-run, or refund_stale() would hand every past use back.
-            await self._conn.execute("UPDATE code_redemptions SET outcome = 'legacy' WHERE outcome IS NULL")
-        except aiosqlite.OperationalError:
-            pass  # column already present
         await self._conn.commit()
+        await self._migrate_outcomes()
+
+    async def _migrate_outcomes(self) -> None:
+        """Adds code_redemptions.outcome and marks every older row 'legacy',
+        so refund_stale() never reads past redemptions as lost jobs and hands
+        every use back.
+
+        One transaction, recorded in PRAGMA user_version: done as two
+        autocommitted steps, a crash between them left old rows NULL, and the
+        next boot skipped the marking because the column already existed."""
+        async with self._db.execute("PRAGMA user_version") as cursor:
+            (version,) = await cursor.fetchone()
+        if version >= _OUTCOMES_SCHEMA_VERSION:
+            return
+        async with self._db.execute("PRAGMA table_info(code_redemptions)") as cursor:
+            columns = {row[1] for row in await cursor.fetchall()}
+        await self._db.execute("BEGIN")
+        try:
+            if "outcome" not in columns:
+                await self._db.execute("ALTER TABLE code_redemptions ADD COLUMN outcome TEXT")
+            await self._db.execute("UPDATE code_redemptions SET outcome = 'legacy' WHERE outcome IS NULL")
+            await self._db.execute(f"PRAGMA user_version = {_OUTCOMES_SCHEMA_VERSION}")
+            await self._db.commit()
+        except BaseException:
+            await self._db.rollback()
+            raise
 
     async def close(self) -> None:
         if self._conn is not None:
