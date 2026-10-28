@@ -8,6 +8,7 @@ is never written into a Job.
 from __future__ import annotations
 
 import asyncio
+import json
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -16,6 +17,12 @@ from app.models import AnalysisComplete, JobStatus, PersonaEvent, PersonaStatus
 
 # A None on a subscriber queue signals "stream is done, close the connection".
 _SENTINEL = None
+
+
+def _error_payload(message: str | None) -> str:
+    # json.dumps, not repr(): repr() single-quotes most strings, which isn't
+    # JSON, so the frontend's JSON.parse threw and the user never saw why.
+    return json.dumps({"message": message or "Analysis failed"})
 
 
 def new_job_id() -> str:
@@ -89,7 +96,7 @@ class JobStore:
             return
         job.status = JobStatus.error
         job.error = message
-        self._broadcast(job, "error", f'{{"message": {message!r}}}')
+        self._broadcast(job, "error", _error_payload(message))
         for queue in job.subscribers:
             queue.put_nowait(_SENTINEL)
 
@@ -109,7 +116,7 @@ class JobStore:
             queue.put_nowait(f"event: complete\ndata: {job.result.model_dump_json(by_alias=True)}\n\n")
             queue.put_nowait(_SENTINEL)
         elif job.status == JobStatus.error:
-            queue.put_nowait(f'event: error\ndata: {{"message": {job.error!r}}}\n\n')
+            queue.put_nowait(f"event: error\ndata: {_error_payload(job.error)}\n\n")
             queue.put_nowait(_SENTINEL)
 
         return queue

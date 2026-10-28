@@ -116,3 +116,22 @@ async def test_custom_persona_expansion_is_told_not_to_name_brands(monkeypatch):
     await persona_gen.expand_custom_persona(api_key="k", description="a mum", industry="Cruises",
                                             competitors=COMPS, buyer_context=None)
     assert persona_gen._NO_BRANDS_RULE in seen["system"]
+
+
+# ── job errors reach the client as JSON, without internals ────────────
+
+def test_error_events_are_valid_json_without_internal_detail():
+    import json
+
+    from app.errors import user_facing_error
+    from app.job_store import JobStore
+
+    store = JobStore(ttl_seconds=60)
+    job = store.create_job(["p1"])
+    queue = store.subscribe(job.job_id)
+    store.fail(job.job_id, user_facing_error(RuntimeError("db at 10.0.0.5 said no")))
+    event = queue.get_nowait()
+    payload = json.loads(event.split("data: ", 1)[1])
+    assert payload == {"message": "Something went wrong during the analysis."}
+    late = store.subscribe(job.job_id).get_nowait()  # replay for a late subscriber
+    assert json.loads(late.split("data: ", 1)[1]) == payload

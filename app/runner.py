@@ -11,6 +11,7 @@ import asyncio
 import logging
 
 from app.config import get_settings
+from app.errors import user_facing_error
 from app.job_store import JobStore
 from app.models import AnalysisComplete, AnalysisRequest, PersonaEvent
 from app.services import aggregation
@@ -53,7 +54,7 @@ async def _run_one_persona(
         except Exception as exc:  # noqa: BLE001 - one persona's failure must not sink the job
             logger.exception("persona %s failed", persona.id)
             job_store.update_persona(
-                job_id, PersonaEvent(persona_id=persona.id, status="error", error=str(exc))
+                job_id, PersonaEvent(persona_id=persona.id, status="error", error=user_facing_error(exc))
             )
             return persona.id, None
 
@@ -141,4 +142,4 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         job_store.complete(job_id, complete)
     except Exception as exc:  # noqa: BLE001 - last-resort guard so the SSE stream always terminates
         logger.exception("job %s failed", job_id)
-        job_store.fail(job_id, str(exc))
+        job_store.fail(job_id, user_facing_error(exc))
