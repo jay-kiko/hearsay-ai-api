@@ -2,9 +2,14 @@
 
 The key is the server's own ANTHROPIC_API_KEY (see app.config) — there are no
 accounts, so access is gated by the multi-use codes in app.code_store rather
-than by a per-user key. Every call still builds a throwaway `AsyncAnthropic`
-client rather than a shared one, which is only relevant now for isolating
-retries/timeouts per call, not for key custody.
+than by a per-user key.
+
+One client per key and event loop, shared by every call, so connections are
+reused instead of a TLS handshake per call. Its own retries are off: retrying
+is done once, here, in _with_retry (the SDK's 2 retries used to stack under
+ours). An explicit timeout replaces the SDK's 10-minute default, which let one
+hung call hold a job for 10+ minutes per attempt. A process-wide semaphore caps
+calls in flight across all jobs, since each job alone fans out to dozens.
 """
 from __future__ import annotations
 
@@ -12,7 +17,15 @@ import asyncio
 import logging
 from typing import Any
 
-from anthropic import AsyncAnthropic, BadRequestError, RateLimitError
+from anthropic import (
+    AsyncAnthropic,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    PermissionDeniedError,
+    RateLimitError,
+    UnprocessableEntityError,
+)
 
 from app.config import get_settings
 
@@ -33,6 +46,37 @@ _RATE_LIMIT_BASE_DELAY_SECONDS = 5.0
 _RATE_LIMIT_MAX_DELAY_SECONDS = 60.0
 
 
+# Requests that fail the same way every time: retrying only costs time.
+_NOT_RETRYABLE = (AuthenticationError, BadRequestError, NotFoundError, PermissionDeniedError, UnprocessableEntityError)
+
+_clients: dict[tuple[int, str], AsyncAnthropic] = {}
+_semaphores: dict[int, asyncio.Semaphore] = {}
+
+
+def _client(api_key: str) -> AsyncAnthropic:
+    # Keyed by loop too: the client's connection pool belongs to the loop
+    # that opened it (one loop in production; tests open one per test).
+    key = (id(asyncio.get_running_loop()), api_key)
+    if key not in _clients:
+        settings = get_settings()
+        _clients[key] = AsyncAnthropic(api_key=api_key, timeout=settings.anthropic_timeout_seconds, max_retries=0)
+    return _clients[key]
+
+
+def _in_flight() -> asyncio.Semaphore:
+    loop_id = id(asyncio.get_running_loop())
+    if loop_id not in _semaphores:
+        _semaphores[loop_id] = asyncio.Semaphore(get_settings().anthropic_max_concurrency)
+    return _semaphores[loop_id]
+
+
+async def close_clients() -> None:
+    for client in list(_clients.values()):
+        await client.close()
+    _clients.clear()
+    _semaphores.clear()
+
+
 def _cacheable_system(system: str) -> list[dict[str, Any]]:
     """Marks the system prompt as an Anthropic prompt-cache breakpoint.
 
@@ -51,7 +95,10 @@ async def _with_retry(fn, *, retries: int, label: str):
     rate_limit_attempt = 0
     while True:
         try:
-            return await fn()
+            async with _in_flight():
+                return await fn()
+        except _NOT_RETRYABLE:
+            raise
         except RateLimitError as exc:
             rate_limit_attempt += 1
             if rate_limit_attempt > _RATE_LIMIT_MAX_RETRIES:
@@ -78,7 +125,7 @@ async def _with_retry(fn, *, retries: int, label: str):
 
 async def call_text(*, api_key: str, model: str, system: str, user: str, max_tokens: int = 1024) -> str:
     settings = get_settings()
-    client = AsyncAnthropic(api_key=api_key)
+    client = _client(api_key)
 
     async def _do() -> str:
         response = await client.messages.create(
@@ -89,10 +136,7 @@ async def call_text(*, api_key: str, model: str, system: str, user: str, max_tok
         )
         return "".join(block.text for block in response.content if block.type == "text").strip()
 
-    try:
-        return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_text")
-    finally:
-        await client.close()
+    return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_text")
 
 
 # Some models (confirmed live for the quality tier) reject a forced tool call
@@ -128,7 +172,7 @@ async def call_structured(
     call the tool, and raises if the model still doesn't.
     """
     settings = get_settings()
-    client = AsyncAnthropic(api_key=api_key)
+    client = _client(api_key)
 
     async def _request(forced: bool):
         return await client.messages.create(
@@ -155,10 +199,7 @@ async def call_structured(
                 return block.input
         raise ValueError(f"model did not return a {tool_name} tool call")
 
-    try:
-        return await _with_retry(_do, retries=settings.anthropic_max_retries, label=f"call_structured:{tool_name}")
-    finally:
-        await client.close()
+    return await _with_retry(_do, retries=settings.anthropic_max_retries, label=f"call_structured:{tool_name}")
 
 
 # Search localisation only supports some countries (confirmed live: "Country
@@ -185,7 +226,7 @@ async def call_web_search(
     response. A paused turn is resumed, and the returned response carries the
     content blocks of every part of the turn."""
     settings = get_settings()
-    client = AsyncAnthropic(api_key=api_key)
+    client = _client(api_key)
 
     async def _do():
         country = (user_location or {}).get("country")
@@ -224,7 +265,4 @@ async def call_web_search(
         response.content = blocks
         return response
 
-    try:
-        return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_web_search")
-    finally:
-        await client.close()
+    return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_web_search")

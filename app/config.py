@@ -26,7 +26,13 @@ class Settings(BaseSettings):
     anthropic_quality_model: str = "claude-opus-5-5"
     anthropic_model: str = "claude-sonnet-5"
     anthropic_fast_model: str = "claude-haiku-4-5-20251001"
-    anthropic_max_retries: int = 1
+    # Retries for a failed call (rate limits have their own, longer budget in
+    # anthropic_client). The SDK's own retries are off, so this is the total.
+    anthropic_max_retries: int = 2
+    # Per call. Web-search calls are the slowest, measured at up to ~100s.
+    anthropic_timeout_seconds: float = 180.0
+    # Calls in flight at once across every job in the process.
+    anthropic_max_concurrency: int = 16
 
     admin_secret: str | None = None
     codes_db_path: str = "/app/data/codes.db"

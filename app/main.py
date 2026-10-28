@@ -15,6 +15,7 @@ from app.routes.categories import router as categories_router
 from app.routes.detect import router as detect_router
 from app.routes.personas import router as personas_router
 from app.routes.prompts import router as prompts_router
+from app.services.anthropic_client import close_clients
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,6 +31,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         eviction_task.cancel()
+        await close_clients()
         await get_code_store().close()
 
 

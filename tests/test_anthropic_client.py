@@ -39,6 +39,7 @@ def _reset(monkeypatch):
     _FakeClient.calls = []
     ac._NO_FORCED_TOOL_CHOICE.clear()
     monkeypatch.setattr(ac, "AsyncAnthropic", _FakeClient)
+    ac._clients.clear()
 
 
 async def _call(model="fancy-model"):
@@ -94,6 +95,7 @@ def _country_error():
 async def test_unsupported_search_country_is_dropped_and_remembered(monkeypatch):
     ac._UNSUPPORTED_COUNTRIES.clear()
     monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
     loc = {"type": "approximate", "country": "SG"}
     _SearchFake.seen, _SearchFake.script = [], [_country_error(), _resp(["ok"])]
     out = await ac.call_web_search(api_key="k", model="m", system="s", user="u", user_location=loc)
@@ -108,6 +110,7 @@ async def test_unsupported_search_country_is_dropped_and_remembered(monkeypatch)
 async def test_location_without_country_is_never_blacklisted(monkeypatch):
     ac._UNSUPPORTED_COUNTRIES.clear()
     monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
     _SearchFake.seen, _SearchFake.script = [], [_country_error(), _resp(["ok"])]
     await ac.call_web_search(api_key="k", model="m", system="s", user="u",
                              user_location={"type": "approximate", "city": "Singapore"})
@@ -116,8 +119,37 @@ async def test_location_without_country_is_never_blacklisted(monkeypatch):
 
 async def test_paused_search_turn_is_resumed_and_blocks_merged(monkeypatch):
     monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
     _SearchFake.seen, _SearchFake.script = [], [_resp(["a", "b"], stop="pause_turn"), _resp(["c"])]
     out = await ac.call_web_search(api_key="k", model="m", system="s", user="u")
     assert out.content == ["a", "b", "c"]
     resumed = _SearchFake.seen[1]["messages"]
     assert resumed[-1] == {"role": "assistant", "content": ["a", "b"]}
+
+
+async def test_requests_that_cannot_succeed_are_not_retried(monkeypatch):
+    attempts = []
+
+    async def bad():
+        attempts.append(1)
+        request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+        raise BadRequestError("invalid", response=httpx.Response(400, request=request), body=None)
+
+    with pytest.raises(BadRequestError):
+        await ac._with_retry(bad, retries=3, label="t")
+    assert len(attempts) == 1
+
+
+async def test_one_shared_client_with_timeout_and_no_sdk_retries():
+    made = []
+
+    class Recording(_FakeClient):
+        def __init__(self, **kw):
+            made.append(kw)
+            super().__init__(**kw)
+
+    ac.AsyncAnthropic = Recording  # restored by the autouse monkeypatch
+    ac._clients.clear()
+    await _call()
+    await _call()
+    assert len(made) == 1 and made[0]["max_retries"] == 0 and made[0]["timeout"] > 0
