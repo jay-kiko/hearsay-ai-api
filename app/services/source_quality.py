@@ -190,6 +190,14 @@ def is_public_http_url(url: str) -> bool:
         return False
     if parsed.scheme not in ("http", "https") or not parsed.hostname:
         return False
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+    # Public pages live on the default ports; anything else is a way to poke
+    # at non-web services on a public host.
+    if port is not None and port not in (80, 443):
+        return False
     host = parsed.hostname.lower()
     if host == "localhost" or host.endswith((".local", ".internal", ".localhost")):
         return False

@@ -42,9 +42,11 @@ app = FastAPI(title="hearsay.ai backend", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    # No cookies or auth headers are used (codes travel in the body), so
+    # credentialed cross-origin requests are not allowed.
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "X-Admin-Secret"],
 )
 
 app.include_router(access_router)

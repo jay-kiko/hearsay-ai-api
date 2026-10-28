@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 import time
-import uuid
 from dataclasses import dataclass, field
 
 from app.models import AnalysisComplete, JobStatus, PersonaEvent, PersonaStatus
@@ -26,7 +26,9 @@ def _error_payload(message: str | None) -> str:
 
 
 def new_job_id() -> str:
-    return f"j_{uuid.uuid4().hex[:10]}"
+    # The id is the only thing guarding a job's results (no accounts), so it
+    # carries 128 bits, not the 40 it used to.
+    return f"j_{secrets.token_urlsafe(16)}"
 
 
 @dataclass

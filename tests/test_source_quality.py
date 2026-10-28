@@ -168,3 +168,11 @@ def test_html_to_text_keeps_visible_text_only():
 
     page = "<p>Hi &amp; <b>Disney</b></p><SCRIPT>x='<p>no</p>'</script ><style>p{}</style>ok<!-- c --> end"
     assert html_to_text(page) == "Hi & Disney ok end"
+
+
+def test_page_fetcher_only_uses_default_web_ports():
+    from app.services.source_quality import is_public_http_url
+
+    assert is_public_http_url("https://example.com:443/a")
+    assert not is_public_http_url("http://example.com:6379/")
+    assert not is_public_http_url("http://example.com:99999/")
