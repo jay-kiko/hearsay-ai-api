@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.config import get_settings
 from app.models import (
@@ -14,8 +14,8 @@ router = APIRouter()
 
 
 @router.post("/api/generate-personas", response_model=GeneratePersonasResponse)
-async def create_personas(body: GeneratePersonasRequest) -> GeneratePersonasResponse:
-    await charge_generation_call(body.access_code)
+async def create_personas(body: GeneratePersonasRequest, request: Request) -> GeneratePersonasResponse:
+    await charge_generation_call(body.access_code, request)
     with upstream_errors():
         personas = await generate_personas(
             api_key=get_settings().anthropic_api_key,
@@ -30,8 +30,8 @@ async def create_personas(body: GeneratePersonasRequest) -> GeneratePersonasResp
 
 
 @router.post("/api/personas/expand", response_model=ExpandPersonaResponse)
-async def expand_persona(body: ExpandPersonaRequest) -> ExpandPersonaResponse:
-    await charge_generation_call(body.access_code)
+async def expand_persona(body: ExpandPersonaRequest, request: Request) -> ExpandPersonaResponse:
+    await charge_generation_call(body.access_code, request)
     with upstream_errors():
         persona = await expand_custom_persona(
             api_key=get_settings().anthropic_api_key,

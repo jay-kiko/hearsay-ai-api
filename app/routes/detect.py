@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.config import get_settings
 from app.models import DetectRequest, DetectResponse
@@ -9,7 +9,7 @@ router = APIRouter()
 
 
 @router.post("/api/detect", response_model=DetectResponse)
-async def detect(body: DetectRequest) -> DetectResponse:
-    await charge_generation_call(body.access_code)
+async def detect(body: DetectRequest, request: Request) -> DetectResponse:
+    await charge_generation_call(body.access_code, request)
     with upstream_errors():
         return await detect_brand(api_key=get_settings().anthropic_api_key, query=body.query)

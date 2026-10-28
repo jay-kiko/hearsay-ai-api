@@ -14,9 +14,9 @@ router = APIRouter()
 
 
 @router.post("/api/analysis", response_model=AnalysisStartResponse)
-async def start_analysis(body: AnalysisRequest) -> AnalysisStartResponse:
+async def start_analysis(body: AnalysisRequest, request: Request) -> AnalysisStartResponse:
     code_store = get_code_store()
-    await require_usable_code(body.access_code)
+    await require_usable_code(body.access_code, request)
 
     # Reserve the job id and spend one use against it atomically before
     # anything else exists, so two concurrent requests can't both win the

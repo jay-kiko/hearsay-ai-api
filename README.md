@@ -74,6 +74,12 @@ Gate usage without accounts (`app/code_store.py`, SQLite-backed):
   code (`MAX_PROMPT_CALLS_PER_CODE`) — they're billed AI calls that happen
   *before* a code is actually redeemed, so without a cap a code could be
   hammered for free generation forever.
+- **Guessing is throttled**: failed code lookups (and wrong admin secrets)
+  are counted per client IP and globally (`CODE_FAILURES_PER_IP`,
+  `CODE_FAILURES_GLOBAL`); past either limit lookups get 429 *before* the
+  code is checked. Set `FORWARDED_ALLOW_IPS` behind a proxy so client IPs are real.
+- **A job that delivers nothing gives its use back** (all personas failed, or
+  the process restarted mid-job — unfinished redemptions are refunded at startup).
 - **The throttle resets on every successful redemption**, not just once per
   code's lifetime — otherwise heavy iteration during one real use could
   starve every other use of the same multi-use code before they even start.

@@ -34,6 +34,11 @@ class Settings(BaseSettings):
     # regenerate while reviewing) — cap the free regenerations per code so
     # that path can't rack up unlimited billed calls on its own.
     max_prompt_calls_per_code: int = 10
+    # Failed access-code / admin-secret lookups allowed per window before
+    # further lookups are refused (see app/rate_limit.py).
+    code_failures_per_ip: int = 20
+    code_failures_global: int = 1000
+    code_failure_window_seconds: int = 600
 
     prompts_per_persona: int = 3
     persona_count: int = 4

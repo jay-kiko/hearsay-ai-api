@@ -1,6 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.config import get_settings
 from app.models import AdaptSeedPromptRequest, AdaptSeedPromptResponse, PromptsRequest, PromptsResponse
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/api/prompts", response_model=PromptsResponse)
-async def create_prompts(body: PromptsRequest) -> PromptsResponse:
+async def create_prompts(body: PromptsRequest, request: Request) -> PromptsResponse:
     settings = get_settings()
 
     if body.categories:
@@ -37,7 +37,7 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
         # calls, not 1, or a multi-select run would get unlimited free
         # generation past the cap.
         for _ in active:
-            await charge_generation_call(body.access_code)
+            await charge_generation_call(body.access_code, request)
 
         with upstream_errors():
             per_category = await asyncio.gather(
@@ -68,7 +68,7 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
     # reviewing them; a use is only spent when they actually launch a job.
     # Still capped per code so this path can't rack up unlimited billed calls
     # on a code that never gets spent on an analysis.
-    await charge_generation_call(body.access_code)
+    await charge_generation_call(body.access_code, request)
 
     with upstream_errors():
         prompts = await generate_prompts(
@@ -88,12 +88,12 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
 
 
 @router.post("/api/prompts/seed", response_model=AdaptSeedPromptResponse)
-async def create_seed_prompts(body: AdaptSeedPromptRequest) -> AdaptSeedPromptResponse:
+async def create_seed_prompts(body: AdaptSeedPromptRequest, request: Request) -> AdaptSeedPromptResponse:
     settings = get_settings()
 
     # Same shared pre-spend throttle, not consumed — one adaptation call per
     # request regardless of persona count, same as /api/prompts.
-    await charge_generation_call(body.access_code)
+    await charge_generation_call(body.access_code, request)
 
     with upstream_errors():
         prompts = await adapt_seed_prompt(

@@ -8,11 +8,12 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 
 from anthropic import AnthropicError, AuthenticationError
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 
 from app.code_store import get_code_store
 from app.config import get_settings
 from app.errors import user_facing_error
+from app.rate_limit import client_key, ensure_not_throttled, get_limiter
 
 logger = logging.getLogger("hearsay.routes")
 
@@ -24,24 +25,28 @@ _STATUS_ERRORS = {
 }
 
 
-def raise_for_status(status: str) -> None:
+def raise_for_status(status: str, request: Request | None = None) -> None:
+    if status == "unknown" and request is not None:
+        get_limiter().record_failure(client_key(request))
     error = _STATUS_ERRORS.get(status)
     if error:
         raise HTTPException(status_code=error[0], detail=error[1])
 
 
-async def charge_generation_call(access_code: str) -> None:
+async def charge_generation_call(access_code: str, request: Request) -> None:
     """The pre-spend throttle: every billed call made before a job is launched
     (detect, categories, personas, prompts) draws on one shared per-code
     budget, validated but not spending a use."""
+    ensure_not_throttled(request)
     raise_for_status(
-        await get_code_store().register_prompt_call(access_code, get_settings().max_prompt_calls_per_code)
+        await get_code_store().register_prompt_call(access_code, get_settings().max_prompt_calls_per_code), request
     )
 
 
-async def require_usable_code(access_code: str) -> None:
+async def require_usable_code(access_code: str, request: Request) -> None:
+    ensure_not_throttled(request)
     status = await get_code_store().status(access_code)
-    raise_for_status("ok" if status == "valid" else status)
+    raise_for_status("ok" if status == "valid" else status, request)
 
 
 @contextmanager

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 from app.config import get_settings
 from app.models import CategoriesRequest, CategoriesResponse
@@ -9,8 +9,8 @@ router = APIRouter()
 
 
 @router.post("/api/categories", response_model=CategoriesResponse)
-async def create_categories(body: CategoriesRequest) -> CategoriesResponse:
-    await charge_generation_call(body.access_code)
+async def create_categories(body: CategoriesRequest, request: Request) -> CategoriesResponse:
+    await charge_generation_call(body.access_code, request)
     with upstream_errors():
         categories = await generate_categories(
             api_key=get_settings().anthropic_api_key,
