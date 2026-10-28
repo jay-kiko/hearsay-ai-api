@@ -20,6 +20,7 @@ from typing import Any
 
 from anthropic import (
     AsyncAnthropic,
+    APITimeoutError,
     AuthenticationError,
     BadRequestError,
     NotFoundError,
@@ -95,7 +96,7 @@ def _cacheable_system(system: str) -> list[dict[str, Any]]:
     return [{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}]
 
 
-async def _with_retry(fn, *, retries: int, label: str):
+async def _with_retry(fn, *, retries: int, label: str, retry_timeouts: bool = True):
     attempt = 0
     rate_limit_attempt = 0
     while True:
@@ -104,6 +105,15 @@ async def _with_retry(fn, *, retries: int, label: str):
                 return await fn()
         except _NOT_RETRYABLE:
             raise
+        except APITimeoutError:
+            if not retry_timeouts:
+                raise
+            attempt += 1
+            if attempt > retries:
+                logger.warning("%s timed out after %d attempt(s)", label, attempt)
+                raise
+            logger.info("%s timed out (attempt %d), retrying", label, attempt)
+            await asyncio.sleep(1.0 * attempt)
         except RateLimitError as exc:
             rate_limit_attempt += 1
             if rate_limit_attempt > _RATE_LIMIT_MAX_RETRIES:
@@ -270,4 +280,9 @@ async def call_web_search(
         response.content = blocks
         return response
 
-    return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_web_search")
+    # One retry at most, and none after a timeout: every attempt re-runs the
+    # whole multi-turn search and bills its searches again, and a search that
+    # took the full timeout once will likely do it again (3 x 180s otherwise).
+    return await _with_retry(
+        _do, retries=min(settings.anthropic_max_retries, 1), label="call_web_search", retry_timeouts=False
+    )

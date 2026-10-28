@@ -171,3 +171,15 @@ def test_caches_are_per_loop_and_shutdown_keeps_the_semaphore():
     finally:
         first_loop.close()
         second_loop.close()
+
+
+async def test_a_timed_out_web_search_is_not_rerun(monkeypatch):
+    from anthropic import APITimeoutError
+
+    request = httpx.Request("POST", "https://api.anthropic.com/v1/messages")
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
+    _SearchFake.seen, _SearchFake.script = [], [APITimeoutError(request=request), _resp(["ok"])]
+    with pytest.raises(APITimeoutError):
+        await ac.call_web_search(api_key="k", model="m", system="s", user="u")
+    assert len(_SearchFake.seen) == 1
