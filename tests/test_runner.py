@@ -83,3 +83,27 @@ async def test_all_personas_failing_cancels_grounding_and_refunds(monkeypatch, s
     await asyncio.sleep(0)
     assert cancelled.is_set()
     assert jobs.get(job.job_id).status.value == "error" and store.refunded == [job.job_id]
+
+
+async def test_a_grounding_error_still_delivers_the_persona_results(monkeypatch, store):
+    async def ok_persona(**_):
+        return PersonaResult(prompt="q", mentioned=False, sentiment=Sentiment.neutral, vis=0, rank=None, quote="",
+                             parts=[], exchanges=[], opportunity="Critical Gap")
+
+    async def broken_grounding(**_):
+        raise KeyError("malformed search block")
+
+    async def insights(**_):
+        from app.models import CompetitorDiagnosis
+        return CompetitorDiagnosis(rival_wins=[], brand_wins=[], gaps=[]), [], []
+
+    monkeypatch.setattr(runner, "run_persona", ok_persona)
+    monkeypatch.setattr(runner, "run_grounding", broken_grounding)
+    monkeypatch.setattr(runner, "generate_insights", insights)
+    jobs = JobStore(ttl_seconds=60)
+    job = jobs.create_job(["p1"])
+    await runner.run_job(job.job_id, _request(), jobs, "k")
+    done = jobs.get(job.job_id)
+    assert done.status.value == "complete"
+    assert done.result.sources.coverage_note.startswith("Sources couldn't be researched")
+    assert store.finished == [job.job_id] and not store.refunded

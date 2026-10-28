@@ -478,7 +478,7 @@ _MAX_ENRICHED_DOMAINS = 15
 _MAX_PAGES_CHECKED_PER_DOMAIN = 3
 
 
-def _empty_sources(note: str, queries: list[SourceQuery] | None = None) -> tuple[Sources, list[SitelistEntry]]:
+def empty_sources(note: str, queries: list[SourceQuery] | None = None) -> tuple[Sources, list[SitelistEntry]]:
     return Sources(citations=[], publishers=[], communities=[], source_intel=[], queries=queries or [],
                    coverage_note=note), []
 
@@ -699,7 +699,7 @@ async def run_grounding(
 
     asked = _questions_to_search(personas, prompts)
     if not asked:
-        return _empty_sources("No buyer questions to search, so no sources were researched.")
+        return empty_sources("No buyer questions to search, so no sources were researched.")
     questions = [q for _, q in asked]
 
     try:
@@ -716,7 +716,7 @@ async def run_grounding(
         )
     except Exception:
         logger.exception("grounding search failed, returning empty sources")
-        return _empty_sources("The source search failed, so no sources are shown for this run.")
+        return empty_sources("The source search failed, so no sources are shown for this run.")
 
     brand_names = [brand, *(brand_match_names or [])]
     hits, query_log, queries, errored = _screen_searches(response, asked, brand, competitors, brand_names)
@@ -750,7 +750,7 @@ async def run_grounding(
     # name, so the deterministic filter alone can't catch them.
     if classified.domain_pages and not enrichment:
         logger.warning("origin classification unavailable; showing no sources rather than unverified ones")
-        return _empty_sources("Sources couldn't be checked for independence this run, so none are shown.", query_log)
+        return empty_sources("Sources couldn't be checked for independence this run, so none are shown.", query_log)
     kept_domains = [d for d in classified.domain_pages if enrichment.get(d, {}).get("origin") == "independent"]
     for domain in classified.domain_pages:
         if domain not in kept_domains:

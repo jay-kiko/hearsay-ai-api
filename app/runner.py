@@ -16,7 +16,7 @@ from app.errors import user_facing_error
 from app.job_store import JobStore
 from app.models import AnalysisComplete, AnalysisRequest, Competitor, PersonaEvent, PersonaIn, PersonaResult
 from app.services import aggregation
-from app.services.grounding import run_grounding
+from app.services.grounding import empty_sources, run_grounding
 from app.services.insights_gen import generate_insights
 from app.services.pipeline import run_persona
 
@@ -132,7 +132,14 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             await _fail(job_store, job_id, "All persona calls failed — see per-persona errors for details")
             return
 
-        sources, sitelist = await grounding
+        # Sources are enrichment: a bug or bad model output anywhere in
+        # grounding must not throw away persona results the client already
+        # has (and refund a job that did all its spending). Invariant 6.
+        try:
+            sources, sitelist = await grounding
+        except Exception:
+            logger.exception("job %s: grounding failed, completing without sources", job_id)
+            sources, sitelist = empty_sources("Sources couldn't be researched this run, so none are shown.")
 
         products = aggregation.build_products(results, request.brand, request.competitors)
         score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
