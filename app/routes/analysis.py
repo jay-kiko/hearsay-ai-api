@@ -7,6 +7,7 @@ from app.code_store import get_code_store
 from app.config import get_settings
 from app.job_store import get_job_store, new_job_id
 from app.models import AnalysisRequest, AnalysisStartResponse, JobSnapshot
+from app.routes._access import require_usable_code
 from app.runner import run_job
 
 router = APIRouter()
@@ -14,17 +15,8 @@ router = APIRouter()
 
 @router.post("/api/analysis", response_model=AnalysisStartResponse)
 async def start_analysis(body: AnalysisRequest) -> AnalysisStartResponse:
-    if not body.personas:
-        raise HTTPException(status_code=400, detail="At least one persona is required")
-
     code_store = get_code_store()
-    status = await code_store.status(body.access_code)
-    if status == "unknown":
-        raise HTTPException(status_code=404, detail="Access code not found")
-    if status == "revoked":
-        raise HTTPException(status_code=403, detail="This access code has been revoked")
-    if status == "exhausted":
-        raise HTTPException(status_code=403, detail="This access code has no uses remaining")
+    await require_usable_code(body.access_code)
 
     # Reserve the job id and spend one use against it atomically before
     # anything else exists, so two concurrent requests can't both win the

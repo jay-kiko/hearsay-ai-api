@@ -1,7 +1,5 @@
-from anthropic import AnthropicError, AuthenticationError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from app.code_store import get_code_store
 from app.config import get_settings
 from app.models import (
     ExpandPersonaRequest,
@@ -9,6 +7,7 @@ from app.models import (
     GeneratePersonasRequest,
     GeneratePersonasResponse,
 )
+from app.routes._access import charge_generation_call, upstream_errors
 from app.services.persona_gen import expand_custom_persona, generate_personas
 
 router = APIRouter()
@@ -16,25 +15,10 @@ router = APIRouter()
 
 @router.post("/api/generate-personas", response_model=GeneratePersonasResponse)
 async def create_personas(body: GeneratePersonasRequest) -> GeneratePersonasResponse:
-    settings = get_settings()
-
-    # Same pre-spend throttle as /api/detect and /api/prompts, and
-    # deliberately the *same* counter — all three are billed AI calls on a
-    # code that hasn't been redeemed yet, sharing one budget rather than
-    # each getting its own unlimited allowance.
-    call_status = await get_code_store().register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
-    if call_status == "unknown":
-        raise HTTPException(status_code=404, detail="Access code not found")
-    if call_status == "revoked":
-        raise HTTPException(status_code=403, detail="This access code has been revoked")
-    if call_status == "exhausted":
-        raise HTTPException(status_code=403, detail="This access code has no uses remaining")
-    if call_status == "rate_limited":
-        raise HTTPException(status_code=429, detail="Too many detection/prompt/persona calls for this access code")
-
-    try:
+    await charge_generation_call(body.access_code)
+    with upstream_errors():
         personas = await generate_personas(
-            api_key=settings.anthropic_api_key,
+            api_key=get_settings().anthropic_api_key,
             industry=body.industry,
             competitors=body.competitors,
             buyer_context=body.buyer_context,
@@ -42,32 +26,15 @@ async def create_personas(body: GeneratePersonasRequest) -> GeneratePersonasResp
             market=body.market,
             persona_count=body.persona_count,
         )
-    except AuthenticationError as exc:
-        raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
-    except AnthropicError as exc:
-        raise HTTPException(status_code=502, detail=f"Anthropic API error: {exc}") from exc
-
     return GeneratePersonasResponse(personas=personas)
 
 
 @router.post("/api/personas/expand", response_model=ExpandPersonaResponse)
 async def expand_persona(body: ExpandPersonaRequest) -> ExpandPersonaResponse:
-    settings = get_settings()
-
-    # Same shared pre-spend throttle as /api/generate-personas above.
-    call_status = await get_code_store().register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
-    if call_status == "unknown":
-        raise HTTPException(status_code=404, detail="Access code not found")
-    if call_status == "revoked":
-        raise HTTPException(status_code=403, detail="This access code has been revoked")
-    if call_status == "exhausted":
-        raise HTTPException(status_code=403, detail="This access code has no uses remaining")
-    if call_status == "rate_limited":
-        raise HTTPException(status_code=429, detail="Too many detection/prompt/persona calls for this access code")
-
-    try:
+    await charge_generation_call(body.access_code)
+    with upstream_errors():
         persona = await expand_custom_persona(
-            api_key=settings.anthropic_api_key,
+            api_key=get_settings().anthropic_api_key,
             description=body.description,
             industry=body.industry,
             competitors=body.competitors,
@@ -75,9 +42,4 @@ async def expand_persona(body: ExpandPersonaRequest) -> ExpandPersonaResponse:
             brand_summary=body.brand_summary,
             market=body.market,
         )
-    except AuthenticationError as exc:
-        raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
-    except AnthropicError as exc:
-        raise HTTPException(status_code=502, detail=f"Anthropic API error: {exc}") from exc
-
     return ExpandPersonaResponse(persona=persona)

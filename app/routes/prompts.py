@@ -1,34 +1,18 @@
 import asyncio
 
-from anthropic import AnthropicError, AuthenticationError
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 
-from app.code_store import get_code_store
 from app.config import get_settings
 from app.models import AdaptSeedPromptRequest, AdaptSeedPromptResponse, PromptsRequest, PromptsResponse
+from app.routes._access import charge_generation_call, upstream_errors
 from app.services.prompt_gen import adapt_seed_prompt, generate_prompts
 
 router = APIRouter()
-
-_CALL_STATUS_ERRORS = {
-    "unknown": (404, "Access code not found"),
-    "revoked": (403, "This access code has been revoked"),
-    "exhausted": (403, "This access code has no uses remaining"),
-    "rate_limited": (429, "Too many prompt regenerations for this access code"),
-}
-
-
-def _raise_for_call_status(status: str) -> None:
-    error = _CALL_STATUS_ERRORS.get(status)
-    if error:
-        code, detail = error
-        raise HTTPException(status_code=code, detail=detail)
 
 
 @router.post("/api/prompts", response_model=PromptsResponse)
 async def create_prompts(body: PromptsRequest) -> PromptsResponse:
     settings = get_settings()
-    code_store = get_code_store()
 
     if body.categories:
         # prompts_per_persona is a fixed total per persona, not a per-category
@@ -53,10 +37,9 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
         # calls, not 1, or a multi-select run would get unlimited free
         # generation past the cap.
         for _ in active:
-            call_status = await code_store.register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
-            _raise_for_call_status(call_status)
+            await charge_generation_call(body.access_code)
 
-        try:
+        with upstream_errors():
             per_category = await asyncio.gather(
                 *[
                     generate_prompts(
@@ -74,10 +57,6 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
                     for category, count in active
                 ]
             )
-        except AuthenticationError as exc:
-            raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
-        except AnthropicError as exc:
-            raise HTTPException(status_code=502, detail=f"Anthropic API error: {exc}") from exc
 
         merged: dict[str, list[str]] = {persona.id: [] for persona in body.personas}
         for category_prompts in per_category:
@@ -89,10 +68,9 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
     # reviewing them; a use is only spent when they actually launch a job.
     # Still capped per code so this path can't rack up unlimited billed calls
     # on a code that never gets spent on an analysis.
-    call_status = await code_store.register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
-    _raise_for_call_status(call_status)
+    await charge_generation_call(body.access_code)
 
-    try:
+    with upstream_errors():
         prompts = await generate_prompts(
             api_key=settings.anthropic_api_key,
             brand=body.brand,
@@ -105,10 +83,6 @@ async def create_prompts(body: PromptsRequest) -> PromptsResponse:
             competitors=body.competitors,
             brand_match_names=body.brand_match_names,
         )
-    except AuthenticationError as exc:
-        raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
-    except AnthropicError as exc:
-        raise HTTPException(status_code=502, detail=f"Anthropic API error: {exc}") from exc
 
     return PromptsResponse(prompts=prompts)
 
@@ -119,10 +93,9 @@ async def create_seed_prompts(body: AdaptSeedPromptRequest) -> AdaptSeedPromptRe
 
     # Same shared pre-spend throttle, not consumed — one adaptation call per
     # request regardless of persona count, same as /api/prompts.
-    call_status = await get_code_store().register_prompt_call(body.access_code, settings.max_prompt_calls_per_code)
-    _raise_for_call_status(call_status)
+    await charge_generation_call(body.access_code)
 
-    try:
+    with upstream_errors():
         prompts = await adapt_seed_prompt(
             api_key=settings.anthropic_api_key,
             brand=body.brand,
@@ -135,9 +108,5 @@ async def create_seed_prompts(body: AdaptSeedPromptRequest) -> AdaptSeedPromptRe
             competitors=body.competitors,
             brand_match_names=body.brand_match_names,
         )
-    except AuthenticationError as exc:
-        raise HTTPException(status_code=500, detail="Server's Anthropic API key was rejected") from exc
-    except AnthropicError as exc:
-        raise HTTPException(status_code=502, detail=f"Anthropic API error: {exc}") from exc
 
     return AdaptSeedPromptResponse(prompts=prompts)
