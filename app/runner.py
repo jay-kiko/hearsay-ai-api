@@ -69,6 +69,13 @@ async def _fail(job_store: JobStore, job_id: str, message: str) -> None:
         logger.exception("refund failed for job %s", job_id)
 
 
+async def _stop(task: asyncio.Task) -> None:
+    """Cancels and waits, so the task's in-flight calls are released and an
+    exception it already raised is retrieved rather than logged as lost."""
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+
+
 async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, anthropic_api_key: str) -> None:
     settings = get_settings()
     semaphore = asyncio.Semaphore(settings.persona_concurrency)
@@ -116,12 +123,12 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         try:
             pairs = await asyncio.gather(*tasks)
         except BaseException:
-            grounding.cancel()
+            await _stop(grounding)
             raise
         results = {pid: result for pid, result in pairs if result is not None}
 
         if not results:
-            grounding.cancel()  # nothing to attach sources to; stop spending on it
+            await _stop(grounding)  # nothing to attach sources to; stop spending on it
             await _fail(job_store, job_id, "All persona calls failed — see per-persona errors for details")
             return
 
