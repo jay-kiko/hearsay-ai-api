@@ -7,7 +7,7 @@ from fastapi import APIRouter, Request
 
 from app.code_store import get_code_store
 from app.models import AccessCode, AccessStatusResponse
-from app.rate_limit import client_key, ensure_not_throttled, get_limiter
+from app.rate_limit import ensure_not_throttled, record_failure
 
 router = APIRouter()
 
@@ -17,5 +17,5 @@ async def access_status(code: AccessCode, request: Request) -> AccessStatusRespo
     ensure_not_throttled(request)
     status = await get_code_store().status(code)
     if status == "unknown":
-        get_limiter().record_failure(client_key(request))
+        record_failure(request)
     return AccessStatusResponse(status=status)

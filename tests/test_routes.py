@@ -1,5 +1,7 @@
 """HTTP edges: access-code gating, upstream error mapping, and the guess
 throttle on code lookups."""
+from types import SimpleNamespace
+
 import httpx
 import pytest
 from anthropic import APIStatusError
@@ -13,7 +15,7 @@ from app.code_store import CodeStore
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     monkeypatch.setattr(code_store_module, "_store", CodeStore(str(tmp_path / "codes.db")))
-    monkeypatch.setattr(rate_limit, "_limiter", None)
+    monkeypatch.setattr(rate_limit, "_limiters", {})
     from app.main import app
 
     with TestClient(app) as c:
@@ -51,14 +53,40 @@ def test_code_guessing_is_throttled_before_the_lookup(client):
 def test_failure_limiter_windows():
     from app.rate_limit import FailureLimiter
 
-    limiter = FailureLimiter(per_key=2, global_limit=3, window_seconds=60)
-    limiter.record_failure("a")
+    limiter = FailureLimiter(per_key=3, global_limit=4, window_seconds=60, tight_per_key=2)
+    for _ in range(2):
+        limiter.record_failure("a")
     assert not limiter.blocked("a")
     limiter.record_failure("a")
     assert limiter.blocked("a") and not limiter.blocked("b")
     limiter.record_failure("b")
-    assert limiter.blocked("c")  # global backstop
+    # Global window full: a client that never failed still gets through,
+    # clients with failures get the tight allowance.
+    assert not limiter.blocked("c")
+    limiter.record_failure("b")
+    assert limiter.blocked("b")
 
     expiring = FailureLimiter(per_key=1, global_limit=99, window_seconds=0)
     expiring.record_failure("a")
     assert not expiring.blocked("a")
+
+
+def test_a_guessing_flood_never_locks_out_valid_codes_or_the_admin(client):
+    real = _mint(client)
+    limiter = rate_limit.get_limiter()
+    for i in range(5000):  # far past the global limit, from other clients
+        limiter.record_failure(f"10.0.{i // 250}.{i % 250}")
+    assert client.get("/api/access/status", params={"code": real}).json()["status"] == "valid"
+    assert client.post("/api/detect", json={"query": "x", "accessCode": "NOPE-NOPE"}).status_code == 404
+    assert not rate_limit.get_limiter("admin").blocked("testclient")  # admin has its own window
+
+
+def test_ipv6_clients_are_keyed_by_their_64():
+    from app.rate_limit import client_key
+
+    def req(host):
+        return SimpleNamespace(client=SimpleNamespace(host=host))
+
+    assert client_key(req("2001:db8::1")) == client_key(req("2001:db8::ffff")) == "2001:db8::/64"
+    assert client_key(req("::ffff:1.2.3.4")) == "1.2.3.4"
+    assert client_key(req("1.2.3.4")) == "1.2.3.4"

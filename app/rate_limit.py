@@ -5,18 +5,25 @@ without limit, so codes (which spend the server's Anthropic key) could be
 enumerated. Only *failed* lookups count, so people using a real code are never
 slowed. Two windows:
 
-  * per client IP — stops a single guesser;
-  * global — the backstop if IPs are spoofed or rotated (X-Forwarded-For is
-    only as trustworthy as the proxy config, see FORWARDED_ALLOW_IPS). While it
-    trips, unknown-code lookups from everyone are refused, which costs a user
-    who mistypes a code a short wait; the default caps an attacker at roughly
-    150k guesses a day, decades for a 40-bit space.
+  * per client — stops a single guesser. A client is an IPv4 address or an
+    IPv6 /64, since one IPv6 host can rotate through a /64 for free;
+  * global — when failures from everyone pass the global limit (a distributed
+    guess), the per-client allowance drops to a handful. It never refuses a
+    client that hasn't failed: an earlier version refused every lookup once
+    the global window filled, so one attacker could lock out every user with
+    a valid code, and the admin with them.
 
 The check runs *before* the lookup: a throttled request must not learn whether
-its code exists. In memory, like the job store (one worker process only).
+its code exists. Client IPs are only as real as the proxy config (see
+FORWARDED_ALLOW_IPS); a spoofable X-Forwarded-For turns this into the global
+brake alone. Admin-secret failures use their own limiter, so a code-guessing
+flood can't lock the admin out. Longer codes would be the stronger fix against
+distributed guessing (they need a frontend format change). In memory, like the
+job store (one worker process only).
 """
 from __future__ import annotations
 
+import ipaddress
 import time
 from collections import deque
 
@@ -28,8 +35,9 @@ _MAX_TRACKED_KEYS = 10_000
 
 
 class FailureLimiter:
-    def __init__(self, *, per_key: int, global_limit: int, window_seconds: float) -> None:
+    def __init__(self, *, per_key: int, global_limit: int, window_seconds: float, tight_per_key: int = 3) -> None:
         self._per_key = per_key
+        self._tight_per_key = tight_per_key
         self._global_limit = global_limit
         self._window = window_seconds
         self._by_key: dict[str, deque[float]] = {}
@@ -47,7 +55,9 @@ class FailureLimiter:
             self._prune(hits, now)
             if not hits:
                 del self._by_key[key]
-        return len(self._all) >= self._global_limit or (hits is not None and len(hits) >= self._per_key)
+        failures = len(hits) if hits is not None else 0
+        limit = self._tight_per_key if len(self._all) >= self._global_limit else self._per_key
+        return failures >= limit
 
     def record_failure(self, key: str) -> None:
         now = time.monotonic()
@@ -59,23 +69,36 @@ class FailureLimiter:
         self._by_key.setdefault(key, deque()).append(now)
 
 
-_limiter: FailureLimiter | None = None
+_limiters: dict[str, FailureLimiter] = {}
 
 
-def get_limiter() -> FailureLimiter:
-    global _limiter
-    if _limiter is None:
+def get_limiter(scope: str = "code") -> FailureLimiter:
+    """One limiter per scope ("code", "admin"), so their global windows are separate."""
+    if scope not in _limiters:
         s = get_settings()
-        _limiter = FailureLimiter(
+        _limiters[scope] = FailureLimiter(
             per_key=s.code_failures_per_ip, global_limit=s.code_failures_global, window_seconds=s.code_failure_window_seconds
         )
-    return _limiter
+    return _limiters[scope]
 
 
-def client_key(request: Request, scope: str = "code") -> str:
-    return f"{scope}:{request.client.host if request.client else 'unknown'}"
+def client_key(request: Request) -> str:
+    host = request.client.host if request.client else "unknown"
+    try:
+        address = ipaddress.ip_address(host)
+    except ValueError:
+        return host
+    if isinstance(address, ipaddress.IPv6Address):
+        if address.ipv4_mapped:
+            return str(address.ipv4_mapped)
+        return str(ipaddress.ip_network(f"{address}/64", strict=False))
+    return str(address)
 
 
 def ensure_not_throttled(request: Request, scope: str = "code") -> None:
-    if get_limiter().blocked(client_key(request, scope)):
+    if get_limiter(scope).blocked(client_key(request)):
         raise HTTPException(status_code=429, detail="Too many invalid attempts. Try again in a few minutes.")
+
+
+def record_failure(request: Request, scope: str = "code") -> None:
+    get_limiter(scope).record_failure(client_key(request))

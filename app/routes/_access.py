@@ -13,7 +13,7 @@ from fastapi import HTTPException, Request
 from app.code_store import get_code_store
 from app.config import get_settings
 from app.errors import user_facing_error
-from app.rate_limit import client_key, ensure_not_throttled, get_limiter
+from app.rate_limit import ensure_not_throttled, record_failure
 
 logger = logging.getLogger("hearsay.routes")
 
@@ -27,7 +27,7 @@ _STATUS_ERRORS = {
 
 def raise_for_status(status: str, request: Request | None = None) -> None:
     if status == "unknown" and request is not None:
-        get_limiter().record_failure(client_key(request))
+        record_failure(request)
     error = _STATUS_ERRORS.get(status)
     if error:
         raise HTTPException(status_code=error[0], detail=error[1])

@@ -8,7 +8,7 @@ from fastapi import APIRouter, Header, HTTPException, Query, Request
 
 from app.code_store import get_code_store
 from app.config import get_settings
-from app.rate_limit import client_key, ensure_not_throttled, get_limiter
+from app.rate_limit import ensure_not_throttled, record_failure
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -19,7 +19,7 @@ def _require_admin(request: Request, x_admin_secret: str | None) -> None:
         raise HTTPException(status_code=503, detail="Admin endpoints are disabled (ADMIN_SECRET not set)")
     ensure_not_throttled(request, scope="admin")
     if not x_admin_secret or not secrets.compare_digest(x_admin_secret, configured):
-        get_limiter().record_failure(client_key(request, scope="admin"))
+        record_failure(request, scope="admin")
         raise HTTPException(status_code=401, detail="Invalid admin secret")
 
 
