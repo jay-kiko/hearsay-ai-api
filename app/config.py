@@ -22,7 +22,8 @@ class Settings(BaseSettings):
     #              calls that decide what the report shows (detect research,
     #              source classification, brand detection).
     #   fast     — mechanical work only (sentiment classification, relevance
-    #              filtering, running the source search's given queries).
+    #              filtering, running the source search's given queries,
+    #              web_fetch of pages that block our own fetcher).
     anthropic_quality_model: str = "claude-opus-5-5"
     anthropic_model: str = "claude-sonnet-5"
     anthropic_fast_model: str = "claude-haiku-4-5-20251001"
@@ -53,6 +54,11 @@ class Settings(BaseSettings):
     # A redemption unfinished after this long belongs to a lost job and is
     # refunded. Well past the longest job (calls time out at 180s, with retries).
     stale_job_seconds: int = 3600
+    # Source pages read through Anthropic's web_fetch when they block our own
+    # fetcher: at most this many per run (~1 cent each on the fast tier), each
+    # capped at this much page text.
+    web_fetch_max_pages: int = 10
+    web_fetch_max_content_tokens: int = 20000
 
     @property
     def cors_origin_list(self) -> list[str]:

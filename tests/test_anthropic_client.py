@@ -183,3 +183,37 @@ async def test_a_timed_out_web_search_is_not_rerun(monkeypatch):
     with pytest.raises(APITimeoutError):
         await ac.call_web_search(api_key="k", model="m", system="s", user="u")
     assert len(_SearchFake.seen) == 1
+
+
+# ── web fetch ────────────────────────────────────────────────────────
+
+def _fetch_response(result):
+    return SimpleNamespace(content=[
+        {"type": "server_tool_use", "id": "s1", "name": "web_fetch", "input": {"url": "https://a.example/p"}},
+        {"type": "web_fetch_tool_result", "tool_use_id": "s1", "content": result},
+        {"type": "text", "text": "done."},
+    ], stop_reason="end_turn")
+
+
+async def test_web_fetch_returns_the_page_text_and_copy_date(monkeypatch):
+    page = {"type": "web_fetch_result", "url": "https://a.example/p", "retrieved_at": "2026-06-20T00:00:00+00:00",
+            "content": {"type": "document", "source": {"type": "text", "media_type": "text/plain", "data": "Hello DCL"}}}
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
+    _SearchFake.seen, _SearchFake.script = [], [_fetch_response(page)]
+    fetched = await ac.call_web_fetch(api_key="k", model="m", url="https://a.example/p", max_content_tokens=500)
+    assert fetched.text == "Hello DCL" and fetched.retrieved_at.date().isoformat() == "2026-06-20"
+    sent = _SearchFake.seen[0]
+    assert sent["tools"][0]["type"] == "web_fetch_20250910" and sent["tools"][0]["max_content_tokens"] == 500
+    assert sent["max_tokens"] >= 300  # room for the tool call (at 64 the model skipped it, confirmed live)
+    assert sent["extra_headers"]["anthropic-beta"] == "web-fetch-2025-09-10"
+
+
+async def test_web_fetch_error_or_empty_page_is_none(monkeypatch):
+    monkeypatch.setattr(ac, "AsyncAnthropic", _SearchFake)
+    ac._clients.clear()
+    error = {"type": "web_fetch_tool_error", "error_code": "url_not_accessible"}
+    empty = {"type": "web_fetch_result", "content": {"type": "document", "source": {"data": "  "}}}
+    _SearchFake.seen, _SearchFake.script = [], [_fetch_response(error), _fetch_response(empty), _resp([])]
+    for _ in range(3):
+        assert await ac.call_web_fetch(api_key="k", model="m", url="https://a.example/p", max_content_tokens=500) is None

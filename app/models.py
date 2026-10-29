@@ -445,6 +445,10 @@ class SourceIntel(CamelModel):
     # `url` plus a text fragment that scrolls the browser to the first brand
     # mention; equal to `url` when there is no on-page mention to point at.
     link: str = ""
+    # ISO date of the copy this page was measured on, when it was read through
+    # web_fetch from a copy more than a week old (it blocks our own fetcher);
+    # None for a live read.
+    read_from_copy: str | None = None
     # Same measure as `mentions`, per competitor named on these pages.
     competitor_mentions: dict[str, int] = Field(default_factory=dict)
     # Only when not visible: "competitor-owned" (rivals named here) or "open".

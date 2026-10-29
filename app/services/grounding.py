@@ -17,10 +17,12 @@ decides which pages are sources.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from collections import Counter, defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 
 from app.config import get_settings
@@ -37,7 +39,7 @@ from app.models import (
 )
 from app.services import inventory
 from app.services import source_quality as sq
-from app.services.anthropic_client import call_structured, call_web_search
+from app.services.anthropic_client import call_structured, call_web_fetch, call_web_search
 from app.services.common import clean_str_list
 from app.services.scoring import count_brand_mentions, find_mentions
 
@@ -550,8 +552,58 @@ def _drop_entity_sites(hits: list[dict], entity_names: list[str]) -> list[dict]:
     return [h for h in hits if not _is_entity_or_proxy(h.get("url", ""))]
 
 
+async def _read_blocked_pages(
+    ranked: dict[str, list[sq.SourcePage]],
+    checks: dict[str, sq.PageCheck],
+    *,
+    api_key: str,
+    model: str,
+    max_pages: int,
+    max_content_tokens: int,
+) -> None:
+    """For each domain none of whose checked pages we could read, reads its
+    best page through Anthropic's web_fetch and records the text in `checks`.
+
+    Fallback only: our own fetcher is free and live, so it always goes first;
+    dead pages and internal addresses are never sent. Confirmed live: big
+    publishers (cruisecritic, moneysmart, sethlui) block our fetcher, which
+    left over half of a run's sources unmeasurable. Capped per run, domains
+    with the most pages first, and failures just leave the page unread."""
+    targets: list[str] = []
+    for domain in sorted(ranked, key=lambda d: -len(ranked[d])):
+        checked = ranked[domain][:_MAX_PAGES_CHECKED_PER_DOMAIN]
+        statuses = [checks.get(p.url, sq.PageCheck(alive=None)) for p in checked]
+        if any(s.readable for s in statuses):
+            continue
+        target = next((p.url for p, s in zip(checked, statuses) if s.needs_fallback), None)
+        if target:
+            targets.append(target)
+    targets = targets[:max_pages]
+    if not targets:
+        return
+
+    results = await asyncio.gather(
+        *(call_web_fetch(api_key=api_key, model=model, url=url, max_content_tokens=max_content_tokens) for url in targets),
+        return_exceptions=True,
+    )
+    for url, result in zip(targets, results):
+        if isinstance(result, BaseException):
+            logger.warning("web_fetch failed for %s: %r", url, result)
+        elif result is not None:
+            checks[url] = sq.PageCheck(alive=True, text=result.text, retrieved_at=result.retrieved_at)
+    read = sum(1 for url in targets if checks[url].readable)
+    logger.info("web_fetch read %d of %d pages our fetcher couldn't", read, len(targets))
+
+
 async def _fetch_and_rank(
-    domain_pages: dict[str, list[sq.SourcePage]], kept_domains: list[str], count_brand
+    domain_pages: dict[str, list[sq.SourcePage]],
+    kept_domains: list[str],
+    count_brand,
+    *,
+    api_key: str,
+    model: str,
+    max_fallback_pages: int,
+    max_content_tokens: int,
 ) -> tuple[dict[str, list[sq.SourcePage]], dict[str, sq.PageCheck]] | None:
     """Ranks each kept domain's pages by brand evidence and fetches the best
     few: a source never points at a dead page or bounces to the homepage, and
@@ -565,6 +617,13 @@ async def _fetch_and_rank(
     except Exception:
         logger.exception("page check failed; showing no sources rather than unchecked links")
         return None
+    try:
+        await _read_blocked_pages(
+            ranked, checks, api_key=api_key, model=model,
+            max_pages=max_fallback_pages, max_content_tokens=max_content_tokens,
+        )
+    except Exception:  # noqa: BLE001 - enrichment: unread pages are dropped later, the run goes on
+        logger.exception("web_fetch fallback failed; blocked pages stay unread")
     for pages in ranked.values():
         for page in pages:
             page.body = checks.get(page.url, sq.PageCheck(alive=None)).text
@@ -574,6 +633,32 @@ async def _fetch_and_rank(
         checked, rest = pages[:_MAX_PAGES_CHECKED_PER_DOMAIN], pages[_MAX_PAGES_CHECKED_PER_DOMAIN:]
         ranked[domain] = [*sq.rank_pages(checked, count_brand), *rest]
     return ranked, checks
+
+
+_STALE_COPY = timedelta(days=7)
+
+
+def _copy_date(retrieved_at: datetime | None) -> str | None:
+    """The date of a web_fetch copy older than a week (ISO date), so a stale
+    read is never shown as live. None for live reads and fresh copies."""
+    if retrieved_at is None:
+        return None
+    if retrieved_at.tzinfo is None:
+        retrieved_at = retrieved_at.replace(tzinfo=timezone.utc)
+    return retrieved_at.date().isoformat() if datetime.now(timezone.utc) - retrieved_at > _STALE_COPY else None
+
+
+@dataclass
+class _Measured:
+    source_intel: list[SourceIntel] = field(default_factory=list)
+    citations: list[Citation] = field(default_factory=list)
+    publishers: list[Publisher] = field(default_factory=list)
+    communities: list[Community] = field(default_factory=list)
+    # Publishers for the sitelist: also those not shown as sources because
+    # no reader could open them (their reach is still measured).
+    sitelist_publishers: list[Publisher] = field(default_factory=list)
+    reach_by_domain: dict[str, int] = field(default_factory=dict)
+    unreadable: int = 0
 
 
 def _clean_type(raw: object, fallback: str) -> str:
@@ -595,9 +680,12 @@ def _measure_sources(
     brand: str,
     competitors: list[Competitor],
     brand_match_names: list[str] | None,
-) -> tuple[list[SourceIntel], list[Citation], list[Publisher], list[Community], dict[str, int]]:
+) -> _Measured:
     """One SourceIntel per kept domain with a live page, every number on it
-    measured on the page it links to."""
+    measured on the page it links to. A page neither our fetcher nor web_fetch
+    could read, with no brand in its title or snippets, makes no claim we
+    measured, so it isn't a source; it stays in the sitelist, whose reach
+    comes from the search, not the page."""
     # Competitors are counted with the same matcher as the brand, so the two
     # numbers on a source are directly comparable. Each text is scanned once
     # and tallied per competitor; one scan per competitor per text redid the
@@ -611,11 +699,7 @@ def _measure_sources(
 
     competitor_counters = {c.name: _competitor_counter(c.name) for c in competitors}
 
-    source_intel: list[SourceIntel] = []
-    reach_by_domain: dict[str, int] = {}
-    citations: list[Citation] = []
-    publishers: list[Publisher] = []
-    communities: list[Community] = []
+    out = _Measured()
 
     for domain in kept_domains:
         pages = ranked[domain]
@@ -644,16 +728,26 @@ def _measure_sources(
             name: n for name, counter in competitor_counters.items() if (n := sq.page_mentions(best, counter)) > 0
         }
         competitor_evidence = dict(sorted(competitor_evidence.items(), key=lambda kv: -kv[1]))
-        readable = bool(best.body) and checks.get(best.url, sq.PageCheck(alive=None)).alive is True
+        check = checks.get(best.url, sq.PageCheck(alive=None))
+        readable = bool(best.body) and check.readable
         visibility = sq.visibility_from_evidence(brand_evidence, page_readable=readable)
         surfaced_by = sorted({asked[i][0] for i in question_ids})
+        publisher = None if is_community else Publisher(name=domain, type=publisher_type, mentions=page_count)
 
-        citations.append(Citation(domain=domain, title=best.title, count=page_count))
-        if is_community:
-            communities.append(Community(name=domain, platform=domain.split(".")[0].title(), mentions=page_count))
+        out.reach_by_domain[domain] = reach
+        if publisher:
+            out.sitelist_publishers.append(publisher)
+        if visibility == sq.UNVERIFIED:
+            logger.info("not showing %s as a source: no reader could open %s", domain, best.url)
+            out.unreadable += 1
+            continue
+
+        out.citations.append(Citation(domain=domain, title=best.title, count=page_count))
+        if publisher:
+            out.publishers.append(publisher)
         else:
-            publishers.append(Publisher(name=domain, type=publisher_type, mentions=page_count))
-        source_intel.append(
+            out.communities.append(Community(name=domain, platform=domain.split(".")[0].title(), mentions=page_count))
+        out.source_intel.append(
             SourceIntel(
                 domain=domain,
                 url=best.url,
@@ -669,10 +763,10 @@ def _measure_sources(
                 link=sq.text_fragment_link(best.url, sq.first_mention_text(best, brand_texts)),
                 competitor_mentions=competitor_evidence,
                 gap=sq.gap_for(visibility, competitor_evidence),
+                read_from_copy=_copy_date(check.retrieved_at),
             )
         )
-        reach_by_domain[domain] = reach
-    return source_intel, citations, publishers, communities, reach_by_domain
+    return out
 
 
 def _coverage_note(
@@ -681,6 +775,7 @@ def _coverage_note(
     queries: dict[str, str],
     errored: set[str],
     source_intel: list[SourceIntel],
+    unreadable: int = 0,
 ) -> str | None:
     """Says when coverage is thin, so a short list never reads as "nobody
     discusses this" (invariant 7)."""
@@ -695,11 +790,10 @@ def _coverage_note(
     shown = len(source_intel)
     if shown < 3 and not all_failed:
         notes.append(f"Only {shown} independent sources came back for these buyer questions, so treat this list as thin.")
-    unverified = sum(1 for s in source_intel if s.visibility == sq.UNVERIFIED)
-    if unverified:
+    if unreadable:
         notes.append(
-            f"{unverified} of {shown} sources block automated reading, so whether they name you is unknown; "
-            "open them to check."
+            f"{unreadable} more {'page' if unreadable == 1 else 'pages'} turned up but couldn't be read, so "
+            f"{'it isn' if unreadable == 1 else 'they aren'}'t shown here (still listed in the sitelist)."
         )
     return " ".join(notes) or None
 
@@ -784,20 +878,30 @@ async def run_grounding(
     brand_texts = lambda text: [  # noqa: E731
         text[m.start:m.end] for m in find_mentions(text, brand, [], brand_match_names) if m.kind == "brand"
     ]
-    fetched = await _fetch_and_rank(classified.domain_pages, kept_domains, count_brand)
+    fetched = await _fetch_and_rank(
+        classified.domain_pages, kept_domains, count_brand,
+        api_key=api_key,
+        # Fast tier: it only fetches a given URL; the counting is deterministic.
+        model=settings.anthropic_fast_model,
+        max_fallback_pages=settings.web_fetch_max_pages,
+        max_content_tokens=settings.web_fetch_max_content_tokens,
+    )
     if fetched is None:
         return empty_sources("Source links couldn't be checked this run, so none are shown.", query_log)
     ranked, checks = fetched
-    source_intel, citations, publishers, communities, reach_by_domain = _measure_sources(
+    measured = _measure_sources(
         kept_domains=kept_domains, ranked=ranked, checks=checks, classified=classified, enrichment=enrichment,
         asked=asked, count_brand=count_brand, brand_texts=brand_texts, brand=brand, competitors=competitors,
         brand_match_names=brand_match_names,
     )
 
     sources = Sources(
-        citations=citations, publishers=publishers, communities=communities,
-        source_intel=source_intel, queries=query_log,
-        coverage_note=_coverage_note(asked, query_log, queries, errored, source_intel),
+        citations=measured.citations, publishers=measured.publishers, communities=measured.communities,
+        source_intel=measured.source_intel, queries=query_log,
+        coverage_note=_coverage_note(asked, query_log, queries, errored, measured.source_intel, measured.unreadable),
     )
     use_inventory = inventory.applies_to(market) and bool(inventory.load_sites())
-    return sources, _build_sitelist(sources.publishers, reach_by_domain, len(asked), use_inventory=use_inventory)
+    sitelist = _build_sitelist(
+        measured.sitelist_publishers, measured.reach_by_domain, len(asked), use_inventory=use_inventory
+    )
+    return sources, sitelist

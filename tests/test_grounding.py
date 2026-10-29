@@ -74,7 +74,7 @@ ORIGINS = {"reddit.com": "independent", "momblog.example": "independent", "deadb
 
 @pytest.fixture
 def calls(monkeypatch):
-    seen = {"search": [], "filter_user": None, "filter_system": None}
+    seen = {"search": [], "filter_user": None, "filter_system": None, "web_fetch": [], "web_fetch_pages": {}}
 
     def install(leak=False):
         async def fake_web_search(**kw):
@@ -91,9 +91,15 @@ def calls(monkeypatch):
         async def fake_pages(urls, **_):
             return {u: sq.PageCheck(alive=("deadblog" not in u), text=BODIES.get(u, "")) for u in urls}
 
+        async def fake_web_fetch(*, url, **_):
+            # Never the network: pages a test puts in web_fetch_pages read, others fail.
+            seen["web_fetch"].append(url)
+            return seen["web_fetch_pages"].get(url)
+
         monkeypatch.setattr(grounding, "call_web_search", fake_web_search)
         monkeypatch.setattr(grounding, "call_structured", fake_structured)
         monkeypatch.setattr(grounding.sq, "check_pages", fake_pages)
+        monkeypatch.setattr(grounding, "call_web_fetch", fake_web_fetch)
 
     install()
     seen["install"] = install
@@ -370,17 +376,59 @@ async def test_a_failed_page_check_shows_no_unchecked_links(calls, monkeypatch):
 
 # ── a page we couldn't read is unknown, and links point at the mention ──
 
-async def test_a_blocked_page_is_couldnt_verify_not_a_gap(calls, monkeypatch):
-    async def rival_blog_blocked(urls, **_):
-        # rivalblog 403s the checker (alive unknown, no text); the rest as usual
-        return {u: sq.PageCheck(alive=None if "rivalblog" in u else ("deadblog" not in u), text="" if "rivalblog" in u else BODIES.get(u, ""))
+def _rivalblog_blocked(monkeypatch):
+    """rivalblog 403s our fetcher (alive unknown, no text); the rest as usual."""
+    async def pages(urls, **_):
+        return {u: sq.PageCheck(alive=None) if "rivalblog" in u else sq.PageCheck(alive="deadblog" not in u, text=BODIES.get(u, ""))
                 for u in urls}
 
-    monkeypatch.setattr(grounding.sq, "check_pages", rival_blog_blocked)
+    monkeypatch.setattr(grounding.sq, "check_pages", pages)
+
+
+RIVALBLOG = "https://rivalblog.example/couples"
+
+
+async def test_a_blocked_page_is_read_through_web_fetch_and_measured(calls, monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from app.services.anthropic_client import FetchedPage
+
+    _rivalblog_blocked(monkeypatch)
+    old_copy = datetime.now(timezone.utc) - timedelta(days=60)
+    calls["web_fetch_pages"][RIVALBLOG] = FetchedPage(
+        text="Couples love it. Disney Cruise Line also has adult areas. Royal Caribbean too.", retrieved_at=old_copy
+    )
     sources, _ = await _run()
     rival = {s.domain: s for s in sources.source_intel}["rivalblog.example"]
-    assert rival.visibility == "Couldn't verify" and rival.gap is None
-    assert "block automated reading" in sources.coverage_note
+    assert rival.visibility in ("Visible", "Weak visibility") and rival.mentions >= 1
+    assert rival.competitor_mentions["Royal Caribbean"] >= 1
+    assert rival.link == RIVALBLOG + "#:~:text=Disney%20Cruise%20Line"
+    assert rival.read_from_copy == old_copy.date().isoformat()  # a stale copy is never shown as live
+
+
+async def test_a_page_no_reader_can_open_is_dropped_but_stays_in_the_sitelist(calls, monkeypatch):
+    _rivalblog_blocked(monkeypatch)  # and web_fetch can't read it either
+    sources, sitelist = await _run()
+    assert "rivalblog.example" not in {s.domain for s in sources.source_intel}
+    assert "rivalblog.example" in {e.name for e in sitelist}
+    assert "1 more page turned up but couldn't be read" in sources.coverage_note
+
+
+async def test_web_fetch_is_only_a_fallback(calls):
+    await _run()
+    fetched = set(calls["web_fetch"])
+    assert not any(u in fetched for u in BODIES)  # pages we read ourselves are never sent
+    assert not any("deadblog" in u for u in fetched)  # dead pages are never revived from a copy
+
+
+async def test_web_fetch_is_capped_per_run(calls, monkeypatch):
+    async def all_blocked(urls, **_):
+        return {u: sq.PageCheck(alive=None) for u in urls}
+
+    monkeypatch.setattr(grounding.sq, "check_pages", all_blocked)
+    monkeypatch.setattr(grounding.get_settings(), "web_fetch_max_pages", 2)
+    await _run()
+    assert len(calls["web_fetch"]) == 2
 
 
 async def test_link_scrolls_to_the_first_on_page_mention(calls):

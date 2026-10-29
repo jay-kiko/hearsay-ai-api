@@ -38,7 +38,8 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 | Share of Voice | share of all product mentions | `aggregation.build_products` |
 | Ranking, Sentiment | first-mention position; sentiment call | `scoring.py`, `pipeline.py` |
 | Source "Visible" badge, `mentions`, `evidence` | brand aliases on the **linked page only**: its text where readable, plus title / quoted passages / URL slug | `grounding.py` via `source_quality` + `scoring.count_brand_mentions` |
-| Source "Couldn't verify" badge | page unreadable (bot-blocked, timed out, script-rendered) and no brand in its title/snippets: presence unknown, never shown as "Not visible" or a gap | `source_quality.visibility_from_evidence` |
+| Which pages are read | our own fetcher first (free, live); a page it can't read (bot-blocked, timed out, script-rendered; never dead or internal) goes to Anthropic's `web_fetch`, capped per run. A page neither can read and whose title/snippets don't name the brand is not shown as a source (no measured claim), but stays in the sitelist | `grounding._read_blocked_pages`, `_measure_sources` |
+| Source `readFromCopy` | date of a `web_fetch` copy more than a week old (it may serve a cached copy) | `grounding._copy_date` |
 | Source Authority score | the same `mentions` as the badge, over readable sources only; left out of the headline when none were readable | `aggregation.build_score_breakdown`, `measured_sources` |
 | Source `url` | the page with brand evidence, link-checked (dead, homepage-redirect and internal-address links dropped) | `grounding.py` |
 | Source `link` | `url` + a text fragment scrolling to the first on-page brand mention | `source_quality.text_fragment_link` |
@@ -92,7 +93,7 @@ Choose per call by: *does its output directly shape what a client sees?* and *ho
 
 - **quality** (`anthropic_quality_model`): generative steps whose content is the result and that run once or a few times per job — persona gen/expand, prompt gen/seed-adapt, categories, insights.
 - **standard** (`anthropic_model`): the per-prompt "answer" call (the signal being measured; fans out per prompt, so cost-sensitive), plus judgement calls that decide what the report shows — detect research, source `origin` classification.
-- **fast** (`anthropic_fast_model`): mechanical work only — sentiment classification, domain relevance filter, detect formatting, and the source search (it only runs the given buyer questions; the search engine decides what comes back).
+- **fast** (`anthropic_fast_model`): mechanical work only — sentiment classification, domain relevance filter, detect formatting, the source search (it only runs the given buyer questions; the search engine decides what comes back), and `web_fetch` of blocked source pages (it only fetches a given URL; counting stays deterministic).
 
 A new LLM call must be assigned a tier deliberately and say why in a comment.
 Promoting a high-fan-out call needs a cost estimate first.
@@ -126,6 +127,7 @@ Promoting a high-fan-out call needs a cost estimate first.
 - Translate/cache/archive hosts proxy other sites' pages; `source_quality` checks
   hosts embedded in the URL so an owned site can't enter through one.
 - `web_search` `user_location.country` 400s for unsupported codes (SG is one — Singapore is localised by city + timezone instead, see `grounding._location_for`); `call_web_search` drops it and retries. (`allowed_domains` also 400s the whole request if any domain is one the crawler refuses — straitstimes.com, channelnewsasia.com, reuters.com — relevant if a domain allowlist is ever reintroduced.)
+- Big publishers (cruisecritic, moneysmart, sethlui) block our page fetcher even with browser headers; `web_fetch` read 6 of 7 such pages (about 1 cent each). It can return a cached copy months old, hence `readFromCopy`. Its call needs `max_tokens` room for the tool call: at 64 the model replied without fetching.
 - The page fetcher (`source_quality.check_pages`) fetches URLs from search results, i.e. attacker-influenced input: every hop is checked syntactically and by DNS resolution for non-public addresses. Keep both checks.
 - The model trims long questions into shorter searches, sometimes to bare keywords; `attribute_queries` matches on the share of the search's words drawn from each question, falling back to order. Keyword-trimmed searches return quite different pages, which is most of the run-to-run variance.
 - Apps in the DSP CSV are mapped to publisher websites (`tag_inventory`), but the `editorial` flag is deliberately strict, so most app-publisher sites (MyFitnessPal, Moovit, Carousell) are inventory-only, not sources. Loosening it is a product call.

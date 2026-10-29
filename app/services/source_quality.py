@@ -20,6 +20,7 @@ import socket
 import ssl
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
+from datetime import datetime
 from urllib.parse import quote, unquote, urlparse
 
 # Shorter slugs ("dcl", "ana") collide with unrelated hostnames far too often
@@ -296,6 +297,19 @@ def _is_tls_error(exc: BaseException) -> bool:
 class PageCheck:
     alive: bool | None  # True = there, False = dead, None = can't tell
     text: str = ""  # visible text of the page when readable
+    # Set when the text came from Anthropic's web_fetch (a page that blocked
+    # our fetcher), which may serve a cached copy: when that copy was taken.
+    retrieved_at: datetime | None = None
+
+    @property
+    def readable(self) -> bool:
+        return self.alive is True and bool(self.text)
+
+    @property
+    def needs_fallback(self) -> bool:
+        """Exists (or can't tell) but gave us no text: bot-blocked, timed out,
+        or rendered by script. Dead and internal-address pages never qualify."""
+        return self.alive is not False and not self.text
 
 
 _MAX_BODY_BYTES = 200_000

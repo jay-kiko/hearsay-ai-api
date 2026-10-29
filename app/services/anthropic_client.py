@@ -16,6 +16,8 @@ from __future__ import annotations
 import asyncio
 import logging
 import weakref
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from anthropic import (
@@ -286,3 +288,70 @@ async def call_web_search(
     return await _with_retry(
         _do, retries=min(settings.anthropic_max_retries, 1), label="call_web_search", retry_timeouts=False
     )
+
+
+# ── Web fetch (reading pages that block our own fetcher) ─────────────
+
+WEB_FETCH_TOOL = {"type": "web_fetch_20250910", "name": "web_fetch", "max_uses": 1}
+_WEB_FETCH_BETA = "web-fetch-2025-09-10"
+_WEB_FETCH_SYSTEM = "Fetch the given URL with the web_fetch tool exactly once, then reply only: done."
+
+
+@dataclass
+class FetchedPage:
+    text: str
+    # When Anthropic's fetcher retrieved this copy; it can serve a cached copy
+    # (confirmed live: up to four months old), so callers show its age.
+    retrieved_at: datetime | None
+
+
+def _block_field(item, key: str):
+    return item.get(key) if isinstance(item, dict) else getattr(item, key, None)
+
+
+def _parse_fetch(response) -> FetchedPage | None:
+    for block in getattr(response, "content", None) or []:
+        if _block_field(block, "type") != "web_fetch_tool_result":
+            continue
+        result = _block_field(block, "content")
+        if _block_field(result, "type") != "web_fetch_result":
+            return None  # web_fetch_tool_error: url_not_accessible and the like
+        source = _block_field(_block_field(result, "content"), "source")
+        text = _block_field(source, "data")
+        if not isinstance(text, str) or not text.strip():
+            return None
+        retrieved = _block_field(result, "retrieved_at")
+        try:
+            retrieved_at = datetime.fromisoformat(retrieved) if isinstance(retrieved, str) else retrieved
+        except ValueError:
+            retrieved_at = None
+        return FetchedPage(text=text, retrieved_at=retrieved_at)
+    return None
+
+
+async def call_web_fetch(*, api_key: str, model: str, url: str, max_content_tokens: int) -> FetchedPage | None:
+    """The text of `url` as read by Anthropic's web_fetch tool, or None when it
+    couldn't be read. For pages that block our own fetcher (confirmed live:
+    6 of 7 bot-blocked source pages read this way, about 1 cent each on the
+    fast tier). The model's own reply is ignored; only the fetched text is
+    used, and counting the brand in it stays deterministic.
+
+    max_tokens must leave room for the tool call itself: at 64 the model
+    replied without calling it (confirmed live)."""
+    client = _client(api_key)
+    tool = {**WEB_FETCH_TOOL, "max_content_tokens": max_content_tokens}
+
+    async def _do() -> FetchedPage | None:
+        response = await client.messages.create(
+            model=model,
+            max_tokens=300,
+            system=_WEB_FETCH_SYSTEM,
+            messages=[{"role": "user", "content": url}],
+            tools=[tool],
+            extra_headers={"anthropic-beta": _WEB_FETCH_BETA},
+        )
+        return _parse_fetch(response)
+
+    # One attempt plus one retry, none after a timeout: a page that timed out
+    # once will likely do so again, and each attempt bills the page's tokens.
+    return await _with_retry(_do, retries=1, label="call_web_fetch", retry_timeouts=False)
