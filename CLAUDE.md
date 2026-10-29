@@ -35,7 +35,7 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 | Shown to the client | Computed from | Where |
 |---|---|---|
 | Presence / mention rate | prompt-level `exchange.mentioned` (regex on the answer, alias-aware) | `aggregation._prompt_mention_counts` |
-| Share of Voice | share of all product mentions | `aggregation.build_products` |
+| Share of Voice | chart: share of all product mentions; breakdown score: the brand's mentions relative to the most-mentioned brand (leader = 100), note shows the real share and rank | `aggregation.build_products`, `aggregation.share_of_voice` |
 | Ranking, Sentiment | first-mention position; sentiment call | `scoring.py`, `pipeline.py` |
 | Source "Visible" badge, `mentions`, `evidence` | brand aliases on the **linked page only**: its text where readable, plus title / quoted passages / URL slug | `grounding.py` via `source_quality` + `scoring.count_brand_mentions` |
 | Which names count as the brand (everywhere) | detect's `brandMatchNames` (brand, short forms, product lines, named products such as ships/models) always; `brandContextNames` ("Disney" for Disney Cruise Line) only in a sentence containing one of `categoryTerms`; per answer, a model-suggested product name only if it shares a word with a known name or the sentence also names the brand | `scoring.find_mentions` / `BrandContext`, `pipeline.verified_alias` |

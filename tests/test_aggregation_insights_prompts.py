@@ -253,3 +253,23 @@ def test_empty_optional_fields_from_the_form_are_accepted():
     )
     assert request.market is None and request.prompts == {"p1": ["q"]}
     assert request.brand_match_names == ["B"] and request.competitors[0].match_names == ["R"]
+
+
+def test_share_of_voice_scores_against_the_leader_not_raw_share():
+    """Confirmed live: Disney led 10 to 9 and scored a red 29/100."""
+    from app.models import Product
+    from app.services.aggregation import share_of_voice
+
+    def products(brand_count, *rivals):
+        total = brand_count + sum(rivals) or 1
+        return [Product(name="Disney", count=brand_count, share=brand_count / total, is_brand=True)] + [
+            Product(name=f"R{i}", count=c, share=c / total) for i, c in enumerate(rivals)
+        ]
+
+    assert share_of_voice(products(10, 9, 6, 5, 2, 2)) == (100, "29% of all product mentions · #1 of 6 brands named")
+    score, note = share_of_voice(products(3, 10, 2))
+    assert score == 30 and note.endswith("#2 of 3 brands named (leader: R0, 10 mentions to your 3)")
+    assert share_of_voice(products(5, 5))[0] == 100  # tied for first
+    assert share_of_voice(products(0, 4, 1)) == (0, "Not named in any answer; 2 other brands were")
+    # adding unnamed rivals changes nothing
+    assert share_of_voice(products(10, 9, 0, 0))[0] == 100

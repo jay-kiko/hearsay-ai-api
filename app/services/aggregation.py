@@ -97,6 +97,27 @@ def build_products(results: dict[str, PersonaResult], brand: str, competitors: l
     return products
 
 
+def share_of_voice(products: list[Product]) -> tuple[int, str]:
+    """(score, note). The score is the brand's mentions relative to the
+    most-mentioned brand (leader = 100), not its raw share: with six brands
+    named, even a clear leader rarely passes 30-40% of all mentions, so the
+    raw share read as a failing grade (confirmed live: Disney led with 10
+    mentions to Royal Caribbean's 9 and scored a red 29/100). Raw share also
+    fell whenever more competitors were listed, with nothing about the brand
+    changing. The note keeps the real share and adds the rank."""
+    brand = next((p for p in products if p.is_brand), None)
+    named = [p for p in products if p.count > 0]
+    if brand is None or brand.count == 0:
+        return 0, f"Not named in any answer; {len(named)} other brand{'s' if len(named) != 1 else ''} were"
+    leader = max(named, key=lambda p: p.count)
+    score = round(brand.count / leader.count * 100)
+    rank = 1 + sum(1 for p in named if p.count > brand.count)
+    note = f"{round(brand.share * 100)}% of all product mentions · #{rank} of {len(named)} brands named"
+    if rank > 1:
+        note += f" (leader: {leader.name}, {leader.count} mentions to your {brand.count})"
+    return score, note
+
+
 def build_score_breakdown(
     results: dict[str, PersonaResult], products: list[Product], brand: str, sources: Sources
 ) -> list[ScoreComponent]:
@@ -110,8 +131,7 @@ def build_score_breakdown(
 
     presence = round(mentioned_prompts / total_prompts * 100) if total_prompts else 0
 
-    brand_product = next((p for p in products if p.is_brand), None)
-    sov = round((brand_product.share if brand_product else 0.0) * 100)
+    sov, sov_note = share_of_voice(products)
 
     # Recommendation Strength / Ranking / Sentiment average over the same
     # mentioned exchanges Presence counts, so the card shares one denominator.
@@ -152,7 +172,7 @@ def build_score_breakdown(
             + (f" ({failed} more couldn't be answered this run)" if (failed := _failed_prompts(results)) else ""),
         ),
         ScoreComponent(
-            name="Share of Voice", score=sov, note=f"{sov}% of all product mentions"
+            name="Share of Voice", score=sov, note=sov_note
         ),
         ScoreComponent(
             name="Recommendation Strength",
