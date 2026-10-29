@@ -41,7 +41,7 @@ from app.services import inventory
 from app.services import source_quality as sq
 from app.services.anthropic_client import call_structured, call_web_fetch, call_web_search
 from app.services.common import clean_str_list
-from app.services.scoring import count_brand_mentions, find_mentions
+from app.services.scoring import BrandContext, count_brand_mentions, find_mentions
 
 logger = logging.getLogger("hearsay.grounding")
 
@@ -680,6 +680,7 @@ def _measure_sources(
     brand: str,
     competitors: list[Competitor],
     brand_match_names: list[str] | None,
+    context: BrandContext | None = None,
 ) -> _Measured:
     """One SourceIntel per kept domain with a live page, every number on it
     measured on the page it links to. A page neither our fetcher nor web_fetch
@@ -692,7 +693,10 @@ def _measure_sources(
     # whole match C times over every page body.
     @lru_cache(maxsize=256)
     def _competitor_tally(text: str) -> Counter[str]:
-        return Counter(m.name for m in find_mentions(text, brand, competitors, brand_match_names) if m.kind == "competitor")
+        return Counter(
+            m.name for m in find_mentions(text, brand, competitors, brand_match_names, context=context)
+            if m.kind == "competitor"
+        )
 
     def _competitor_counter(name: str):
         return lambda text: _competitor_tally(text)[name]
@@ -808,6 +812,8 @@ async def run_grounding(
     prompts: dict[str, list[str]],
     brand_match_names: list[str] | None = None,
     market: str | None = None,
+    brand_context_names: list[str] | None = None,
+    category_terms: list[str] | None = None,
 ) -> tuple[Sources, list[SitelistEntry]]:
     """Search → screen → filter → classify origin → fetch → measure. Each
     stage is a function above; this only wires them and decides what an
@@ -835,7 +841,11 @@ async def run_grounding(
         logger.exception("grounding search failed, returning empty sources")
         return empty_sources("The source search failed, so no sources are shown for this run.")
 
-    brand_names = [brand, *(brand_match_names or [])]
+    # Context names ("Disney") screen searches and name entity sites
+    # unconditionally: a search that says "Disney" is a brand lookup whatever
+    # the sentence, and a disney-named domain is about the brand.
+    brand_names = [brand, *(brand_match_names or []), *(brand_context_names or [])]
+    context = BrandContext.of(brand_context_names, category_terms)
     hits, query_log, queries, errored = _screen_searches(response, asked, brand, competitors, brand_names)
     entity_names = brand_names + [n for c in competitors for n in (c.name, *c.match_names)]
     hits = _drop_entity_sites(hits, entity_names)
@@ -873,10 +883,10 @@ async def run_grounding(
         if domain not in kept_domains:
             logger.info("dropping %s: origin=%s", domain, enrichment.get(domain, {}).get("origin", "unclassified"))
 
-    count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names)  # noqa: E731
+    count_brand = lambda text: count_brand_mentions(text, brand, brand_match_names, context=context)  # noqa: E731
     # The brand as written on a page (same matcher), for the deep link.
     brand_texts = lambda text: [  # noqa: E731
-        text[m.start:m.end] for m in find_mentions(text, brand, [], brand_match_names) if m.kind == "brand"
+        text[m.start:m.end] for m in find_mentions(text, brand, [], brand_match_names, context=context) if m.kind == "brand"
     ]
     fetched = await _fetch_and_rank(
         classified.domain_pages, kept_domains, count_brand,
@@ -892,7 +902,7 @@ async def run_grounding(
     measured = _measure_sources(
         kept_domains=kept_domains, ranked=ranked, checks=checks, classified=classified, enrichment=enrichment,
         asked=asked, count_brand=count_brand, brand_texts=brand_texts, brand=brand, competitors=competitors,
-        brand_match_names=brand_match_names,
+        brand_match_names=brand_match_names, context=context,
     )
 
     sources = Sources(

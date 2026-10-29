@@ -14,6 +14,8 @@ formats those findings into the response shape.
 """
 from __future__ import annotations
 
+import re
+
 from app.config import get_settings
 from app.models import (
     LINE_MAX,
@@ -37,11 +39,33 @@ _INPUT_SCHEMA = {
             "type": "array",
             "items": {"type": "string"},
             "description": (
-                "Every real-world name variant that should count as a mention of this brand — "
-                "the brand name itself, common short forms, and any sub-brands or product lines "
-                "it sells under. An AI answer is far more likely to name a specific product line "
-                "(e.g. 'Redmi Note 13') than the parent brand (e.g. 'Xiaomi') — include both, and "
-                "every distinct sub-brand/product line, so real mentions aren't missed."
+                "Every real-world name that unambiguously means this brand: the brand name itself, "
+                "short forms, sub-brands and product lines, AND up to 10 of its main named products "
+                "(every ship, model, collection or app people would name), e.g. 'Galaxy', 'Galaxy S24', "
+                "'Galaxy A55' for Samsung phones, or 'Disney Wish', 'Disney Treasure', 'Disney Dream' "
+                "for Disney Cruise Line. List the brand's products everywhere it sells, not only in "
+                "the user's market. Answers and "
+                "articles name a product far more often than the parent brand, so missing ones "
+                "go uncounted. Leave out names that also mean something else; those go in "
+                "brandContextNames."
+            ),
+        },
+        "brandContextNames": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "Short or parent names that mean this brand only when the text is about this "
+                "category, e.g. 'Disney' for Disney Cruise Line (it also means the parks and films). "
+                "Empty if the brand's names aren't ambiguous."
+            ),
+        },
+        "categoryTerms": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "3-8 single lowercase words that show a sentence is about this category, e.g. "
+                "['cruise', 'ship', 'sail', 'cabin', 'voyage'] for cruises or ['phone', 'smartphone', "
+                "'android'] for phones."
             ),
         },
         "industry": {
@@ -103,7 +127,13 @@ _INPUT_SCHEMA = {
             ),
         },
     },
-    "required": ["brand", "brandMatchNames", "industry", "competitors", "buyerContext", "brandSummary"],
+    # brandContextNames/categoryTerms are required (empty allowed): left
+    # optional, the model skipped categoryTerms every time (confirmed live),
+    # and without them a context name never counts.
+    "required": [
+        "brand", "brandMatchNames", "brandContextNames", "categoryTerms",
+        "industry", "competitors", "buyerContext", "brandSummary",
+    ],
 }
 
 _RESEARCH_SYSTEM = (
@@ -142,16 +172,46 @@ _EXTRACT_SYSTEM = (
 )
 
 
+def _with_plain_variants(names: list[str]) -> list[str]:
+    """Each name plus its form without punctuation: "Love, Bonito" is often
+    written "Love Bonito", and the matcher requires the punctuation as given."""
+    out: list[str] = []
+    for name in names:
+        out.append(name)
+        plain = " ".join(re.sub(r"[^\w\s&+'-]", " ", name).split())
+        if plain and plain != name:
+            out.append(plain)
+    return out
+
+
 def _fit_names(names: list[str], keep: str | None = None) -> list[str]:
     """Deduped and trimmed to the request limits (app.models.Alias / Aliases),
     since these lists are sent straight back in every later request. Derived
     names need 2+ characters; `keep` (the entity's own name) is kept whatever
     its length, so a brand called "X" still matches itself."""
     out: list[str] = [keep] if keep else []
-    for name in names:
+    for name in _with_plain_variants(names):
         if 2 <= len(name) <= NAME_MAX and name.lower() not in (n.lower() for n in out):
             out.append(name)
     return out[:MAX_ALIASES]
+
+
+def _as_names(value: object) -> list[str]:
+    if isinstance(value, str):
+        return [n.strip() for n in value.split(",") if n.strip()]
+    if isinstance(value, list):
+        return [str(n).strip() for n in value if str(n).strip()]
+    return []
+
+
+def _category_terms(value: object) -> list[str]:
+    """Single lowercase words, deduped, within the request limit."""
+    terms: list[str] = []
+    for raw in _as_names(value):
+        term = raw.lower()
+        if 3 <= len(term) <= 30 and " " not in term and term not in terms:
+            terms.append(term)
+    return terms[:12]
 
 
 def _normalize_brand_match_names(value: object, brand: str) -> list[str]:
@@ -251,6 +311,8 @@ async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
     return DetectResponse(
         brand=brand,
         brand_match_names=_normalize_brand_match_names(result.get("brandMatchNames", []), brand),
+        brand_context_names=_fit_names(_as_names(result.get("brandContextNames"))),
+        category_terms=_category_terms(result.get("categoryTerms")),
         industry=fit(result["industry"], LINE_MAX),
         competitors=_normalize_competitors(result.get("competitors", [])),
         buyer_context=fit(result["buyerContext"], PARAGRAPH_MAX),

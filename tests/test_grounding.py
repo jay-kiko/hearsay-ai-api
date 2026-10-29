@@ -445,3 +445,27 @@ def test_text_fragment_link_encoding():
     assert sq.text_fragment_link("https://a.example/p", "Co-op") == "https://a.example/p#:~:text=Co%2Dop"
     assert sq.text_fragment_link("https://a.example/p#top", "X Y") == "https://a.example/p#top:~:text=X%20Y"
     assert sq.text_fragment_link("https://a.example/p", "  ") == "https://a.example/p"
+
+
+async def test_sources_count_the_parent_name_in_context_and_drop_searches_that_use_it(calls, monkeypatch):
+    async def pages(urls, **_):
+        text = {"https://rivalblog.example/couples": "For couples, Disney is a calm pick on its newest ship. Royal Caribbean too."}
+        return {u: sq.PageCheck(alive="deadblog" not in u, text=text.get(u, BODIES.get(u, ""))) for u in urls}
+
+    monkeypatch.setattr(grounding.sq, "check_pages", pages)
+    sources, _ = await grounding.run_grounding(
+        api_key="k", brand=BRAND, industry="Cruises", competitors=COMPETITORS, brand_match_names=ALIASES,
+        personas=PERSONAS, prompts=PROMPTS, market="Singapore",
+        brand_context_names=["Disney"], category_terms=["cruise", "ship"],
+    )
+    rival = {s.domain: s for s in sources.source_intel}["rivalblog.example"]
+    assert rival.mentions == 1 and rival.visibility == "Weak visibility"
+
+
+async def test_a_search_naming_the_parent_brand_is_dropped(calls):
+    calls["install"](leak=True)  # one search is "Disney Cruise Line reviews Singapore"
+    sources, _ = await grounding.run_grounding(
+        api_key="k", brand="Some Cruise Brand", industry="Cruises", competitors=[], brand_match_names=["Some Cruise Brand"],
+        personas=PERSONAS, prompts=PROMPTS, market="Singapore", brand_context_names=["Disney"], category_terms=["cruise"],
+    )
+    assert any(q.dropped for q in sources.queries)

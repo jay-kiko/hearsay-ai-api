@@ -42,6 +42,7 @@ async def _run_case(api_key: str, c: dict) -> dict:
     sources, _ = await run_grounding(
         api_key=api_key, brand=c["brand"], industry=c["industry"], competitors=comps,
         brand_match_names=c["aliases"], personas=persona_in, prompts=prompts, market=c["market"],
+        brand_context_names=c.get("context_names"), category_terms=c.get("category_terms"),
     )
     t3 = time.time()
     return dict(

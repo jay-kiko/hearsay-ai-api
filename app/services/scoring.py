@@ -59,8 +59,49 @@ class Mention:
     name: str
 
 
+@dataclass(frozen=True)
+class BrandContext:
+    """Names that count as the brand only in context. A parent or short name
+    ("Disney" for Disney Cruise Line) also means unrelated things (the parks,
+    Disney+), so it counts only in a sentence that also has a category word
+    ("cruise", "ship"). Confirmed live: a Yahoo cruise guide said "Disney is
+    an obvious choice" and "a Disney ship" but never "Disney Cruise Line",
+    and read 0 mentions; its header also linked "Disney reveals Monstropolis
+    coaster", which must not count."""
+
+    names: tuple[str, ...] = ()
+    category_terms: tuple[str, ...] = ()
+
+    @classmethod
+    def of(cls, names: list[str] | None, category_terms: list[str] | None) -> "BrandContext | None":
+        names_t = tuple(n for n in (names or []) if n.strip())
+        terms_t = tuple(t.strip().lower() for t in (category_terms or []) if t.strip())
+        # Without category words there's no context to check, so a context
+        # name never counts on its own.
+        return cls(names_t, terms_t) if names_t and terms_t else None
+
+    def term_pattern(self) -> re.Pattern[str]:
+        # Prefix match so "cruise" also covers "cruises" and "cruising".
+        return re.compile(r"\b(?:" + "|".join(re.escape(t) for t in self.category_terms) + r")\w*", re.IGNORECASE)
+
+
+_SENTENCE_END = re.compile(r"[.!?\n]")
+
+
+def sentence_around(text: str, start: int, end: int) -> str:
+    """The sentence (or line) containing text[start:end]."""
+    begin = max((m.end() for m in _SENTENCE_END.finditer(text, 0, start)), default=0)
+    after = _SENTENCE_END.search(text, end)
+    return text[begin : after.start() if after else len(text)]
+
+
 def find_mentions(
-    text: str, brand: str, competitors: list[Competitor], brand_match_names: list[str] | None = None
+    text: str,
+    brand: str,
+    competitors: list[Competitor],
+    brand_match_names: list[str] | None = None,
+    *,
+    context: BrandContext | None = None,
 ) -> list[Mention]:
     candidates: list[Mention] = []
 
@@ -78,6 +119,21 @@ def find_mentions(
                 continue
             seen_brand_spans.add(span)
             candidates.append(Mention(m.start(), m.end(), "brand", brand))
+
+    # Context names come after the full aliases, so where both match at the
+    # same place ("Disney Wish" vs "Disney") the longer, unconditional one wins.
+    if context:
+        terms = context.term_pattern()
+        for name in context.names:
+            pattern = _pattern_for(name)
+            if not pattern:
+                continue
+            for m in pattern.finditer(text):
+                span = (m.start(), m.end())
+                if span in seen_brand_spans or not terms.search(sentence_around(text, *span)):
+                    continue
+                seen_brand_spans.add(span)
+                candidates.append(Mention(m.start(), m.end(), "brand", brand))
 
     for competitor in competitors:
         # A holding company is almost always mentioned by a sub-brand's name,
@@ -117,12 +173,14 @@ def name_matches(name: str, text: str) -> list[tuple[int, str]]:
     return [(m.start(), m.group(0)) for m in pattern.finditer(text)] if pattern else []
 
 
-def count_brand_mentions(text: str, brand: str, brand_match_names: list[str] | None = None) -> int:
+def count_brand_mentions(
+    text: str, brand: str, brand_match_names: list[str] | None = None, *, context: BrandContext | None = None
+) -> int:
     """How many times `text` names the brand under any known alias. The one
     place anything outside this module should ask "does this text mention the
     brand" — source evidence (grounding.py) goes through here so it agrees
     with the per-prompt mention detection instead of re-deriving its own."""
-    return sum(1 for m in find_mentions(text, brand, [], brand_match_names) if m.kind == "brand")
+    return sum(1 for m in find_mentions(text, brand, [], brand_match_names, context=context) if m.kind == "brand")
 
 
 def build_parts(text: str, mentions: list[Mention]) -> list[ResponsePart]:
@@ -172,8 +230,9 @@ def analyze_answer(
     competitors: list[Competitor],
     sentiment: Sentiment,
     brand_match_names: list[str] | None = None,
+    context: BrandContext | None = None,
 ) -> tuple[bool, int | None, int, list[ResponsePart]]:
-    mentions = find_mentions(text, brand, competitors, brand_match_names)
+    mentions = find_mentions(text, brand, competitors, brand_match_names, context=context)
     mentioned = any(m.kind == "brand" for m in mentions)
     rank = compute_rank(mentions, brand)
     vis = compute_visibility_score(mentioned, rank, sentiment)

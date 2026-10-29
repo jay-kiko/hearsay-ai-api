@@ -46,6 +46,8 @@ def _drop_blanks(value: object) -> object:
 
 # Blank entries (an emptied form field) are dropped, not rejected.
 Aliases = Annotated[list[Alias], Field(max_length=MAX_ALIASES), BeforeValidator(_drop_blanks)]
+# Words that put an ambiguous brand name in context ("cruise", "ship").
+CategoryTerms = Annotated[list[Name], Field(max_length=12), BeforeValidator(_drop_blanks)]
 MAX_PERSONAS = 10
 MAX_PROMPTS_PER_PERSONA = 10
 MAX_COMPETITORS = 15
@@ -120,6 +122,11 @@ class DetectResponse(CamelModel):
     # form ("Samsung") than a fuller entered name ("Samsung Mobile") —
     # matching only the literal brand string misses those real mentions.
     brand_match_names: list[str]
+    # Ambiguous parent/short names ("Disney" for Disney Cruise Line) that count
+    # as the brand only in a sentence with one of `category_terms`
+    # (scoring.BrandContext). Empty when the brand's names aren't ambiguous.
+    brand_context_names: list[str] = Field(default_factory=list)
+    category_terms: list[str] = Field(default_factory=list)
     industry: str
     competitors: list[Competitor]
     # Free text, not a fixed enum — describes what kind of real-world choice
@@ -216,6 +223,9 @@ class PromptsRequest(CamelModel):
     # competitor are dropped. Without them only the bare brand name is screened.
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     brand_match_names: Aliases = Field(default_factory=list)
+    # From detect; see DetectResponse.brand_context_names.
+    brand_context_names: Aliases = Field(default_factory=list)
+    category_terms: CategoryTerms = Field(default_factory=list)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
     market: OptionalName = None
@@ -241,6 +251,9 @@ class AdaptSeedPromptRequest(CamelModel):
     # competitor are dropped. Without them only the bare brand name is screened.
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     brand_match_names: Aliases = Field(default_factory=list)
+    # From detect; see DetectResponse.brand_context_names.
+    brand_context_names: Aliases = Field(default_factory=list)
+    category_terms: CategoryTerms = Field(default_factory=list)
     seed_prompt: Prompt
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
@@ -261,6 +274,9 @@ class AnalysisRequest(CamelModel):
     # Optional/defaults empty for callers that don't send it yet — falls
     # back to matching on the bare brand string, today's behavior.
     brand_match_names: Aliases = Field(default_factory=list)
+    # From detect; see DetectResponse.brand_context_names.
+    brand_context_names: Aliases = Field(default_factory=list)
+    category_terms: CategoryTerms = Field(default_factory=list)
     industry: Line
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
     buyer_context: Paragraph | None = None

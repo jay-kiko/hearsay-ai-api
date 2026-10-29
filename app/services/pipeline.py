@@ -22,7 +22,7 @@ from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.common import DEFAULT_BUYER_CONTEXT
-from app.services.scoring import analyze_answer, name_matches
+from app.services.scoring import BrandContext, analyze_answer, name_matches, sentence_around
 
 logger = logging.getLogger("hearsay.pipeline")
 
@@ -155,6 +155,20 @@ def _written_like_a_name(answer: str, position: int, occurrence: str) -> bool:
     return occurrence[:1].isupper() and not _starts_sentence(answer, position)
 
 
+def _named_alongside(name: str, answer: str, own_names: list[str]) -> bool:
+    """Whether a sentence that mentions `name` also names the entity itself
+    ("Samsung's A20 is..."). Model codes like "A20" share no word with
+    "Samsung", and requiring a shared word dropped them (a regression from
+    the ownership check); naming the entity in the same sentence is the
+    corroboration instead, so a rival's unlisted product still isn't taken
+    on the model's word alone."""
+    for pos, occurrence in name_matches(name, answer):
+        sentence = sentence_around(answer, pos, pos + len(occurrence))
+        if any(name_matches(own, sentence) for own in own_names if own.strip() and own.strip().lower() != name.lower()):
+            return True
+    return False
+
+
 def _overlaps(a: str, b: str) -> bool:
     return bool(name_matches(a, b) or name_matches(b, a))
 
@@ -171,9 +185,10 @@ def verified_alias(candidate: object, answer: str, own_names: list[str], other_e
       * appears in the answer under the same matching rule as every mention,
         at least once written like a name (see _written_like_a_name);
       * shares the head word of one of the entity's known names ('Disney
-        Wish' for 'Disney Cruise Line', 'Redmi Note 13' for alias 'Redmi') —
-        a product sold under an unrelated name is left to the detect-time
-        alias list rather than taken on the model's word;
+        Wish' for 'Disney Cruise Line', 'Redmi Note 13' for alias 'Redmi'),
+        or sits in a sentence that also names the entity ('Samsung's A20') —
+        otherwise a product sold under an unrelated name is left to the
+        detect-time alias list rather than taken on the model's word;
       * doesn't overlap another entity's name as a whole word (which would
         steal that entity's mention)."""
     if not isinstance(candidate, str):
@@ -184,7 +199,7 @@ def verified_alias(candidate: object, answer: str, own_names: list[str], other_e
     if not any(_written_like_a_name(answer, pos, occ) for pos, occ in name_matches(name, answer)):
         return None
     heads = {_head_word(n) for n in own_names} - {""}
-    if not heads & set(re.findall(r"[a-z0-9]+", name.lower())):
+    if not heads & set(re.findall(r"[a-z0-9]+", name.lower())) and not _named_alongside(name, answer, own_names):
         return None
     if any(other.strip() and _overlaps(name, other) for other in other_entities):
         return None
@@ -258,6 +273,7 @@ async def _analyze_one_prompt(
     api_key: str,
     answer_model: str,
     fast_model: str,
+    context: BrandContext | None = None,
 ) -> _PromptAnalysis:
     answer_task = call_text(
         api_key=api_key, model=answer_model, system=_answer_system(buyer_context, market), user=prompt
@@ -269,7 +285,7 @@ async def _analyze_one_prompt(
     sentiment_result = await call_structured(
         api_key=api_key,
         model=fast_model,
-        system=_sentiment_system(brand, brand_match_names, competitors),
+        system=_sentiment_system(brand, [*brand_match_names, *(context.names if context else ())], competitors),
         user=answer_text or "(empty response)",
         tool_name=_SENTIMENT_TOOL_NAME,
         tool_description="Classify sentiment toward the brand and extract a supporting quote.",
@@ -287,7 +303,10 @@ async def _analyze_one_prompt(
     effective_match_names = list(brand_match_names or [brand])
     competitor_names = [alias for c in competitors for alias in (c.name, *c.match_names)]
     mention_text = verified_alias(
-        sentiment_result.get("mentionText"), answer_text, [brand, *effective_match_names], competitor_names
+        sentiment_result.get("mentionText"),
+        answer_text,
+        [brand, *effective_match_names, *(context.names if context else ())],
+        competitor_names,
     )
     if mention_text and mention_text.lower() not in (n.lower() for n in effective_match_names):
         effective_match_names.append(mention_text)
@@ -302,6 +321,7 @@ async def _analyze_one_prompt(
         competitors=effective_competitors,
         sentiment=sentiment,
         brand_match_names=effective_match_names,
+        context=context,
     )
     # `mentioned` is the deterministic regex ground truth (scoring.py); the
     # sentiment call's own quote can disagree with it — it was told to return
@@ -389,6 +409,7 @@ async def run_persona(
     buyer_context: str | None,
     market: str | None,
     api_key: str,
+    context: BrandContext | None = None,
 ) -> PersonaResult:
     settings = get_settings()
 
@@ -403,6 +424,7 @@ async def run_persona(
             api_key=api_key,
             answer_model=settings.anthropic_model,
             fast_model=settings.anthropic_fast_model,
+            context=context,
         )
         for p in prompts
     ]

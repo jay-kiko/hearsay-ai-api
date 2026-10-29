@@ -19,6 +19,7 @@ from app.services import aggregation
 from app.services.grounding import empty_sources, run_grounding
 from app.services.insights_gen import generate_insights
 from app.services.pipeline import run_persona
+from app.services.scoring import BrandContext
 
 logger = logging.getLogger("hearsay.runner")
 
@@ -36,6 +37,7 @@ async def _run_one_persona(
     buyer_context: str | None,
     market: str | None,
     api_key: str,
+    context: BrandContext | None = None,
 ) -> tuple[str, PersonaResult | None]:
     job_store.set_persona_status(job_id, persona.id, "running")
     async with semaphore:
@@ -49,6 +51,7 @@ async def _run_one_persona(
                 buyer_context=buyer_context,
                 market=market,
                 api_key=api_key,
+                context=context,
             )
             job_store.update_persona(job_id, PersonaEvent(persona_id=persona.id, status="done", result=result))
             return persona.id, result
@@ -81,6 +84,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
     semaphore = asyncio.Semaphore(settings.persona_concurrency)
     # Falls back to the bare brand name for callers that don't send aliases yet.
     brand_match_names = request.brand_match_names or [request.brand]
+    context = BrandContext.of(request.brand_context_names, request.category_terms)
 
     try:
         tasks = [
@@ -96,6 +100,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
                 buyer_context=request.buyer_context,
                 market=request.market,
                 api_key=anthropic_api_key,
+                context=context,
             )
             for persona in request.personas
             if request.prompts.get(persona.id)
@@ -115,6 +120,8 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
                 industry=request.industry,
                 competitors=request.competitors,
                 brand_match_names=brand_match_names,
+                brand_context_names=request.brand_context_names,
+                category_terms=request.category_terms,
                 personas=request.personas,
                 prompts=request.prompts,
                 market=request.market,

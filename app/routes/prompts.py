@@ -10,6 +10,14 @@ from app.services.prompt_gen import adapt_seed_prompt, generate_prompts
 router = APIRouter()
 
 
+def _screen_names(body: PromptsRequest | AdaptSeedPromptRequest) -> list[str]:
+    """Names a generated prompt must not contain. Context names ("Disney")
+    count here unconditionally: a prompt that says "Disney" leaks the brand
+    whatever the sentence is about."""
+    names = [*body.brand_match_names, *body.brand_context_names]
+    return [body.brand, *names] if names else []
+
+
 @router.post("/api/prompts", response_model=PromptsResponse)
 async def create_prompts(body: PromptsRequest, request: Request) -> PromptsResponse:
     settings = get_settings()
@@ -52,7 +60,7 @@ async def create_prompts(body: PromptsRequest, request: Request) -> PromptsRespo
                         personas=body.personas,
                         prompts_per_persona=count,
                         competitors=body.competitors,
-                        brand_match_names=body.brand_match_names,
+                        brand_match_names=_screen_names(body),
                     )
                     for category, count in active
                 ]
@@ -81,7 +89,7 @@ async def create_prompts(body: PromptsRequest, request: Request) -> PromptsRespo
             personas=body.personas,
             prompts_per_persona=body.prompts_per_persona,
             competitors=body.competitors,
-            brand_match_names=body.brand_match_names,
+            brand_match_names=_screen_names(body),
         )
 
     return PromptsResponse(prompts=prompts)
@@ -106,7 +114,7 @@ async def create_seed_prompts(body: AdaptSeedPromptRequest, request: Request) ->
             personas=body.personas,
             seed_prompt=body.seed_prompt,
             competitors=body.competitors,
-            brand_match_names=body.brand_match_names,
+            brand_match_names=_screen_names(body),
         )
 
     return AdaptSeedPromptResponse(prompts=prompts)
