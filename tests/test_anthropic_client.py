@@ -62,6 +62,24 @@ async def test_remembers_the_model_so_later_calls_skip_the_failed_attempt():
     assert [c["tool_choice"]["type"] for c in _FakeClient.calls] == ["auto"]
 
 
+def test_decodes_array_and_object_fields_sent_as_json_strings():
+    # Confirmed live: source enrichment's `sources` array arrived as a string,
+    # so grounding classified nothing and showed no sources.
+    schema = {"type": "object", "properties": {
+        "sources": {"type": "array"}, "meta": {"type": "object"}, "note": {"type": "string"},
+    }}
+    value = {"sources": '[{"domain": "a.com"}]', "meta": '{"k": 1}', "note": "[1]"}
+    assert ac._decode_stringified(value, schema, "t") == {
+        "sources": [{"domain": "a.com"}], "meta": {"k": 1}, "note": "[1]",
+    }
+
+
+def test_leaves_undecodable_or_mistyped_strings_alone():
+    schema = {"type": "object", "properties": {"sources": {"type": "array"}, "meta": {"type": "object"}}}
+    value = {"sources": "[{truncated", "meta": "[1, 2]"}
+    assert ac._decode_stringified(value, schema, "t") == value
+
+
 # ── web search ───────────────────────────────────────────────────────
 
 class _SearchFake:

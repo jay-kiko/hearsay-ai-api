@@ -14,6 +14,7 @@ calls in flight across all jobs, since each job alone fans out to dozens.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import weakref
 from dataclasses import dataclass
@@ -171,6 +172,28 @@ def _rejects_forced_tool_choice(exc: BadRequestError) -> bool:
     return "tool_choice" in str(exc)
 
 
+def _decode_stringified(value: dict[str, Any], input_schema: dict[str, Any], tool_name: str) -> dict[str, Any]:
+    """Confirmed live (standard tier, ~1 in 4 source-enrichment calls): the
+    model sometimes sends a top-level array or object field as a JSON-encoded
+    string. Callers iterate it as a list, find nothing, and silently degrade —
+    grounding then showed no sources at all. A string that doesn't decode to
+    the declared type is left as is, so each caller's own fallback applies."""
+    properties = input_schema.get("properties", {})
+    decoded = dict(value)
+    for key, raw in value.items():
+        expected = properties.get(key, {}).get("type")
+        if expected not in ("array", "object") or not isinstance(raw, str):
+            continue
+        try:
+            parsed = json.loads(raw)
+        except ValueError:
+            continue
+        if isinstance(parsed, list if expected == "array" else dict):
+            logger.info("decoded %s.%s, sent as a JSON string", tool_name, key)
+            decoded[key] = parsed
+    return decoded
+
+
 async def call_structured(
     *,
     api_key: str,
@@ -213,7 +236,7 @@ async def call_structured(
             response = await _request(False)
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
-                return block.input
+                return _decode_stringified(block.input, input_schema, tool_name)
         raise ValueError(f"model did not return a {tool_name} tool call")
 
     return await _with_retry(_do, retries=settings.anthropic_max_retries, label=f"call_structured:{tool_name}")
