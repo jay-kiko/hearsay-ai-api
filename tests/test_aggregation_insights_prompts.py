@@ -330,3 +330,79 @@ def test_unlisted_brands_count_in_share_of_voice_as_one_brand_each():
     assert products["Saucony"].count == 2 and products["Brooks"].count == 2  # spelling variants merged
     assert not products["Saucony"].listed and products["Hoka"].listed and products["Nike"].is_brand
     assert abs(sum(p.share for p in products.values()) - 1) < 0.01
+
+
+# ── prompts that reword one question ─────────────────────────────────
+
+# Confirmed live: each selected category was generated in its own call, and
+# every persona got one scenario three times over.
+REWORDED = [
+    "First cruise for our 4 and 7 year old from Singapore, which ship has the best kids club and character meet-ups?",
+    "Which cruise from Singapore has the best kids club for a 4 and 7 year old, and not packed?",
+    "First cruise with a 4 and 7 year old from Singapore, which ship's kids club is actually good and not packed?",
+]
+TEENS = [
+    "My 13 and 16 yo will roll their eyes at kiddie stuff. Any Singapore cruises with proper teen clubs?",
+    "Our 13 and 16 yo think everything is babyish. Any short getaway from SG with proper teen-only zones and thrill stuff?",
+]
+DISTINCT = [
+    "Which cruise lines sailing out of Marina Bay have kids clubs that work for a 4 and 7 year old?",
+    "June hols cruise from Singapore under $4k for family of 4, any ship where the kids club doesn't get fully booked?",
+    "Ah Ma turning 70, want a 3 night cruise from Singapore with proper halal food onboard. Which lines are reliable?",
+]
+
+
+def test_near_duplicates_catch_rewordings_but_not_distinct_questions():
+    assert len(prompt_gen.near_duplicate_pairs(REWORDED)) == 3
+    assert prompt_gen.near_duplicate_pairs(TEENS) == [(0, 1)]
+    assert prompt_gen.near_duplicate_pairs(DISTINCT) == []
+
+
+def _categories():
+    return [prompt_gen.CategoryPlan(name="Family cruises", buyer_context="Parents choosing a cruise", count=2),
+            prompt_gen.CategoryPlan(name="Short getaways", buyer_context="Couples picking a weekend cruise", count=1)]
+
+
+async def test_categories_are_written_in_one_call_in_order(monkeypatch):
+    calls = []
+
+    async def fake(**kw):
+        calls.append(kw)
+        return {"personas": [{"personaId": "p1", "prompts": DISTINCT}]}
+
+    monkeypatch.setattr(prompt_gen, "call_structured", fake)
+    out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Cruises", buyer_context=None,
+                                            personas=[PERSONA], prompts_per_persona=3, categories=_categories())
+    assert out == {"p1": DISTINCT} and len(calls) == 1
+    user = calls[0]["user"]
+    assert "prompts 1-2: Family cruises" in user and "prompt 3: Short getaways" in user
+    assert user.index("Family cruises") < user.index("Short getaways")
+
+
+async def test_a_reworded_set_is_asked_for_once_more_and_the_better_set_kept(monkeypatch):
+    replies = [{"personas": [{"personaId": "p1", "prompts": REWORDED}]},
+               {"personas": [{"personaId": "p1", "prompts": DISTINCT}]}]
+    calls = []
+
+    async def fake(**kw):
+        calls.append(kw)
+        return replies[len(calls) - 1]
+
+    monkeypatch.setattr(prompt_gen, "call_structured", fake)
+    out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Cruises", buyer_context=None,
+                                            personas=[PERSONA], prompts_per_persona=3)
+    assert out == {"p1": DISTINCT}
+    assert len(calls) == 2 and "repeated one question" in calls[1]["user"] and "Parent" in calls[1]["user"]
+
+
+async def test_a_retry_that_is_no_better_keeps_the_first_set(monkeypatch):
+    calls = []
+
+    async def fake(**kw):
+        calls.append(kw)
+        return {"personas": [{"personaId": "p1", "prompts": REWORDED}]}
+
+    monkeypatch.setattr(prompt_gen, "call_structured", fake)
+    out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Cruises", buyer_context=None,
+                                            personas=[PERSONA], prompts_per_persona=3)
+    assert out == {"p1": REWORDED} and len(calls) == 2  # asked once more, never in a loop

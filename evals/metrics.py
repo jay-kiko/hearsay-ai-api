@@ -1,5 +1,6 @@
 """Scores evals/run.py output. These are screening metrics, not a verdict: they
-catch length creep, repeated openers, stock AI phrasing and brand leakage, but
+catch length creep, repeated openers, one question reworded within a persona
+("reworded pairs"), stock AI phrasing and brand leakage, but
 only reading the prompts tells you whether they sound human. Always read a few.
 
     python -m evals.metrics out/base.json out/new.json
@@ -12,6 +13,7 @@ import statistics as st
 import sys
 from collections import Counter
 
+from app.services.prompt_gen import near_duplicate_pairs
 from evals.cases import CASES
 
 STOCK = [
@@ -43,6 +45,7 @@ def report(path: str) -> None:
             f"  [{case['case']}] prompts: words mean={st.mean(lengths):.1f} max={max(lengths)} | "
             f"stock-phrase={sum(any(s in p.lower() for s in STOCK) for p in prompts)}/{len(prompts)} | "
             f"repeated openers={sum(c for c in openers.values() if c > 1)} | "
+            f"reworded pairs={sum(len(near_duplicate_pairs(ps)) for ps in case['prompts'].values())} | "
             f"brand/competitor named: prompts={sum(any(n in p.lower() for n in names) for p in prompts)}, "
             f"personas={sum(any(n in ' '.join(map(str, p.values())).lower() for n in names) for p in personas)}"
         )

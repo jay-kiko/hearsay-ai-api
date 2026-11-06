@@ -90,3 +90,22 @@ def test_ipv6_clients_are_keyed_by_their_64():
     assert client_key(req("2001:db8::1")) == client_key(req("2001:db8::ffff")) == "2001:db8::/64"
     assert client_key(req("::ffff:1.2.3.4")) == "1.2.3.4"
     assert client_key(req("1.2.3.4")) == "1.2.3.4"
+
+
+def test_several_categories_make_one_prompt_call(client, monkeypatch):
+    calls = []
+
+    async def fake_generate(**kw):
+        calls.append(kw)
+        return {"p1": ["q1", "q2", "q3"]}
+
+    monkeypatch.setattr("app.routes.prompts.generate_prompts", fake_generate)
+    code = _mint(client)
+    persona = {"id": "p1", "title": "T", "role": "r", "pains": "p", "criteria": "c"}
+    response = client.post("/api/prompts", json={
+        "brand": "B", "industry": "Cruises", "personas": [persona], "accessCode": code, "promptsPerPersona": 3,
+        "categories": [{"name": n, "buyerContext": "x"} for n in ("Family", "Weekend", "Luxury")],
+    })
+    assert response.status_code == 200 and response.json()["prompts"] == {"p1": ["q1", "q2", "q3"]}
+    assert len(calls) == 1
+    assert [(c.name, c.count) for c in calls[0]["categories"]] == [("Family", 1), ("Weekend", 1), ("Luxury", 1)]

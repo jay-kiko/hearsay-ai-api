@@ -11,8 +11,11 @@ brands alike.
 """
 from __future__ import annotations
 
+import itertools
 import json
 import logging
+import re
+from dataclasses import dataclass
 
 from app.config import get_settings
 from app.models import PROMPT_MAX, Competitor, PersonaIn
@@ -92,6 +95,16 @@ _SYSTEM = (
     "pull in a different buyer type's motivation just because the buyer context mentions it."
 )
 
+@dataclass(frozen=True)
+class CategoryPlan:
+    """A product category the person picked, and how many of each persona's
+    prompts are about it."""
+
+    name: str
+    buyer_context: str
+    count: int
+
+
 def _user_prompt(
     brand: str,
     industry: str,
@@ -100,11 +113,23 @@ def _user_prompt(
     market: str | None,
     personas: list[PersonaIn],
     count: int,
+    categories: list[CategoryPlan] | None = None,
+    repeated: list[str] | None = None,
 ) -> str:
-    lines = [
-        f"Industry: {industry}",
-        f"Buyer context: {buyer_context}",
-    ]
+    lines = [f"Industry: {industry}"]
+    if categories:
+        plan, first = [], 1
+        for c in categories:
+            last = first + c.count - 1
+            where = f"prompt {first}" if c.count == 1 else f"prompts {first}-{last}"
+            plan.append(f"- {where}: {c.name}. Who is choosing: {c.buyer_context}")
+            first = last + 1
+        lines.append(
+            "Categories, in this order for every persona (each prompt is about its category, and every "
+            "prompt raises a different concern from the persona's others):\n" + "\n".join(plan)
+        )
+    else:
+        lines.append(f"Buyer context: {buyer_context}")
     if brand_summary:
         lines.append(f"Brand summary: {brand_summary}")
     if market:
@@ -115,8 +140,41 @@ def _user_prompt(
         f"prompts takes a different angle and a different shape; no two prompts in the whole output "
         f"open the same way."
     )
+    if repeated:
+        lines.append(
+            "A previous attempt repeated one question in different words for: " + ", ".join(repeated)
+            + ". Give each of those personas' prompts a different concern, situation and detail, not a "
+            "rewording of one scenario."
+        )
     lines.append(f"\nPersonas:\n{json.dumps(persona_payload(personas), indent=2)}")
     return "\n".join(lines)
+
+
+_STOPWORDS = frozenset(
+    "a an and the of for to in on at with from is are be our my we i you your it its this that which what any "
+    "some do does can has have had not but or so if as by just get got still really actually best good proper".split()
+)
+# Share of meaningful words two prompts have in common. Calibrated live: one
+# scenario reworded scored 0.23-1.0 (categories each generated in their own
+# call all asked about "13 and 16 yo think it's babyish" or "Ah Ma in a
+# wheelchair plus 6 grandkids"); 144 distinct prompts from single calls
+# scored at most 0.17.
+_REPEAT_OVERLAP = 0.2
+
+
+def _content_words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z0-9]+", text.lower()) if w not in _STOPWORDS}
+
+
+def near_duplicate_pairs(prompts: list[str]) -> list[tuple[int, int]]:
+    """Index pairs of prompts that ask the same question in other words. One
+    definition, used by generation and by evals.metrics."""
+    out = []
+    for (i, a), (j, b) in itertools.combinations(enumerate(prompts), 2):
+        wa, wb = _content_words(a), _content_words(b)
+        if wa | wb and len(wa & wb) / len(wa | wb) >= _REPEAT_OVERLAP:
+            out.append((i, j))
+    return out
 
 
 def names_a_brand(
@@ -157,46 +215,70 @@ async def generate_prompts(
     prompts_per_persona: int | None,
     competitors: list[Competitor] | None = None,
     brand_match_names: list[str] | None = None,
+    categories: list[CategoryPlan] | None = None,
 ) -> dict[str, list[str]]:
+    """Every persona's prompts in one call, categories included: a call sees
+    only its own output, so one call per category wrote the persona's most
+    obvious scenario once per category (confirmed live: three rewordings of
+    "first cruise with a 4 and 7 year old"). A persona whose prompts still
+    repeat one question is asked for once more and keeps the less repetitive
+    set."""
     settings = get_settings()
-    count = prompts_per_persona or settings.prompts_per_persona
+    count = sum(c.count for c in categories) if categories else (prompts_per_persona or settings.prompts_per_persona)
 
     if not personas:
         return {}
 
-    result = await call_structured(
-        api_key=api_key,
-        model=settings.anthropic_quality_model,
-        system=_SYSTEM,
-        user=_user_prompt(
-            brand, industry, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count
-        ),
-        tool_name=_TOOL_NAME,
-        tool_description="Return the written prompts for every persona.",
-        input_schema=_INPUT_SCHEMA,
-        # Sized to the output: a fixed 2048 cut off at 10 personas x 10 prompts,
-        # the truncated tool call came back empty and every persona silently
-        # got the fallback prompt. ~60 tokens per prompt plus JSON overhead.
-        max_tokens=max(2048, 60 * count * len(personas) + 512),
-    )
+    async def attempt(repeated: list[str] | None) -> dict[str, list[str]]:
+        result = await call_structured(
+            api_key=api_key,
+            model=settings.anthropic_quality_model,
+            system=_SYSTEM,
+            user=_user_prompt(
+                brand, industry, buyer_context or DEFAULT_BUYER_CONTEXT, brand_summary, market, personas, count,
+                categories, repeated,
+            ),
+            tool_name=_TOOL_NAME,
+            tool_description="Return the written prompts for every persona.",
+            input_schema=_INPUT_SCHEMA,
+            # Sized to the output: a fixed 2048 cut off at 10 personas x 10 prompts,
+            # the truncated tool call came back empty and every persona silently
+            # got the fallback prompt. ~60 tokens per prompt plus JSON overhead.
+            max_tokens=max(2048, 60 * count * len(personas) + 512),
+        )
 
-    # Tool output isn't a hard type guarantee: skip malformed entries rather
-    # than KeyError into a 500.
-    by_persona: dict[str, list[str]] = {}
-    for entry in result.get("personas", []) if isinstance(result.get("personas"), list) else []:
-        if isinstance(entry, dict) and isinstance(entry.get("personaId"), str):
-            # Capped at the requested count: extras would push a persona past
-            # the analysis request's per-persona limit.
-            by_persona[entry["personaId"]] = _clean_prompts(entry.get("prompts"))[:count]
+        # Tool output isn't a hard type guarantee: skip malformed entries rather
+        # than KeyError into a 500.
+        by_persona: dict[str, list[str]] = {}
+        for entry in result.get("personas", []) if isinstance(result.get("personas"), list) else []:
+            if isinstance(entry, dict) and isinstance(entry.get("personaId"), str):
+                # Capped at the requested count: extras would push a persona past
+                # the analysis request's per-persona limit.
+                by_persona[entry["personaId"]] = _clean_prompts(entry.get("prompts"))[:count]
 
-    output: dict[str, list[str]] = {}
-    for persona in personas:
-        prompts = by_persona.get(persona.id, [])
-        clean = [p for p in prompts if not names_a_brand(p, brand, competitors or [], brand_match_names)]
-        if len(clean) < len(prompts):
-            logger.warning("dropped %d generated prompt(s) that named the brand or a competitor", len(prompts) - len(clean))
-        output[persona.id] = clean or [_fallback_prompt(industry, market)]
-    return output
+        out: dict[str, list[str]] = {}
+        for persona in personas:
+            prompts = by_persona.get(persona.id, [])
+            clean = [p for p in prompts if not names_a_brand(p, brand, competitors or [], brand_match_names)]
+            if len(clean) < len(prompts):
+                logger.warning("dropped %d generated prompt(s) that named the brand or a competitor", len(prompts) - len(clean))
+            out[persona.id] = clean
+        return out
+
+    output = await attempt(None)
+    repeated = [p for p in personas if near_duplicate_pairs(output[p.id])]
+    if repeated:
+        logger.warning("prompts repeated one question for %d persona(s); asking once more", len(repeated))
+        try:
+            retry = await attempt([p.title for p in repeated])
+        except Exception:  # noqa: BLE001 - the first set still stands
+            logger.exception("prompt retry failed; keeping the first set")
+            retry = {}
+        for p in repeated:
+            again = retry.get(p.id) or []
+            if len(again) >= len(output[p.id]) and len(near_duplicate_pairs(again)) < len(near_duplicate_pairs(output[p.id])):
+                output[p.id] = again
+    return {pid: prompts or [_fallback_prompt(industry, market)] for pid, prompts in output.items()}
 
 
 _SEED_TOOL_NAME = "adapt_seed_prompt"

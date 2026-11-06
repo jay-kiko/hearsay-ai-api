@@ -1,11 +1,9 @@
-import asyncio
-
 from fastapi import APIRouter, Request
 
 from app.config import get_settings
 from app.models import AdaptSeedPromptRequest, AdaptSeedPromptResponse, PromptsRequest, PromptsResponse
 from app.routes._access import charge_generation_call, upstream_errors
-from app.services.prompt_gen import adapt_seed_prompt, generate_prompts
+from app.services.prompt_gen import CategoryPlan, adapt_seed_prompt, generate_prompts
 
 router = APIRouter()
 
@@ -27,50 +25,34 @@ async def create_prompts(body: PromptsRequest, request: Request) -> PromptsRespo
         # rate — selecting more categories must split that same budget across
         # them, not multiply it (5 categories at 3 each used to mean 15
         # prompts per persona instead of 3). Distributed as evenly as
-        # possible; a category whose share rounds to 0 is skipped entirely —
-        # no call, no throttle charge — rather than still costing one for
-        # zero prompts.
+        # possible; a category whose share rounds to 0 is left out.
         total = body.prompts_per_persona or settings.prompts_per_persona
         n = len(body.categories)
         base, extra = divmod(total, n)
-        active = [
-            (category, base + (1 if i < extra else 0)) for i, category in enumerate(body.categories)
+        plan = [
+            CategoryPlan(name=category.name, buyer_context=category.buyer_context, count=base + (1 if i < extra else 0))
+            for i, category in enumerate(body.categories)
         ]
-        active = [(category, count) for category, count in active if count > 0]
+        plan = [c for c in plan if c.count > 0]
 
-        # One category picked used to mean "one generation call" — selecting
-        # several now means several real, billed generation calls (one per
-        # active category, run across every persona), so the pre-spend
-        # throttle has to charge proportionally: N active categories costs N
-        # calls, not 1, or a multi-select run would get unlimited free
-        # generation past the cap.
-        for _ in active:
-            await charge_generation_call(body.access_code, request)
-
+        # One call for every category, so each persona's prompts are written
+        # together and don't reword one another (see generate_prompts).
+        await charge_generation_call(body.access_code, request)
         with upstream_errors():
-            per_category = await asyncio.gather(
-                *[
-                    generate_prompts(
-                        api_key=settings.anthropic_api_key,
-                        brand=body.brand,
-                        industry=f"{body.industry} — {category.name}",
-                        buyer_context=category.buyer_context,
-                        brand_summary=body.brand_summary,
-                        market=body.market,
-                        personas=body.personas,
-                        prompts_per_persona=count,
-                        competitors=body.competitors,
-                        brand_match_names=_screen_names(body),
-                    )
-                    for category, count in active
-                ]
+            prompts = await generate_prompts(
+                api_key=settings.anthropic_api_key,
+                brand=body.brand,
+                industry=body.industry,
+                buyer_context=body.buyer_context,
+                brand_summary=body.brand_summary,
+                market=body.market,
+                personas=body.personas,
+                prompts_per_persona=total,
+                competitors=body.competitors,
+                brand_match_names=_screen_names(body),
+                categories=plan,
             )
-
-        merged: dict[str, list[str]] = {persona.id: [] for persona in body.personas}
-        for category_prompts in per_category:
-            for persona_id, prompts in category_prompts.items():
-                merged.setdefault(persona_id, []).extend(prompts)
-        return PromptsResponse(prompts=merged)
+        return PromptsResponse(prompts=prompts)
 
     # Validated but not consumed — the user can regenerate prompts while
     # reviewing them; a use is only spent when they actually launch a job.

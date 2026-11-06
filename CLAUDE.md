@@ -86,7 +86,7 @@ Deliberately exempt: the per-prompt answer call (`pipeline._answer_system`).
 It is the signal being measured, so its style is the assistant's own.
 Mechanical calls (sentiment, relevance, origin) return structured fields only.
 
-Check with `evals.metrics` (length, repeated openers, stock phrases, leakage),
+Check with `evals.metrics` (length, repeated openers, reworded pairs, stock phrases, leakage),
 then read a sample: the metrics can't tell you a line sounds human.
 
 ## Model tiers (`app/config.py`)
@@ -135,5 +135,9 @@ Promoting a high-fan-out call needs a cost estimate first.
 - Check localisation with `python -m evals.markets` (prompts once, then ground + judge before/after): 2 brands × 6 markets incl. Kenya and Peru.
 - Apps in the DSP CSV are mapped to publisher websites (`tag_inventory`), but the `editorial` flag is deliberately strict, so most app-publisher sites (MyFitnessPal, Moovit, Carousell) are inventory-only, not sources. Loosening it is a product call.
 - The DSP CSV mixes real sites with Android package names that look like domains (`com.livescore`, `tunein.player`); `inventory._clean_domain` validates the TLD and package prefixes. Re-check after importing a new export.
+- A generation call only sees its own output: prompts for several selected categories used to be one call per
+  category, and every persona got one scenario reworded three times (9 reworded pairs in 4 personas). They are
+  one call now (`prompt_gen.CategoryPlan`), and a persona whose prompts still reword one question
+  (`prompt_gen.near_duplicate_pairs`) is asked for once more. Never split a persona's prompts across calls.
 - Persona text feeds prompt generation, so a brand or competitor named in a
   persona leaks into the prompts. Generated personas/prompts must stay neutral.
