@@ -176,8 +176,10 @@ def _decode_stringified(value: dict[str, Any], input_schema: dict[str, Any], too
     """Confirmed live (standard tier, ~1 in 4 source-enrichment calls): the
     model sometimes sends a top-level array or object field as a JSON-encoded
     string. Callers iterate it as a list, find nothing, and silently degrade —
-    grounding then showed no sources at all. A string that doesn't decode to
-    the declared type is left as is, so each caller's own fallback applies."""
+    grounding then showed no sources at all. The string can also hold the
+    whole input again ('{"sources": [...]}' inside "sources", ~1 in 10), so
+    that wrapper is unwrapped. A string that doesn't decode to the declared
+    type is left as is, so each caller's own fallback applies."""
     properties = input_schema.get("properties", {})
     decoded = dict(value)
     for key, raw in value.items():
@@ -188,10 +190,23 @@ def _decode_stringified(value: dict[str, Any], input_schema: dict[str, Any], too
             parsed = json.loads(raw)
         except ValueError:
             continue
+        if expected == "array" and isinstance(parsed, dict) and isinstance(parsed.get(key), list):
+            parsed = parsed[key]
         if isinstance(parsed, list if expected == "array" else dict):
             logger.info("decoded %s.%s, sent as a JSON string", tool_name, key)
             decoded[key] = parsed
     return decoded
+
+
+def _check_required_shapes(value: dict[str, Any], input_schema: dict[str, Any], tool_name: str) -> None:
+    """Raises (so _with_retry makes a fresh call) when a required array or
+    object field is still missing or the wrong type after decoding: a shape
+    nobody has seen yet must not reach a caller as an empty result."""
+    properties = input_schema.get("properties", {})
+    for key in input_schema.get("required", []):
+        expected = properties.get(key, {}).get("type")
+        if expected in ("array", "object") and not isinstance(value.get(key), list if expected == "array" else dict):
+            raise ValueError(f"{tool_name}.{key} is not a JSON {expected}")
 
 
 async def call_structured(
@@ -204,12 +219,17 @@ async def call_structured(
     tool_description: str,
     input_schema: dict[str, Any],
     max_tokens: int = 1536,
+    retry_malformed: bool = False,
 ) -> dict[str, Any]:
     """Return a tool call's input as guaranteed-shape JSON.
 
     Forces the tool call where the model allows it; for models that reject a
     forced tool_choice, falls back to tool_choice=auto plus an instruction to
     call the tool, and raises if the model still doesn't.
+
+    `retry_malformed` retries a reply whose required array/object fields are
+    still the wrong shape after decoding. Opt-in: detect parses comma-joined
+    strings for its list fields itself, and would fail where it now recovers.
     """
     settings = get_settings()
     client = _client(api_key)
@@ -236,7 +256,10 @@ async def call_structured(
             response = await _request(False)
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
-                return _decode_stringified(block.input, input_schema, tool_name)
+                value = _decode_stringified(block.input, input_schema, tool_name)
+                if retry_malformed:
+                    _check_required_shapes(value, input_schema, tool_name)
+                return value
         raise ValueError(f"model did not return a {tool_name} tool call")
 
     return await _with_retry(_do, retries=settings.anthropic_max_retries, label=f"call_structured:{tool_name}")

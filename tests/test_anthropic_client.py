@@ -74,10 +74,55 @@ def test_decodes_array_and_object_fields_sent_as_json_strings():
     }
 
 
+def test_unwraps_the_whole_input_resent_inside_a_string_field():
+    # Confirmed live: "sources" held '{"sources": [...]}', not the bare array.
+    schema = {"type": "object", "properties": {"sources": {"type": "array"}}}
+    value = {"sources": '{"sources": [{"domain": "a.com"}]}'}
+    assert ac._decode_stringified(value, schema, "t") == {"sources": [{"domain": "a.com"}]}
+
+
 def test_leaves_undecodable_or_mistyped_strings_alone():
     schema = {"type": "object", "properties": {"sources": {"type": "array"}, "meta": {"type": "object"}}}
     value = {"sources": "[{truncated", "meta": "[1, 2]"}
     assert ac._decode_stringified(value, schema, "t") == value
+
+
+async def test_retries_when_a_required_array_is_still_malformed(monkeypatch):
+    replies = [{"sources": "not json"}, {"sources": [{"domain": "a.com"}]}]
+
+    class _Malformed(_FakeClient):
+        async def _create(self, **kwargs):
+            block = SimpleNamespace(type="tool_use", name="t", input=replies.pop(0))
+            return SimpleNamespace(content=[block])
+
+    monkeypatch.setattr(ac, "AsyncAnthropic", _Malformed)
+    monkeypatch.setattr(ac.asyncio, "sleep", _no_sleep)
+    result = await ac.call_structured(
+        api_key="k", model="m", system="s", user="u", tool_name="t", tool_description="d",
+        input_schema={"type": "object", "properties": {"sources": {"type": "array"}}, "required": ["sources"]},
+        retry_malformed=True,
+    )
+    assert result == {"sources": [{"domain": "a.com"}]}
+
+
+async def test_returns_a_malformed_field_as_is_unless_asked_to_retry(monkeypatch):
+    # detect parses "a, b" for its list fields itself; a retry there could
+    # fail a lookup it recovers from today.
+    class _CommaJoined(_FakeClient):
+        async def _create(self, **kwargs):
+            block = SimpleNamespace(type="tool_use", name="t", input={"names": "a, b"})
+            return SimpleNamespace(content=[block])
+
+    monkeypatch.setattr(ac, "AsyncAnthropic", _CommaJoined)
+    result = await ac.call_structured(
+        api_key="k", model="m", system="s", user="u", tool_name="t", tool_description="d",
+        input_schema={"type": "object", "properties": {"names": {"type": "array"}}, "required": ["names"]},
+    )
+    assert result == {"names": "a, b"}
+
+
+async def _no_sleep(_):
+    pass
 
 
 # ── web search ───────────────────────────────────────────────────────
