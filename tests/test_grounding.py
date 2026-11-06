@@ -545,3 +545,11 @@ def test_front_pages_are_never_source_links():
         assert sq.is_homepage(url), url
     for url in ("https://www.reddit.com/r/cruise/", "https://blog.example/kids-clubs", "https://x.com/sg/blog"):
         assert not sq.is_homepage(url), url
+
+
+async def test_singapore_sitelist_has_no_inventory_unless_turned_on(calls, monkeypatch):
+    fields = {"inventory": ["Banner"], "cpm": "1.00 - 2.00", "availability": "1 web bid requests", "buyable": True}
+    monkeypatch.setattr(grounding.inventory, "sitelist_fields", lambda domain: fields)
+    monkeypatch.setattr(grounding.inventory, "load_sites", lambda: {"x": {}})
+    _, sitelist = await _run(market="Singapore")
+    assert sitelist and not any(e.buyable for e in sitelist) and all(e.cpm == "—" for e in sitelist)

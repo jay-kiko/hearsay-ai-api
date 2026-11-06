@@ -11,10 +11,10 @@ A source is a specific third-party page where people form opinions (forums,
 independent blogs and reviews, editorial) — never the brand's or a
 competitor's own site, and never a store, marketplace, booking or affiliate
 site. Rules live in
-app.services.source_quality; the invariants in CLAUDE.md. For Singapore,
-the sitelist overlays real programmatic CPM/reach from app.services.inventory
-on whichever sources are buyable — the inventory labels sources, it never
-decides which pages are sources.
+app.services.source_quality; the invariants in CLAUDE.md. With
+`sitelist_inventory` on (off by default), Singapore runs overlay real
+programmatic CPM/reach from app.services.inventory on the sitelist — the
+inventory labels sources, it never decides which pages are sources.
 """
 from __future__ import annotations
 
@@ -1005,7 +1005,7 @@ async def run_grounding(
         source_intel=measured.source_intel, queries=query_log,
         coverage_note=_coverage_note(asked, query_log, queries, errored, measured.source_intel, measured.unreadable),
     )
-    use_inventory = inventory.applies_to(market) and bool(inventory.load_sites())
+    use_inventory = settings.sitelist_inventory and inventory.applies_to(market) and bool(inventory.load_sites())
     sitelist = _build_sitelist(
         measured.sitelist_publishers, measured.reach_by_domain, len(asked), use_inventory=use_inventory
     )

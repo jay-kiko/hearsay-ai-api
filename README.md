@@ -209,6 +209,9 @@ inherently noisy, so treat a single run's list as a sample.
 
 ## Singapore programmatic inventory
 
+**Off by default** (`SITELIST_INVENTORY=true` to turn it on): until the actions
+feature that uses it is built, every market's sitelist shows placeholders.
+
 The inventory **labels** sources; it never decides which pages are sources. When
 a source found by the buyer-question search is in the Singapore inventory, its
 sitelist entry shows real CPM, reach (bid requests) and creative types and is

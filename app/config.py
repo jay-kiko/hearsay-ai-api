@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     # capped at this much page text.
     web_fetch_max_pages: int = 10
     web_fetch_max_content_tokens: int = 20000
+    # Fills the sitelist's CPM / formats / buyability from the Singapore DSP
+    # export for Singapore runs. Off until the actions feature that uses it is
+    # built, so every market's report behaves the same.
+    sitelist_inventory: bool = False
 
     @property
     def cors_origin_list(self) -> list[str]:
