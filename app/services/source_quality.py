@@ -263,6 +263,17 @@ def _path_depth(url: str) -> int:
     return len([seg for seg in urlparse(url).path.split("/") if seg])
 
 
+_LOCALE_SEGMENT = re.compile(r"^[a-z]{2}(?:[-_][a-z]{2})?$", re.IGNORECASE)
+
+
+def is_homepage(url: str) -> bool:
+    """A site's front page ('/', or just a locale like '/en/' or '/es-pe/'):
+    never a source, because it isn't the page that says anything (confirmed
+    live: vendor homepages such as sync.ke/ came back as search results)."""
+    segments = [seg for seg in urlparse(url).path.split("/") if seg]
+    return not segments or (len(segments) == 1 and bool(_LOCALE_SEGMENT.match(segments[0])))
+
+
 def judge_response(requested_url: str, status: int, final_url: str) -> bool | None:
     """True = page is there, False = dead, None = can't tell.
 

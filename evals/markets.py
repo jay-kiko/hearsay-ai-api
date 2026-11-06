@@ -101,7 +101,7 @@ async def _ground(api_key: str, row: dict) -> dict:
     return dict(
         case=row["case"], market=row["market"],
         queries=[q.model_dump() for q in sources.queries],
-        shown=[dict(url=s.url, domain=s.domain, category=s.category) for s in sources.source_intel],
+        shown=[dict(url=s.url, domain=s.domain, category=s.category, origin=s.origin) for s in sources.source_intel],
         coverage_note=sources.coverage_note,
     )
 
@@ -115,7 +115,7 @@ _JUDGE_SCHEMA = {
                 "type": "object",
                 "properties": {
                     "url": {"type": "string"},
-                    "label": {"type": "string", "enum": ["local", "global", "wrong_market", "store"]},
+                    "label": {"type": "string", "enum": ["local", "global", "wrong_market", "vendor", "store"]},
                 },
                 "required": ["url", "label"],
             },
@@ -128,8 +128,10 @@ _JUDGE_SYSTEM = (
     "'local' = written for buyers in that market (local publication, local forum, or a page specifically "
     "about that country/city). 'global' = not tied to any country and genuinely useful to a buyer there "
     "(international reviews, global forums). 'wrong_market' = written for buyers in a different country "
-    "(another country's prices, stores, regulations, tax rules, events or availability). 'store' = a "
-    "retailer, marketplace, booking or brand/vendor site, including its blog. Judge from the URL and domain."
+    "(another country's prices, stores, regulations, tax rules, events or availability). 'vendor' = an "
+    "article by a business in the category (software company, agency, firm) written for that market or "
+    "globally. 'store' = a retailer, marketplace or booking site, including its blog. Judge from the URL and "
+    "domain."
 )
 
 
@@ -161,20 +163,21 @@ async def main(cmd: str, args: list[str]) -> None:
             rows = json.load(open(path))
             labels = await asyncio.gather(*(_judge(api_key, r) for r in rows))
             print(f"\n{path}")
-            print(f"{'case':13} {'market':28} shown local global wrong store  queries naming market")
+            print(f"{'case':13} {'market':28} shown local global wrong vendor store tagged  queries naming market")
             total = Counter()
             for r, ls in zip(rows, labels):
                 c = Counter(ls)
                 total.update(c)
                 places = [_plain(p) for p in r["market"].split(",") if p.strip()]
                 named = sum(any(p in _plain(q.get("query") or "") for p in places) for q in r["queries"])
+                tagged = sum(s.get("origin") == "vendor" for s in r["shown"])
                 print(f"{r['case']:13} {r['market']:28} {len(ls):5} {c['local']:5} {c['global']:6} "
-                      f"{c['wrong_market']:5} {c['store']:5}  {named}/{len(r['queries'])}"
+                      f"{c['wrong_market']:5} {c['vendor']:6} {c['store']:5} {tagged:6}  {named}/{len(r['queries'])}"
                       + (f"  ERROR {r['error'][:60]}" if r.get("error") else ""))
                 for s, label in zip(r["shown"], ls):
                     s["label"] = label
             print(f"{'TOTAL':42} {sum(total.values()):5} {total['local']:5} {total['global']:6} "
-                  f"{total['wrong_market']:5} {total['store']:5}")
+                  f"{total['wrong_market']:5} {total['vendor']:6} {total['store']:5}")
             _write(path.replace(".json", ".judged.json"), rows)
     else:
         raise SystemExit(__doc__)

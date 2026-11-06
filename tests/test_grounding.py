@@ -81,13 +81,14 @@ def _response_for(query, leak=False):
 
 
 ORIGINS = {"reddit.com": "independent", "momblog.example": "independent", "deadblog.example": "independent",
-           "noevidence.example": "independent", "rivalblog.example": "independent",
+           "noevidence.example": "independent", "rivalblog.example": "vendor",
            "cruisedeals.example": "affiliate", "brandlookup.example": "independent"}
 
 
 @pytest.fixture
 def calls(monkeypatch):
-    seen = {"search": [], "filter_user": None, "filter_system": None, "web_fetch": [], "web_fetch_pages": {}}
+    seen = {"search": [], "filter_user": None, "filter_system": None, "web_fetch": [], "web_fetch_pages": {},
+            "page_kinds": {}, "page_kind_user": None}
 
     def install(leak=False):
         async def fake_web_search(**kw):
@@ -98,6 +99,10 @@ def calls(monkeypatch):
             if tool_name == grounding._FILTER_TOOL_NAME:
                 seen["filter_user"], seen["filter_system"] = user, system
                 return {"relevantDomains": list(ORIGINS)}
+            if tool_name == grounding._PAGE_KIND_TOOL_NAME:
+                seen["page_kind_user"] = user
+                urls = [line[5:] for line in user.splitlines() if line.startswith("URL: ")]
+                return {"pages": [{"url": u, "kind": seen["page_kinds"].get(u, "article")} for u in urls]}
             return {"sources": [{"domain": d, "type": "Community" if d == "reddit.com" else "Blog",
                                  "keywords": ["cruise"], "origin": o} for d, o in ORIGINS.items()]}
 
@@ -257,11 +262,11 @@ def _authority(visibilities):
 async def test_source_authority_counts_only_pages_we_could_read():
     authority, sources = _authority(["Visible", "Not visible", "Couldn't verify", "Couldn't verify"])
     assert authority.score == 50  # 1 of 2 readable, not 1 of 4
-    assert authority.note == "Named in 1 of 2 independent sources we could read (2 more block automated reading)"
+    assert authority.note == "Named in 1 of 2 sources we could read (2 more block automated reading)"
     assert aggregation.measured_sources(sources)
 
     authority, sources = _authority(["Couldn't verify"])
-    assert authority.note.startswith("None of the 1 independent sources could be read")
+    assert authority.note.startswith("None of the 1 sources could be read")
     assert not aggregation.measured_sources(sources)  # so it's left out of the headline score
 
 
@@ -281,9 +286,11 @@ async def test_enrichment_failure_shows_no_sources_rather_than_unverified_ones(c
 
 
 async def test_model_returned_domains_are_normalised(calls, monkeypatch):
-    async def www_everywhere(*, tool_name, **_):
+    async def www_everywhere(*, tool_name, user="", **_):
         if tool_name == grounding._FILTER_TOOL_NAME:
             return {"relevantDomains": [f"www.{d}" for d in ORIGINS] + ["HTTPS://Reddit.com/r/x"]}
+        if tool_name == grounding._PAGE_KIND_TOOL_NAME:
+            return {"pages": [{"url": line[5:], "kind": "article"} for line in user.splitlines() if line.startswith("URL: ")]}
         return {"sources": [{"domain": f"WWW.{d.upper()}", "type": "Blog", "keywords": [], "origin": o}
                             for d, o in ORIGINS.items()]}
 
@@ -498,6 +505,43 @@ def test_coverage_note_says_none_rather_than_only_zero():
     asked = [("P", "q")]
     log = [grounding.SourceQuery(persona="P", question="q", query="q")]
     assert grounding._coverage_note(asked, log, {"0:a": "q"}, set(), []) == (
-        "No independent sources came back for these buyer questions.")
+        "No usable sources came back for these buyer questions.")
     one = [SourceIntel.model_construct()]
-    assert grounding._coverage_note(asked, log, {"0:a": "q"}, set(), one).startswith("Only 1 independent source came")
+    assert grounding._coverage_note(asked, log, {"0:a": "q"}, set(), one).startswith("Only 1 usable source came")
+
+
+async def test_vendor_articles_are_shown_labelled_and_stores_never(calls):
+    sources, _ = await _run()
+    origin = {s.domain: s.origin for s in sources.source_intel}
+    assert origin["rivalblog.example"] == "vendor"
+    assert origin["reddit.com"] == "independent"
+    assert "cruisedeals.example" not in origin  # a store ("affiliate"), never a source
+
+
+async def test_a_vendor_page_selling_itself_is_not_a_source(calls):
+    calls["page_kinds"]["https://rivalblog.example/couples"] = "product_or_service"
+    sources, _ = await _run()
+    assert "rivalblog.example" not in {s.domain for s in sources.source_intel}
+    # only vendor pages are checked; independent ones never are
+    assert "rivalblog.example" in calls["page_kind_user"] and "reddit.com" not in calls["page_kind_user"]
+
+
+async def test_vendor_pages_are_hidden_when_their_check_fails(calls, monkeypatch):
+    real = grounding.call_structured
+
+    async def page_check_fails(*, tool_name, **kw):
+        if tool_name == grounding._PAGE_KIND_TOOL_NAME:
+            raise RuntimeError("down")
+        return await real(tool_name=tool_name, **kw)
+
+    monkeypatch.setattr(grounding, "call_structured", page_check_fails)
+    sources, _ = await _run()
+    domains = {s.domain for s in sources.source_intel}
+    assert "rivalblog.example" not in domains and "reddit.com" in domains
+
+
+def test_front_pages_are_never_source_links():
+    for url in ("https://sync.ke/", "https://ke.endasportswear.com", "https://dora.pe/es-pe/", "https://x.com/en"):
+        assert sq.is_homepage(url), url
+    for url in ("https://www.reddit.com/r/cruise/", "https://blog.example/kids-clubs", "https://x.com/sg/blog"):
+        assert not sq.is_homepage(url), url

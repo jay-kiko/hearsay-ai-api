@@ -47,10 +47,11 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 | Source `influence` (reach), sitelist `score` | how many of the brand-free buyer questions surfaced the domain | `grounding._reach_label` |
 | Source `personas` (whose question surfaced it), `competitors`, `competitorMentions`, `gap` | measured from the search attribution and page text | `grounding.py` |
 | Source `keywords`, `Publisher.type` | **model inference** (plausibility, not measurement) | `grounding._enrich_sources` |
+| Source `origin` ("Vendor article" tag), and whether a vendor page is an article | **model inference**, labelled in the UI | `grounding._enrich_sources`, `grounding._vendor_articles` |
 
 ## Invariants — a change that breaks one is a bug
 
-1. **A source is a specific third-party page.** Never the brand's own site, a competitor's, or a store: retailer, marketplace (Shopee, Amazon), booking or affiliate site, including its blog. Forums, independent blogs/reviews and editorial are the point. Clicking a source lands on the page that mentions the brand, never a dead link or a homepage.
+1. **A source is a specific third-party page.** Never the brand's own site, a competitor's, or a store: retailer, marketplace (Shopee, Amazon), booking or affiliate site, including its blog. Forums, independent blogs/reviews and editorial are the point. Another business's article in the category (a firm's or vendor's guide or "best of" list) is shown tagged `origin: "vendor"`, never as independent; its product, service or landing pages are not sources. Clicking a source lands on the page that mentions the brand, never a dead link or a homepage (`source_quality.is_homepage`).
 2. **Measured vs inferred is never blurred.** A value shown to a client as fact (a badge, a score, a count) must be computed from evidence. If it is a model's guess, it is labelled as such or not shown. Never let a model fill a "visibility"/"mentioned"/"cited" style field.
 3. **One definition per number.** A figure that appears in two places comes from one function. "Does this text mention the brand" is `scoring.count_brand_mentions` / `find_mentions`; don't re-derive it with substring checks.
 4. **Never leak the brand into the answer call** (`pipeline._answer_system` deliberately omits brand, summary and industry) — it measures whether the brand comes up organically.
@@ -93,7 +94,7 @@ then read a sample: the metrics can't tell you a line sounds human.
 Choose per call by: *does its output directly shape what a client sees?* and *how often does it run?*
 
 - **quality** (`anthropic_quality_model`): generative steps whose content is the result and that run once or a few times per job — persona gen/expand, prompt gen/seed-adapt, categories, insights.
-- **standard** (`anthropic_model`): the source search (one call per persona; the fast tier rewrote questions into keywords and dropped the market in 8 of 48 live searches, standard kept it in 48 of 48, for a few cents a run), the per-prompt "answer" call (the signal being measured; fans out per prompt, so cost-sensitive), plus judgement calls that decide what the report shows — detect research, source `origin` classification.
+- **standard** (`anthropic_model`): the source search (one call per persona; the fast tier rewrote questions into keywords and dropped the market in 8 of 48 live searches, standard kept it in 48 of 48, for a few cents a run), the per-prompt "answer" call (the signal being measured; fans out per prompt, so cost-sensitive), plus judgement calls that decide what the report shows — detect research, source `origin` classification, the vendor-article check.
 - **fast** (`anthropic_fast_model`): mechanical work only — sentiment classification, domain relevance filter, detect formatting, and `web_fetch` of blocked source pages (it only fetches a given URL; counting stays deterministic).
 
 A new LLM call must be assigned a tier deliberately and say why in a comment.

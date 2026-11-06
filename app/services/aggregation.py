@@ -209,10 +209,10 @@ def measured_sources(sources: Sources) -> list[SourceIntel]:
 def _source_authority_note(named: int, readable: int, unverified: int) -> str:
     if not readable:
         if unverified:
-            return (f"None of the {unverified} independent sources could be read, so this is left out of the "
+            return (f"None of the {unverified} sources could be read, so this is left out of the "
                     "visibility score")
-        return "No independent sources found, so this is left out of the visibility score"
-    note = f"Named in {named} of {readable} independent sources we could read"
+        return "No sources found, so this is left out of the visibility score"
+    note = f"Named in {named} of {readable} sources we could read"
     if unverified:
         note += f" ({unverified} more block automated reading)"
     return note

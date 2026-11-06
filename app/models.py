@@ -469,6 +469,10 @@ class SourceIntel(CamelModel):
     competitor_mentions: dict[str, int] = Field(default_factory=dict)
     # Only when not visible: "competitor-owned" (rivals named here) or "open".
     gap: Literal["competitor-owned", "open"] | None = None
+    # Model inference, labelled as such in the UI: "vendor" = written by a
+    # business in or near the category (its lists may favour itself), not the
+    # brand or a listed competitor; stores are never sources at all.
+    origin: Literal["independent", "vendor"] = "independent"
 
 
 class SourceQuery(CamelModel):

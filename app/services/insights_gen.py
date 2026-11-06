@@ -183,12 +183,13 @@ def _user_prompt(
     source_rows = [
         {"domain": i.domain, "type": i.category, "reach": i.influence, "surfacedBy": i.personas,
          "brandVisibility": i.visibility, "brandMentions": i.mentions,
-         "competitorMentions": i.competitor_mentions, "gap": i.gap}
+         "competitorMentions": i.competitor_mentions, "gap": i.gap, "origin": i.origin}
         for i in sources.source_intel[:12]
     ]
     lines.append(
-        "\nIndependent sources that buyers' own questions surfaced (searched without the brand; brand and "
-        "competitor mentions measured on each page; \"Couldn't verify\" means the page couldn't be read, so "
+        "\nThird-party sources that buyers' own questions surfaced (searched without the brand; brand and "
+        "competitor mentions measured on each page; origin \"vendor\" means another business in the category "
+        "wrote it, so call it a vendor's article, never independent opinion; \"Couldn't verify\" means the page couldn't be read, so "
         f"brand presence there is unknown, not absent):\n{json.dumps(source_rows, indent=2) if source_rows else 'none found'}"
     )
     lines.append(
