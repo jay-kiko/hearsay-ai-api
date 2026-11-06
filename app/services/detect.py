@@ -266,12 +266,23 @@ def _normalize_competitors(value: object) -> list[Competitor]:
     return competitors
 
 
-async def _research_brand(*, api_key: str, model: str, query: str) -> str:
+def _with_market(query: str, market: str | None) -> str:
+    """The query, plus who the buyers are when a market is chosen: competitors
+    are the ones buyers there choose between. Confirmed live: picked globally,
+    Xero's list (QuickBooks, Zoho, Sage) missed what answers in Poland and Peru
+    actually named (wFirma, inFakt, Siigo, Nubefact)."""
+    if not market:
+        return query
+    return (f"{query}\n\nMarket: {market}. Name the competitors buyers in this market actually choose between, "
+            "local ones included, not only the global names.")
+
+
+async def _research_brand(*, api_key: str, model: str, query: str, market: str | None = None) -> str:
     response = await call_web_search(
         api_key=api_key,
         model=model,
         system=_RESEARCH_SYSTEM,
-        user=query,
+        user=_with_market(query, market),
         # Several search rounds plus extended thinking easily exceed a small
         # cap, truncating mid-synthesis before the summary is even written
         # (same failure mode fixed in grounding.py).
@@ -282,13 +293,13 @@ async def _research_brand(*, api_key: str, model: str, query: str) -> str:
     ).strip()
 
 
-async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
+async def detect_brand(*, api_key: str, query: str, market: str | None = None) -> DetectResponse:
     settings = get_settings()
 
     # Stage 1: ground in real search results, on the quality model — this is
     # where disambiguation actually happens (reading real snippets instead
     # of guessing from memory), so it's not worth cheapening.
-    research = await _research_brand(api_key=api_key, model=settings.anthropic_model, query=query)
+    research = await _research_brand(api_key=api_key, model=settings.anthropic_model, query=query, market=market)
 
     # Stage 2: format already-grounded findings into the response shape —
     # genuinely mechanical now that the hard part is done, so the fast model
@@ -298,7 +309,7 @@ async def detect_brand(*, api_key: str, query: str) -> DetectResponse:
         model=settings.anthropic_fast_model,
         system=_EXTRACT_SYSTEM,
         user=(
-            f"Original query: {query}\n\n"
+            f"Original query: {_with_market(query, market)}\n\n"
             f"Research findings:\n{research or '(search returned nothing useful — use best judgment from the query alone)'}"
         ),
         tool_name=_TOOL_NAME,

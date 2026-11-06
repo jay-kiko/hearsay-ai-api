@@ -11,6 +11,7 @@ from __future__ import annotations
 from collections import Counter
 
 from app.models import (
+    AnswerSample,
     Competitor,
     Overview,
     PersonaExchange,
@@ -22,7 +23,7 @@ from app.models import (
     Sources,
 )
 from app.services.source_quality import UNVERIFIED
-from app.services.scoring import SENTIMENT_MULTIPLIER, rank_score
+from app.services.scoring import SENTIMENT_MULTIPLIER, name_matches, rank_score
 
 
 
@@ -30,22 +31,31 @@ def _all_exchanges(results: dict[str, PersonaResult]) -> list[PersonaExchange]:
     return [ex for r in results.values() for ex in r.exchanges]
 
 
-def _exchange_mentions(exchange: PersonaExchange, canonical_name: str) -> bool:
-    # ResponsePart.name is set once, in scoring.py, from whichever alias
-    # matched. Re-matching text here against a local alias list misses aliases
-    # recognised per answer (confirmed live: 100% mention rate beside 0% Share
-    # of Voice).
-    return any(part.name == canonical_name for part in exchange.parts)
+def all_answers(results: dict[str, PersonaResult]) -> list[AnswerSample]:
+    """Every answer to every prompt: what every mention-based number counts
+    (invariant 8), so they agree with each other. An exchange from before
+    prompts were asked several times stands for its one answer."""
+    return [
+        sample
+        for ex in _all_exchanges(results)
+        for sample in (ex.samples or [AnswerSample(
+            mentioned=ex.mentioned, sentiment=ex.sentiment, rank=ex.rank, vis=ex.vis,
+            names=list(dict.fromkeys(p.name for p in ex.parts if p.name)),
+        )])
+    ]
 
 
-def _prompt_mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]:
-    """Mentioned/total across every prompt exchange. Not one OR'd boolean per
-    persona: that lets a persona with more prompts count as "mentioned" just
-    from having more tries. Every mention-based number in the API counts at
-    this prompt level so they agree with each other (invariant 8)."""
-    all_exchanges = _all_exchanges(results)
-    mentioned = sum(1 for ex in all_exchanges if ex.mentioned)
-    return mentioned, len(all_exchanges)
+def mention_counts(results: dict[str, PersonaResult]) -> tuple[int, int]:
+    """Mentioned/total across every answer to every prompt. Not one OR'd
+    boolean per persona: that lets a persona with more prompts count as
+    "mentioned" just from having more tries."""
+    answers = all_answers(results)
+    return sum(1 for a in answers if a.mentioned), len(answers)
+
+
+def answers_per_prompt(results: dict[str, PersonaResult]) -> int:
+    """How many answers each prompt got (the most any prompt got), for notes."""
+    return max((len(ex.samples) for ex in _all_exchanges(results)), default=1) or 1
 
 
 def _failed_prompts(results: dict[str, PersonaResult]) -> int:
@@ -53,14 +63,13 @@ def _failed_prompts(results: dict[str, PersonaResult]) -> int:
 
 
 def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> Overview:
-    mentioned, total = _prompt_mention_counts(results)
+    mentioned, total = mention_counts(results)
     mention_rate = (mentioned / total) if total else 0.0
 
     # Same basis as the breakdown's Sentiment: only prompts that mentioned the
     # brand. Persona-level sentiment also counts non-mentions (forced Neutral),
     # which put "Neutral" next to "4 positive · 0 neutral · 0 negative".
-    mentioned_exchanges = [ex for r in results.values() for ex in (r.exchanges or []) if ex.mentioned]
-    sentiment_counts = Counter(ex.sentiment for ex in mentioned_exchanges)
+    sentiment_counts = Counter(a.sentiment for a in all_answers(results) if a.mentioned)
     avg_sentiment = sentiment_counts.most_common(1)[0][0] if sentiment_counts else Sentiment.neutral
 
     return Overview(
@@ -74,24 +83,45 @@ def build_overview(results: dict[str, PersonaResult], visibility_score: int) -> 
     )
 
 
-def build_products(results: dict[str, PersonaResult], brand: str, competitors: list[Competitor]) -> list[Product]:
-    # (display name, is_brand) — no aliases needed here; _exchange_mentions
-    # reads the canonical name scoring.py already attached to each part.
-    entries: list[tuple[str, bool]] = [(brand, True)] + [(c.name, False) for c in competitors]
+def _canonical_others(names: list[str]) -> dict[str, str]:
+    """Maps each unlisted brand name to one spelling: case variants and a
+    longer form of a shorter name ("Brooks Running" -> "Brooks") count as one
+    brand. The most-used spelling wins."""
+    by_count = Counter(names)
+    ordered = sorted(by_count, key=lambda n: (-by_count[n], len(n)))
+    canonical: dict[str, str] = {}
+    for name in ordered:
+        canonical[name] = next(
+            (c for c in dict.fromkeys(canonical.values())
+             if c.lower() == name.lower() or name_matches(c, name, caseless=True)),
+            name,
+        )
+    return canonical
 
-    # Prompt-level, like Overview, so the two counts agree.
-    all_exchanges = _all_exchanges(results)
-    counts = [
-        (name, sum(1 for ex in all_exchanges if _exchange_mentions(ex, name)), is_brand)
-        for name, is_brand in entries
-    ]
+
+def build_products(results: dict[str, PersonaResult], brand: str, competitors: list[Competitor]) -> list[Product]:
+    """Answers naming each brand: the brand, listed competitors, and every
+    other brand the answers named (`listed=False`). Counting only the listed
+    ones measured share against an incomplete field (confirmed live: unlisted
+    Saucony and Brooks came up more often than listed Hoka)."""
+    answers = all_answers(results)
+    listed = [(brand, True)] + [(c.name, False) for c in competitors]
+    listed_names = {name for name, _ in listed}
+    others = _canonical_others([n for a in answers for n in a.names if n not in listed_names])
+
+    counts: Counter[str] = Counter()
+    for a in answers:
+        counts.update({others.get(n, n) for n in a.names})
+    entries = [(name, is_brand, True) for name, is_brand in listed]
+    entries += [(name, False, False) for name in dict.fromkeys(others.values())]
+
     # Each product's slice of *all* product mentions, so shares sum to 100%
     # (dividing by persona count summed to 126% when answers named several).
-    total_mentions = sum(count for _, count, _ in counts) or 1
-
+    total_mentions = sum(counts[name] for name, _, _ in entries) or 1
     products = [
-        Product(name=name, count=count, share=round(count / total_mentions, 3), is_brand=is_brand)
-        for name, count, is_brand in counts
+        Product(name=name, count=counts[name], share=round(counts[name] / total_mentions, 3),
+                is_brand=is_brand, listed=is_listed)
+        for name, is_brand, is_listed in entries
     ]
     products.sort(key=lambda p: (-p.count, p.name))
     return products
@@ -124,10 +154,11 @@ def build_score_breakdown(
     """Six deterministic sub-scores behind the single visibilityScore — no
     extra AI call, everything here is math over data the pipeline/grounding
     already produced."""
-    all_exchanges = _all_exchanges(results)
-    mentioned_exchanges = [ex for ex in all_exchanges if ex.mentioned]
+    answers = all_answers(results)
+    mentioned_exchanges = [a for a in answers if a.mentioned]
     mentioned_prompts = len(mentioned_exchanges)
-    total_prompts = len(all_exchanges)
+    total_prompts = len(answers)
+    per_prompt = answers_per_prompt(results)
 
     presence = round(mentioned_prompts / total_prompts * 100) if total_prompts else 0
 
@@ -168,7 +199,8 @@ def build_score_breakdown(
             score=presence,
             # Failed prompts are out of the denominator, so say so: "4 of 10"
             # must not read as the whole run when 12 were asked.
-            note=f"Mentioned in {mentioned_prompts} of {total_prompts} persona queries"
+            note=f"Mentioned in {mentioned_prompts} of {total_prompts} "
+            + (f"answers (each query asked {per_prompt} times)" if per_prompt > 1 else "persona queries")
             + (f" ({failed} more couldn't be answered this run)" if (failed := _failed_prompts(results)) else ""),
         ),
         ScoreComponent(
@@ -178,7 +210,7 @@ def build_score_breakdown(
             name="Recommendation Strength",
             score=rec_strength,
             note=(
-                f"Average visibility score of {rec_strength} across {mentioned_prompts} mentioning queries"
+                f"Average visibility score of {rec_strength} across {mentioned_prompts} mentioning answers"
                 if mentioned_prompts
                 else "Never mentioned, so no recommendation strength to measure"
             ),
@@ -186,7 +218,7 @@ def build_score_breakdown(
         ScoreComponent(
             name="Ranking",
             score=ranking_score,
-            note=f"Average position #{avg_rank} in listed options" if avg_rank else "Not ranked in any answer",
+            note=f"Average position #{avg_rank} among every brand named" if avg_rank else "Not ranked in any answer",
         ),
         ScoreComponent(
             name="Sentiment", score=sentiment_score, note=f"{pos} positive · {neu} neutral · {neg} negative"
@@ -231,13 +263,25 @@ _COMPOSITE_WEIGHTS = {
 }
 
 
+# Averaged over only the answers that name the brand, so they say how well it
+# does when it comes up, not how often. In the headline they count in
+# proportion to Presence: confirmed, one mention in 12 answers (ranked first,
+# positive) scored Ranking 100 and Sentiment 100 and took the headline from 0
+# to 39.
+_SCALED_BY_PRESENCE = ("Ranking", "Sentiment")
+
+
 def compute_composite_score(score_breakdown: list[ScoreComponent], *, has_sources: bool = True) -> int:
     """With no sources there is nothing to measure Source Authority on, so it is
     left out and the other weights re-normalised — scoring it 0 would cut the
     headline by up to 10 points over a search that came back empty."""
     weights = {k: w for k, w in _COMPOSITE_WEIGHTS.items() if has_sources or k != "Source Authority"}
     total = sum(weights.values())
-    weighted = sum(weights.get(c.name, 0.0) * c.score for c in score_breakdown)
+    presence = next((c.score for c in score_breakdown if c.name == "Presence"), 0) / 100
+    weighted = sum(
+        weights.get(c.name, 0.0) * c.score * (presence if c.name in _SCALED_BY_PRESENCE else 1.0)
+        for c in score_breakdown
+    )
     return round(weighted / total) if total else 0
 
 

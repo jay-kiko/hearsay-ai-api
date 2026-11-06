@@ -30,6 +30,7 @@ from app.models import (
     RadarCategory,
     Sources,
 )
+from app.services import aggregation
 from app.services.anthropic_client import call_structured
 from app.services.common import clean_str_list
 
@@ -138,24 +139,28 @@ def _user_prompt(
     products: list[Product],
     sources: Sources,
 ) -> str:
-    # Prompt-level, like every number the UI shows ("mentioned in 4 of 12
-    # queries") — a persona-level boolean let the text say "2 of 4 personas".
+    # Answer-level, from the same function as every number the UI shows
+    # ("mentioned in 14 of 36 answers") — a persona-level boolean let the text
+    # say "2 of 4 personas".
     persona_summaries = []
     for persona in personas:
         result = results.get(persona.id)
         if result is None:
             continue
         exchanges = result.exchanges or []
+        mentioned, total = aggregation.mention_counts({persona.id: result})
         persona_summaries.append({
             "title": persona.title,
-            "promptsMentioningBrand": f"{sum(1 for ex in exchanges if ex.mentioned)} of {len(exchanges)}",
+            "answersMentioningBrand": f"{mentioned} of {total}",
             "exchanges": [
-                {"prompt": ex.prompt, "mentioned": ex.mentioned, "sentiment": ex.sentiment.value,
-                 "rank": ex.rank, "quote": ex.quote}
+                {"prompt": ex.prompt,
+                 "answersMentioningBrand": f"{sum(1 for a in ex.samples if a.mentioned)} of {len(ex.samples)}"
+                 if ex.samples else ("1 of 1" if ex.mentioned else "0 of 1"),
+                 "shownAnswer": {"sentiment": ex.sentiment.value, "rank": ex.rank, "quote": ex.quote}}
                 for ex in exchanges
             ],
         })
-    all_exchanges = [ex for r in results.values() for ex in (r.exchanges or [])]
+    mentioned_all, total_all = aggregation.mention_counts(results)
 
     lines = [
         f"Brand: {brand}",
@@ -169,12 +174,12 @@ def _user_prompt(
     if market:
         lines.append(f"Market: {market}")
     lines.append(
-        f"\nThe brand was mentioned in {sum(1 for ex in all_exchanges if ex.mentioned)} of "
-        f"{len(all_exchanges)} buyer queries. Use prompt-level counts like this, never persona counts."
+        f"\nThe brand was mentioned in {mentioned_all} of {total_all} answers (each buyer query was asked "
+        f"{aggregation.answers_per_prompt(results)} times). Use answer counts like this, never persona counts."
     )
     lines.append(f"\nPersona results:\n{json.dumps(persona_summaries, indent=2)}")
     lines.append(
-        f"\nShare of voice (product mention counts across all persona queries):\n"
+        f"\nShare of voice (answers naming each brand; listed=false means not one of the given competitors):\n"
         f"{json.dumps([p.model_dump(by_alias=True) for p in products], indent=2)}"
     )
     # Measured per source: who surfaced it, whether the brand and each rival

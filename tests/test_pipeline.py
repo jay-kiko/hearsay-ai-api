@@ -108,8 +108,8 @@ def test_persona_sentiment_ignores_prompts_that_never_named_the_brand():
 
     def analysis(mentioned, sentiment):
         return _PromptAnalysis(prompt="q", mentioned=mentioned, sentiment=sentiment, rank=1 if mentioned else None,
-                               vis=50 if mentioned else 0, quote="", parts=[])
+                               vis=50 if mentioned else 0, quote="", parts=[], names=[])
 
-    result = _aggregate([analysis(True, Sentiment.positive), analysis(False, Sentiment.neutral),
-                         analysis(False, Sentiment.neutral)])
+    result = _aggregate([[analysis(True, Sentiment.positive)], [analysis(False, Sentiment.neutral)],
+                         [analysis(False, Sentiment.neutral)]])
     assert result.sentiment == Sentiment.positive

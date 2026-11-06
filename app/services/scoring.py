@@ -319,6 +319,39 @@ def compute_visibility_score(mentioned: bool, rank: int | None, sentiment: Senti
     return max(0, min(100, round(score)))
 
 
+_MAX_OTHER_NAME = 120
+
+
+def other_mentions(text: str, candidates: object, known: list[Mention], known_names: list[str]) -> list[Mention]:
+    """Brands an answer names beyond the brand and listed competitors.
+
+    The list of candidates is a model's (it knows "Saucony" is a brand); each
+    one counts only where the matcher finds it in the text itself, outside
+    every known mention, and never when it is a variant of a known name
+    ("QuickBooks Online" for QuickBooks). Confirmed live: rank and Share of
+    Voice ignored unlisted brands, so "Saucony, Brooks, Nike" ranked Nike #1."""
+    if not isinstance(candidates, list):
+        return []
+    out: list[Mention] = []
+    for raw in candidates:
+        if not isinstance(raw, str):
+            continue
+        name = " ".join(raw.split())
+        if not 2 <= len(name) <= _MAX_OTHER_NAME or any(o.name.lower() == name.lower() for o in out):
+            continue
+        if any(k.strip() and (name_matches(name, k, caseless=True) or name_matches(k, name, caseless=True))
+               for k in known_names):
+            continue
+        hits = [
+            (pos, occ) for pos, occ in name_matches(name, text)
+            if not any(m.start < pos + len(occ) and pos < m.end for m in known)
+        ]
+        if hits:
+            pos, occ = hits[0]
+            out.append(Mention(pos, pos + len(occ), "other", name))
+    return out
+
+
 def analyze_answer(
     *,
     text: str,
@@ -327,10 +360,21 @@ def analyze_answer(
     sentiment: Sentiment,
     brand_match_names: list[str] | None = None,
     context: BrandContext | None = None,
-) -> tuple[bool, int | None, int, list[ResponsePart]]:
+    other_names: object = None,
+) -> tuple[bool, int | None, int, list[ResponsePart], list[str]]:
+    """(mentioned, rank, vis, parts, names). Rank counts every brand named,
+    unlisted ones included; `parts` highlight only the brand and listed
+    competitors; `names` is every brand named, in order."""
     mentions = find_mentions(text, brand, competitors, brand_match_names, context=context)
+    known_names = [brand, *(brand_match_names or []), *(context.names if context else ()),
+                   *(n for c in competitors for n in (c.name, *c.match_names))]
+    everyone = sorted(
+        [*mentions, *other_mentions(text, other_names, mentions, known_names)],
+        key=lambda m: (m.start, -(m.end - m.start)),
+    )
     mentioned = any(m.kind == "brand" for m in mentions)
-    rank = compute_rank(mentions, brand)
+    rank = compute_rank(everyone, brand)
     vis = compute_visibility_score(mentioned, rank, sentiment)
     parts = build_parts(text, mentions)
-    return mentioned, rank, vis, parts
+    names = list(dict.fromkeys(m.name for m in everyone))
+    return mentioned, rank, vis, parts, names

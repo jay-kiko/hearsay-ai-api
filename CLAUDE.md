@@ -23,9 +23,9 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 
 ## Pipeline (one analysis job — `app/runner.py`)
 
-1. **Detect** (`detect.py`) — grounded web search → brand, aliases, industry, competitors, buyer context.
+1. **Detect** (`detect.py`) — grounded web search → brand, aliases, industry, competitors (for the chosen market: global lists missed local leaders), buyer context.
 2. **Categories / personas / prompts** (`category_gen.py`, `persona_gen.py`, `prompt_gen.py`) — generative; the *wording is the product*.
-3. **Per-persona** (`pipeline.py`) — for each prompt: one "answer" call (no brand, no web search) → one sentiment call → deterministic mention/rank/score (`scoring.py`).
+3. **Per-persona** (`pipeline.py`) — each prompt is answered `answers_per_prompt` times (default 3; answers vary, one is a sample): per answer one "answer" call (no brand, no web search) → one sentiment call (which also lists every brand named) → deterministic mention/rank/score (`scoring.py`).
 4. **Grounding** (`grounding.py` + `source_quality.py`) — one web-search call per persona, run concurrently, each searching one brand-free buyer question (rotating through each persona's prompts by position, so multi-category runs search more than the first category) ; a market the question doesn't name is added as "in <country>" (`grounding.search_query`) → third-party sources, then measures brand + competitors on each page. The Singapore inventory (`inventory.py`) only labels sources as buyable in the sitelist. Separate from step 3 and run concurrently with it (it needs only the prompts): these are pages buyers' questions surface, not pages that shaped a specific answer.
 5. **Aggregation** (`aggregation.py`) — deterministic: Overview, Share of Voice, score breakdown, composite.
 6. **Insights** (`insights_gen.py`) — one generative call over everything above.
@@ -34,9 +34,9 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 
 | Shown to the client | Computed from | Where |
 |---|---|---|
-| Presence / mention rate | prompt-level `exchange.mentioned` (regex on the answer, alias-aware) | `aggregation._prompt_mention_counts` |
-| Share of Voice | chart: share of all product mentions; breakdown score: the brand's mentions relative to the most-mentioned brand (leader = 100), note shows the real share and rank | `aggregation.build_products`, `aggregation.share_of_voice` |
-| Ranking, Sentiment | first-mention position; sentiment call | `scoring.py`, `pipeline.py` |
+| Presence / mention rate | every answer to every prompt (`exchange.samples`; regex on the answer, alias-aware) | `aggregation.mention_counts` / `all_answers` |
+| Share of Voice | answers naming each brand, unlisted brands included (`listed=False`: model-listed, kept only where the text names them). Chart: share of all product mentions; breakdown score: the brand's mentions relative to the most-mentioned brand (leader = 100), note shows the real share and rank | `aggregation.build_products`, `aggregation.share_of_voice` |
+| Ranking, Sentiment | first-mention position among every brand named; sentiment call. Averaged over answers that name the brand; in the headline they count in proportion to Presence | `scoring.analyze_answer` / `other_mentions`, `aggregation.compute_composite_score` |
 | Source "Visible" badge, `mentions`, `evidence` | brand aliases on the **linked page only**: its text where readable, plus title / quoted passages / URL slug | `grounding.py` via `source_quality` + `scoring.count_brand_mentions` |
 | Which names count as the brand (everywhere) | detect's `brandMatchNames` (brand, short forms, product lines, named products such as ships/models) always; `brandContextNames` ("Disney" for Disney Cruise Line) only in a sentence containing one of `categoryTerms`; per answer, a model-suggested product name only if it shares a word with a known name or the sentence also names the brand. A one-word name that is also an English word ("Grab", "On") counts only capitalised, and a function word ("On") not opening a sentence; leak screens and URL slugs match caseless (`caseless=True`) | `scoring.find_mentions` / `_counts` / `BrandContext`, `pipeline.verified_alias` |
 | Which pages are read | our own fetcher first (free, live); a page it can't read (bot-blocked, timed out, script-rendered; never dead or internal) goes to Anthropic's `web_fetch`, capped per run. A page neither can read and whose title/snippets don't name the brand is not shown as a source (no measured claim), but stays in the sitelist | `grounding._read_blocked_pages`, `_measure_sources` |
@@ -58,7 +58,7 @@ engineers enjoy reviewing: modular, well-typed, defensively handled, easy to tes
 5. **Generated prompts never name the brand or reveal a test**, and must still make a helpful answer name real products (otherwise the measurement is empty), while reading like a real person typed them: varied shape, one concern each, no stock AI phrasing.
 6. **Fail open on enrichment, never on trust.** A failed optional call degrades (empty list, fallback) instead of failing a job whose persona results succeeded — but a source we could not classify as independent is not shown at all, and a missing measurement (no sources) is left out of the headline score, never scored as 0.
 7. **Sources are found like a buyer, never by brand lookup.** The source search and its relevance filter never see the brand or competitor names; a search that names one is dropped. Thin results get a `coverageNote`, never a silent fallback.
-8. **Counts agree.** Overview, Presence and the breakdown all use prompt-level counts (see commits a2c37a0, 3c57800).
+8. **Counts agree.** Overview, Presence, the breakdown and insights all count every answer through `aggregation.all_answers` (see commits a2c37a0, 3c57800).
 
 ## Writing style for generated text
 
@@ -94,7 +94,7 @@ then read a sample: the metrics can't tell you a line sounds human.
 Choose per call by: *does its output directly shape what a client sees?* and *how often does it run?*
 
 - **quality** (`anthropic_quality_model`): generative steps whose content is the result and that run once or a few times per job — persona gen/expand, prompt gen/seed-adapt, categories, insights.
-- **standard** (`anthropic_model`): the source search (one call per persona; the fast tier rewrote questions into keywords and dropped the market in 8 of 48 live searches, standard kept it in 48 of 48, for a few cents a run), the per-prompt "answer" call (the signal being measured; fans out per prompt, so cost-sensitive), plus judgement calls that decide what the report shows — detect research, source `origin` classification, the vendor-article check.
+- **standard** (`anthropic_model`): the source search (one call per persona; the fast tier rewrote questions into keywords and dropped the market in 8 of 48 live searches, standard kept it in 48 of 48, for a few cents a run), the per-prompt "answer" call (the signal being measured; fans out per prompt and per answer, 3 by default: about $0.10 more a run than one answer each, and it cut run-to-run mention-rate spread from 14 to 8 points live), plus judgement calls that decide what the report shows — detect research, source `origin` classification, the vendor-article check.
 - **fast** (`anthropic_fast_model`): mechanical work only — sentiment classification, domain relevance filter, detect formatting, and `web_fetch` of blocked source pages (it only fetches a given URL; counting stays deterministic).
 
 A new LLM call must be assigned a tier deliberately and say why in a comment.

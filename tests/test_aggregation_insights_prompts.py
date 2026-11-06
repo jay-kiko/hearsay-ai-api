@@ -17,8 +17,9 @@ def _ex(mentioned, sentiment):
 def test_composite_leaves_source_authority_out_when_there_are_no_sources():
     breakdown = [ScoreComponent(name=n, score=s, note="") for n, s in
                  [("Presence", 80), ("Share of Voice", 80), ("Ranking", 80), ("Sentiment", 80), ("Source Authority", 0)]]
-    assert aggregation.compute_composite_score(breakdown, has_sources=False) == 80
-    assert aggregation.compute_composite_score(breakdown) == 72  # a real 0 still counts
+    # Ranking and Sentiment count at Presence's strength (80%): 24+24+12.8+6.4 over 0.9
+    assert aggregation.compute_composite_score(breakdown, has_sources=False) == 75
+    assert aggregation.compute_composite_score(breakdown) == 67  # a real 0 still counts
 
 
 def test_overview_sentiment_uses_only_prompts_that_mentioned_the_brand():
@@ -51,7 +52,7 @@ def test_insights_prompt_uses_prompt_level_counts_and_measured_sources():
         personas=[persona], results={"p1": result}, products=[],
         sources=Sources(citations=[], publishers=[], communities=[], source_intel=[intel]),
     )
-    assert "mentioned in 1 of 2 buyer queries" in text
+    assert "mentioned in 1 of 2 answers" in text
     assert '"gap": "competitor-owned"' in text and '"Rival": 3' in text
 
 
@@ -273,3 +274,59 @@ def test_share_of_voice_scores_against_the_leader_not_raw_share():
     assert share_of_voice(products(0, 4, 1)) == (0, "Not named in any answer; 2 other brands were")
     # adding unnamed rivals changes nothing
     assert share_of_voice(products(10, 9, 0, 0))[0] == 100
+
+
+
+# ── one lucky answer, unlisted brands, several answers per prompt ────
+
+from app.models import AnswerSample, Competitor, PersonaExchange, Sources
+
+
+def _prompt(*samples):
+    first = samples[0]
+    return PersonaExchange(prompt="q", mentioned=first.mentioned, sentiment=first.sentiment, rank=first.rank,
+                           vis=first.vis, quote="", parts=[], samples=list(samples))
+
+
+def _answer(names, brand_rank=None, sentiment=Sentiment.positive):
+    mentioned = brand_rank is not None
+    return AnswerSample(mentioned=mentioned, sentiment=sentiment if mentioned else Sentiment.neutral,
+                        rank=brand_rank, vis=100 if brand_rank == 1 else (80 if mentioned else 0), names=names)
+
+
+def _results(exchanges):
+    return {"p": PersonaResult(prompt="q", mentioned=True, sentiment=Sentiment.neutral, vis=0, rank=None, quote="",
+                               parts=[], opportunity="High", exchanges=exchanges)}
+
+
+def _headline(exchanges):
+    results = _results(exchanges)
+    products = aggregation.build_products(results, "Nike", [Competitor(name="Hoka", match_names=["Hoka"])])
+    breakdown = aggregation.build_score_breakdown(results, products, "Nike",
+                                                  Sources(citations=[], publishers=[], communities=[]))
+    return aggregation.compute_composite_score(breakdown, has_sources=False)
+
+
+def test_one_lucky_mention_no_longer_jumps_the_headline():
+    # Confirmed before the fix: 1 mention in 12 answers (first, positive) scored 39.
+    never = [_prompt(_answer(["Hoka"])) for _ in range(12)]
+    once = [_prompt(_answer(["Nike", "Hoka"], 1))] + never[:11]
+    assert _headline(never) == 0
+    assert _headline(once) <= 10
+
+
+def test_every_answer_to_a_prompt_counts():
+    results = _results([_prompt(_answer(["Nike"], 1), _answer(["Hoka"]), _answer(["Nike"], 1))])
+    assert aggregation.mention_counts(results) == (2, 3)
+    breakdown = aggregation.build_score_breakdown(results, aggregation.build_products(results, "Nike", []), "Nike",
+                                                  Sources(citations=[], publishers=[], communities=[]))
+    assert "2 of 3 answers (each query asked 3 times)" in breakdown[0].note
+
+
+def test_unlisted_brands_count_in_share_of_voice_as_one_brand_each():
+    results = _results([_prompt(_answer(["Saucony", "Brooks", "Nike"], 3)), _prompt(_answer(["Brooks Running", "Hoka"])),
+                        _prompt(_answer(["saucony"]))])
+    products = {p.name: p for p in aggregation.build_products(results, "Nike", [Competitor(name="Hoka", match_names=["Hoka"])])}
+    assert products["Saucony"].count == 2 and products["Brooks"].count == 2  # spelling variants merged
+    assert not products["Saucony"].listed and products["Hoka"].listed and products["Nike"].is_brand
+    assert abs(sum(p.share for p in products.values()) - 1) < 0.01

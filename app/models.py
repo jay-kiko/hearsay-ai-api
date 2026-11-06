@@ -111,6 +111,9 @@ class AccessStatusResponse(CamelModel):
 class DetectRequest(CamelModel):
     query: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
     access_code: AccessCode
+    # Competitors are the ones buyers in this market choose between: global
+    # lists missed the local leaders (wFirma and inFakt in Poland).
+    market: OptionalName = None
 
 
 class DetectResponse(CamelModel):
@@ -323,7 +326,25 @@ class ResponsePart(CamelModel):
     name: str | None = None
 
 
+class AnswerSample(CamelModel):
+    """One answer to a prompt. Answers to the same prompt vary (confirmed
+    live: re-asked 5 times, whether Nike came up changed in 5 of 6 prompts),
+    so each prompt is asked several times and every count uses all of them."""
+
+    mentioned: bool
+    sentiment: Sentiment
+    rank: int | None
+    vis: int
+    # Canonical names of every brand the answer names, in order: the brand,
+    # listed competitors, and unlisted brands found in the text itself.
+    names: list[str] = Field(default_factory=list)
+
+
 class PersonaExchange(CamelModel):
+    """One prompt. The top-level fields and `parts` are the answer shown;
+    `samples` are every answer to it (the shown one first), which is what the
+    counts use."""
+
     prompt: str
     mentioned: bool
     sentiment: Sentiment
@@ -331,6 +352,7 @@ class PersonaExchange(CamelModel):
     vis: int
     quote: str
     parts: list[ResponsePart]
+    samples: list[AnswerSample] = Field(default_factory=list)
 
 
 PersonaOpportunity = Literal["Defend", "Grow", "High", "Critical Gap"]
@@ -384,6 +406,9 @@ class Product(CamelModel):
     count: int
     share: float
     is_brand: bool = False
+    # False for a brand the answers named that isn't the brand or a listed
+    # competitor (found in the answer text, not guessed).
+    listed: bool = True
 
 
 class ScoreComponent(CamelModel):

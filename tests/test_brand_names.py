@@ -134,3 +134,31 @@ def test_buyer_context_loses_brand_parent_and_rival_names():
     # "on" in passing is not On Running (the function-word rule applies here too).
     assert without_names("Runners choosing shoes based on fit", "Nike", [ON], ["Nike"]) == (
         "Runners choosing shoes based on fit")
+
+
+
+# ── brands outside the competitor list ───────────────────────────────
+
+from app.models import Sentiment as _Sentiment
+from app.services.scoring import analyze_answer as _analyze
+
+
+def test_rank_counts_unlisted_brands_found_in_the_text():
+    # Confirmed live: "Saucony, Brooks, Nike" ranked Nike #1.
+    text = "Try the Saucony Endorphin or Brooks Ghost; the Nike Pegasus is a solid third pick, ahead of Hoka."
+    hoka = _Competitor(name="Hoka", match_names=["Hoka"])
+    mentioned, rank, _, parts, names = _analyze(
+        text=text, brand="Nike", competitors=[hoka], sentiment=_Sentiment.positive, brand_match_names=["Nike", "Pegasus"],
+        other_names=["Saucony", "Brooks", "Nike", "Hoka", "Runners Point", "Puma"],
+    )
+    assert mentioned and rank == 3
+    assert names == ["Saucony", "Brooks", "Nike", "Hoka"]  # Runners Point and Puma aren't in the text
+    assert {p.name for p in parts if p.name} == {"Nike", "Hoka"}  # only known names are highlighted
+
+
+def test_an_unlisted_name_that_is_a_known_name_variant_is_not_a_new_brand():
+    text = "QuickBooks Online is popular; Xero is simpler."
+    qb = _Competitor(name="QuickBooks", match_names=["QuickBooks"])
+    _, rank, _, _, names = _analyze(text=text, brand="Xero", competitors=[qb], sentiment=_Sentiment.neutral,
+                                     brand_match_names=["Xero"], other_names=["QuickBooks Online", "Xero"])
+    assert names == ["QuickBooks", "Xero"] and rank == 2

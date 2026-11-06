@@ -12,4 +12,4 @@ router = APIRouter()
 async def detect(body: DetectRequest, request: Request) -> DetectResponse:
     await charge_generation_call(body.access_code, request)
     with upstream_errors():
-        return await detect_brand(api_key=get_settings().anthropic_api_key, query=body.query)
+        return await detect_brand(api_key=get_settings().anthropic_api_key, query=body.query, market=body.market)

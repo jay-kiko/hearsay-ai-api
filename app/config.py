@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     code_failure_window_seconds: int = 600
 
     prompts_per_persona: int = 3
+    # Times each prompt is answered; every count uses all the answers. One
+    # answer flipped between mentioned and not on re-asking (5 of 6 prompts,
+    # live), so one is a sample, not a measurement. Each extra answer is one
+    # standard-tier answer call and one fast-tier sentiment call (~half a cent).
+    answers_per_prompt: int = 3
     persona_count: int = 4
     persona_concurrency: int = 4
     job_ttl_seconds: int = 1800

@@ -19,7 +19,7 @@ from collections import Counter
 from dataclasses import dataclass
 
 from app.config import get_settings
-from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
+from app.models import AnswerSample, Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.common import DEFAULT_BUYER_CONTEXT
 from app.services.scoring import BrandContext, analyze_answer, name_matches, sentence_around, starts_sentence
@@ -91,8 +91,18 @@ _SENTIMENT_INPUT_SCHEMA = {
                 "belonging to it but that isn't already in its known name list. Empty array if none."
             ),
         },
+        "brandsNamed": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": (
+                "Every brand whose product the answer puts forward as an option, in order of first "
+                "appearance, each copied verbatim as the answer writes it (the brand, e.g. 'Saucony', "
+                "not a model). Include the brand and competitors above too. Leave out stores, "
+                "retailers, marketplaces, banks and platforms where things are bought."
+            ),
+        },
     },
-    "required": ["sentiment", "quote", "mentionText", "competitorMentions"],
+    "required": ["sentiment", "quote", "mentionText", "competitorMentions", "brandsNamed"],
 }
 
 
@@ -248,6 +258,8 @@ def _apply_competitor_mentions(
 
 @dataclass
 class _PromptAnalysis:
+    """One answer to a prompt."""
+
     prompt: str
     mentioned: bool
     sentiment: Sentiment
@@ -255,6 +267,11 @@ class _PromptAnalysis:
     vis: int
     quote: str
     parts: list
+    names: list[str]
+
+    def sample(self) -> AnswerSample:
+        return AnswerSample(mentioned=self.mentioned, sentiment=self.sentiment, rank=self.rank, vis=self.vis,
+                            names=self.names)
 
 
 async def _analyze_one_prompt(
@@ -285,7 +302,7 @@ async def _analyze_one_prompt(
         tool_name=_SENTIMENT_TOOL_NAME,
         tool_description="Classify sentiment toward the brand and extract a supporting quote.",
         input_schema=_SENTIMENT_INPUT_SCHEMA,
-        max_tokens=512,
+        max_tokens=768,
     )
     # An off-enum value ("positive") would raise and fail the prompt; read it
     # as Neutral instead.
@@ -310,13 +327,14 @@ async def _analyze_one_prompt(
         competitors, sentiment_result.get("competitorMentions", []), answer_text, effective_match_names
     )
 
-    mentioned, rank, vis, parts = analyze_answer(
+    mentioned, rank, vis, parts, names = analyze_answer(
         text=answer_text,
         brand=brand,
         competitors=effective_competitors,
         sentiment=sentiment,
         brand_match_names=effective_match_names,
         context=context,
+        other_names=sentiment_result.get("brandsNamed"),
     )
     # `mentioned` is the deterministic regex ground truth (scoring.py); the
     # sentiment call's own quote can disagree with it — it was told to return
@@ -338,6 +356,7 @@ async def _analyze_one_prompt(
         vis=vis,
         quote=quote,
         parts=parts,
+        names=names,
     )
 
 
@@ -356,7 +375,23 @@ def _classify_opportunity(mentioned: bool, vis: int) -> str:
     return "High"
 
 
-def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
+def _exchange(answers: list[_PromptAnalysis]) -> PersonaExchange:
+    """One prompt: the first answer is the one shown, all of them are counted."""
+    shown = answers[0]
+    return PersonaExchange(
+        prompt=shown.prompt,
+        mentioned=shown.mentioned,
+        sentiment=shown.sentiment,
+        rank=shown.rank,
+        vis=shown.vis,
+        quote=shown.quote,
+        parts=shown.parts,
+        samples=[a.sample() for a in answers],
+    )
+
+
+def _aggregate(by_prompt: list[list[_PromptAnalysis]]) -> PersonaResult:
+    analyses = [a for answers in by_prompt for a in answers]
     mentioned = any(a.mentioned for a in analyses)
     ranked = [a for a in analyses if a.rank is not None]
     representative = min(ranked, key=lambda a: (a.rank, -a.vis)) if ranked else max(
@@ -365,7 +400,7 @@ def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
 
     avg_vis = round(sum(a.vis for a in analyses) / len(analyses))
     best_rank = min((a.rank for a in ranked), default=None)
-    # Only prompts that named the brand have a sentiment toward it; the rest
+    # Only answers that named the brand have a sentiment toward it; the rest
     # are forced Neutral and would outvote a real Positive/Negative.
     sentiment_counts = Counter(a.sentiment for a in analyses if a.mentioned)
     top_sentiment = sentiment_counts.most_common(1)[0][0] if sentiment_counts else Sentiment.neutral
@@ -379,18 +414,7 @@ def _aggregate(analyses: list[_PromptAnalysis]) -> PersonaResult:
         quote=representative.quote,
         parts=representative.parts,
         opportunity=_classify_opportunity(mentioned, avg_vis),
-        exchanges=[
-            PersonaExchange(
-                prompt=a.prompt,
-                mentioned=a.mentioned,
-                sentiment=a.sentiment,
-                rank=a.rank,
-                vis=a.vis,
-                quote=a.quote,
-                parts=a.parts,
-            )
-            for a in analyses
-        ],
+        exchanges=[_exchange(answers) for answers in by_prompt],
     )
 
 
@@ -408,6 +432,9 @@ async def run_persona(
 ) -> PersonaResult:
     settings = get_settings()
 
+    # Each prompt is asked several times: one answer is a sample of what a
+    # buyer might get, not the answer (see AnswerSample).
+    per_prompt = max(1, settings.answers_per_prompt)
     tasks = [
         _analyze_one_prompt(
             prompt=p,
@@ -422,20 +449,31 @@ async def run_persona(
             context=context,
         )
         for p in prompts
+        for _ in range(per_prompt)
     ]
-    # One failed prompt (after its own retries) used to fail the whole persona
-    # and throw away its successful answers, which the client had paid for.
-    # Keep what succeeded; fail only when nothing did.
+    # One failed answer (after its own retries) used to fail the whole persona
+    # and throw away its successful ones, which the client had paid for. Keep
+    # what succeeded; a prompt fails only when none of its answers came back.
     outcomes = await asyncio.gather(*tasks, return_exceptions=True)
-    analyses = [o for o in outcomes if isinstance(o, _PromptAnalysis)]
-    errors = [o for o in outcomes if isinstance(o, BaseException)]
-    for error in errors:
-        if not isinstance(error, Exception):
-            raise error  # cancellation and the like are not prompt failures
-    if not analyses:
+    by_prompt: list[list[_PromptAnalysis]] = []
+    errors: list[BaseException] = []
+    failed_prompts = 0
+    for i in range(len(prompts)):
+        chunk = outcomes[i * per_prompt:(i + 1) * per_prompt]
+        for outcome in chunk:
+            if isinstance(outcome, BaseException):
+                if not isinstance(outcome, Exception):
+                    raise outcome  # cancellation and the like are not answer failures
+                errors.append(outcome)
+        answers = [o for o in chunk if isinstance(o, _PromptAnalysis)]
+        if answers:
+            by_prompt.append(answers)
+        else:
+            failed_prompts += 1
+    if not by_prompt:
         raise errors[0]
     for error in errors:
-        logger.warning("persona %s: one prompt failed, keeping the rest: %r", persona.id, error)
-    result = _aggregate(analyses)
-    result.failed_prompts = len(errors)
+        logger.warning("persona %s: one answer failed, keeping the rest: %r", persona.id, error)
+    result = _aggregate(by_prompt)
+    result.failed_prompts = failed_prompts
     return result
