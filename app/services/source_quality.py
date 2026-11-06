@@ -368,11 +368,17 @@ def html_to_text(raw: str) -> str:
     return " ".join(html.unescape("".join(out)).split())
 
 
-async def check_pages(urls: list[str], *, timeout: float = 6.0, concurrency: int = 8) -> dict[str, PageCheck]:
+async def check_pages(
+    urls: list[str], *, timeout: float = 6.0, page_deadline: float = 20.0, concurrency: int = 8
+) -> dict[str, PageCheck]:
     """One GET per URL, reading at most ~200KB of HTML: judges whether the page
     is alive and returns its visible text so the brand can be counted in the
     page itself. Never raises: a failure to check is alive=None, except DNS and
-    connection errors, which are dead."""
+    connection errors, which are dead.
+
+    `timeout` bounds each network operation; `page_deadline` bounds a whole
+    page. Without it, a server sending a byte every few seconds never trips the
+    per-read timeout and held the job open indefinitely."""
     import httpx  # local: keeps the pure helpers above importable without it
 
     results: dict[str, PageCheck] = {}
@@ -397,21 +403,24 @@ async def check_pages(urls: list[str], *, timeout: float = 6.0, concurrency: int
             if not is_public_http_url(url):
                 results[url] = PageCheck(alive=False)
                 return
+            async def _fetch() -> PageCheck:
+                async with client.stream("GET", url) as response:
+                    alive = judge_response(url, response.status_code, str(response.url))
+                    text = ""
+                    if alive and "html" in response.headers.get("content-type", "").lower():
+                        raw = bytearray()
+                        async for chunk in response.aiter_bytes():
+                            raw.extend(chunk)
+                            if len(raw) >= _MAX_BODY_BYTES:
+                                break
+                        decoded = bytes(raw).decode(response.encoding or "utf-8", errors="replace")
+                        # Off the event loop: CPU work on a page we don't control.
+                        text = await asyncio.to_thread(html_to_text, decoded)
+                    return PageCheck(alive=alive, text=text)
+
             async with semaphore:
                 try:
-                    async with client.stream("GET", url) as response:
-                        alive = judge_response(url, response.status_code, str(response.url))
-                        text = ""
-                        if alive and "html" in response.headers.get("content-type", "").lower():
-                            raw = bytearray()
-                            async for chunk in response.aiter_bytes():
-                                raw.extend(chunk)
-                                if len(raw) >= _MAX_BODY_BYTES:
-                                    break
-                            decoded = bytes(raw).decode(response.encoding or "utf-8", errors="replace")
-                            # Off the event loop: CPU work on a page we don't control.
-                            text = await asyncio.to_thread(html_to_text, decoded)
-                        results[url] = PageCheck(alive=alive, text=text)
+                    results[url] = await asyncio.wait_for(_fetch(), timeout=page_deadline)
                 except _BlockedAddress:
                     # The page (or a redirect) points at an internal address:
                     # never a link we show.

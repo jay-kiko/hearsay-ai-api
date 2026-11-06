@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     # export for Singapore runs. Off until the actions feature that uses it is
     # built, so every market's report behaves the same.
     sitelist_inventory: bool = False
+    # The whole source step (searches, classification, page reads) runs beside
+    # the persona calls; past this, the job completes without sources rather
+    # than waiting on it (sources are enrichment, invariant 6).
+    grounding_deadline_seconds: float = 300.0
 
     @property
     def cors_origin_list(self) -> list[str]:

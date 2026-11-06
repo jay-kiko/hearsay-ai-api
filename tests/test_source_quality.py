@@ -183,3 +183,27 @@ def test_html_to_text_keeps_text_after_characters_that_lowercase_longer():
 
     page = "İ" * 40 + "<script>x</script><p>Visible review of Brand here</p><div>more</div>"
     assert "Visible review of Brand here" in html_to_text(page)
+
+
+async def test_a_page_that_drips_bytes_is_cut_off_by_the_page_deadline(monkeypatch):
+    import asyncio
+    import time
+
+    import httpx
+
+    class _Drip(httpx.AsyncByteStream):
+        async def __aiter__(self):
+            for _ in range(1000):  # a byte at a time, never tripping a per-read timeout
+                await asyncio.sleep(0.01)
+                yield b"x"
+
+    def handler(request):
+        return httpx.Response(200, headers={"content-type": "text/html"}, stream=_Drip())
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(httpx, "AsyncClient", lambda **kw: real_client(transport=httpx.MockTransport(handler), **{
+        k: v for k, v in kw.items() if k != "event_hooks"}))
+    started = time.monotonic()
+    out = await sq.check_pages(["https://slow.example/post"], page_deadline=0.2)
+    assert time.monotonic() - started < 2
+    assert out["https://slow.example/post"].alive is None  # unknown, not dead

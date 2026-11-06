@@ -143,7 +143,10 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
         # grounding must not throw away persona results the client already
         # has (and refund a job that did all its spending). Invariant 6.
         try:
-            sources, sitelist = await grounding
+            sources, sitelist = await asyncio.wait_for(grounding, timeout=settings.grounding_deadline_seconds)
+        except TimeoutError:
+            logger.error("job %s: grounding passed its deadline, completing without sources", job_id)
+            sources, sitelist = empty_sources("Source research took too long this run, so no sources are shown.")
         except Exception:
             logger.exception("job %s: grounding failed, completing without sources", job_id)
             sources, sitelist = empty_sources("Sources couldn't be researched this run, so none are shown.")

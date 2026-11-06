@@ -107,3 +107,28 @@ async def test_a_grounding_error_still_delivers_the_persona_results(monkeypatch,
     assert done.status.value == "complete"
     assert done.result.sources.coverage_note.startswith("Sources couldn't be researched")
     assert store.finished == [job.job_id] and not store.refunded
+
+
+async def test_grounding_past_its_deadline_completes_without_sources(monkeypatch, store):
+    async def ok_persona(**_):
+        return PersonaResult(prompt="q", mentioned=False, sentiment=Sentiment.neutral, vis=0, rank=None, quote="",
+                             parts=[], exchanges=[], opportunity="Critical Gap")
+
+    async def stuck_grounding(**_):
+        await asyncio.sleep(3600)
+
+    async def insights(**_):
+        from app.models import CompetitorDiagnosis
+        return CompetitorDiagnosis(rival_wins=[], brand_wins=[], gaps=[]), [], []
+
+    monkeypatch.setattr(runner, "run_persona", ok_persona)
+    monkeypatch.setattr(runner, "run_grounding", stuck_grounding)
+    monkeypatch.setattr(runner, "generate_insights", insights)
+    monkeypatch.setattr(runner.get_settings(), "grounding_deadline_seconds", 0.05)
+    jobs = JobStore(ttl_seconds=60)
+    job = jobs.create_job(["p1"])
+    await asyncio.wait_for(runner.run_job(job.job_id, _request(), jobs, "k"), timeout=5)
+    done = jobs.get(job.job_id)
+    assert done.status.value == "complete"
+    assert "took too long" in done.result.sources.coverage_note
+    assert store.finished == [job.job_id] and not store.refunded
