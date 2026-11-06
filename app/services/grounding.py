@@ -1,15 +1,16 @@
 """§05 Source grounding.
 
 Sources are found the way a buyer finds them, never by looking the brand up:
-one Claude call with the native `web_search` tool searches one brand-free
-buyer question per persona (one of its generated prompts), and the
-pages that come back are the sources. Only afterwards is each page measured
+one `web_search` call per persona searches one of its brand-free buyer
+questions (one of its generated prompts), and the pages that come back are
+the sources. Only afterwards is each page measured
 for the brand and every competitor. Searching for the brand would make nearly
 every source "Visible" by construction — the bias this replaced.
 
 A source is a specific third-party page where people form opinions (forums,
 independent blogs and reviews, editorial) — never the brand's or a
-competitor's own site, and never a booking/affiliate site. Rules live in
+competitor's own site, and never a store, marketplace, booking or affiliate
+site. Rules live in
 app.services.source_quality; the invariants in CLAUDE.md. For Singapore,
 the sitelist overlays real programmatic CPM/reach from app.services.inventory
 on whichever sources are buyable — the inventory labels sources, it never
@@ -48,38 +49,29 @@ logger = logging.getLogger("hearsay.grounding")
 # Fixed for every brand: the search must look exactly like a buyer's, so it
 # never sees the brand, its competitors, the industry label or the summary.
 _SYSTEM = (
-    "You are researching where people find information when they ask buying questions. You will be given "
-    "a numbered list of questions. Run exactly one web search per question, in order, using the question's "
-    "own wording. Do not add any brand, product or company name to a query. Do not search for anything "
-    "else. After the last search, reply with one short sentence describing the kinds of pages you found. "
-    "Do not recommend anything."
+    "You are researching where people find information when they ask buying questions. Run exactly one web "
+    "search, using the query you are given exactly as written: do not shorten, reword or add to it, and never "
+    "add a brand, product or company name. Then reply with one short sentence describing the kinds of pages "
+    "you found. Do not recommend anything."
 )
 
 
-def _search_user(questions: list[str], market: str | None) -> str:
-    numbered = "\n".join(f"{i}. {q}" for i, q in enumerate(questions, start=1))
-    return (f"Market: {market}\n\n" if market else "") + numbered
+def search_query(question: str, market: str | None) -> str:
+    """The buyer question, plus "in <country>" when it names neither the
+    country nor the area of the market ("Makati, Philippines"). Not bracketed:
+    live, the model dropped "(Peru)" as an aside in 14 of 48 searches.
 
-
-# Search localisation per market. The country field only accepts a subset of
-# codes — SG is rejected (confirmed live: "Country code SG is not supported")
-# while city + timezone are accepted — so Singapore is localised that way.
-# Localisation nudges results only slightly; the market in the question wording
-# does most of the work.
-_MARKET_LOCATION = {
-    "singapore": {"type": "approximate", "city": "Singapore", "timezone": "Asia/Singapore"},
-    "sg": {"type": "approximate", "city": "Singapore", "timezone": "Asia/Singapore"},
-    "malaysia": {"type": "approximate", "country": "MY"},
-    "philippines": {"type": "approximate", "country": "PH"},
-    "indonesia": {"type": "approximate", "country": "ID"},
-}
-
-
-def _location_for(market: str | None) -> dict | None:
-    if not market:
-        return None
-    words = set(re.findall(r"[a-z]+", market.lower()))
-    return next((dict(loc) for name, loc in _MARKET_LOCATION.items() if name in words), None)
+    Confirmed live (2026-11-06): the search tool's location setting returned
+    the same US pages for every country, and rejects most smaller countries'
+    codes outright; the place named in the query is what localises results.
+    A question that already names the area is left as the buyer wrote it."""
+    parts = [p.strip() for p in (market or "").split(",") if p.strip()]
+    if not parts or any(re.search(rf"(?<!\w){re.escape(p)}(?!\w)", question, re.IGNORECASE) for p in parts):
+        return question
+    base = question.rstrip(" ?.!")
+    # "…with CPF payroll built in" + "in Singapore" would read "in in".
+    joiner = " " if re.search(r"\bin$", base, re.IGNORECASE) else " in "
+    return f"{base}{joiner}{parts[-1]}"
 
 
 _FILTER_TOOL_NAME = "filter_relevant_domains"
@@ -165,41 +157,6 @@ def _extract_search(response) -> tuple[list[dict], dict[str, str], set[str]]:
     return hits, queries, errored
 
 
-def _words(text: str) -> set[str]:
-    return set(re.findall(r"[a-z0-9]+", text.lower()))
-
-
-def attribute_queries(queries: dict[str, str], questions: list[str], min_share: float = 0.5) -> dict[str, int | None]:
-    """Maps each search the model ran to the question (0-based) it came from.
-
-    The model was told to search each question verbatim, in order, but it
-    trims long ones (confirmed live: "Planning a cruise for my parents in their
-    70s … Which ships from Singapore have connecting cabins?" became "ships
-    from Singapore connecting cabins family"). So the match is the share of the
-    search's words that come from a question, not overall overlap. A search no
-    question convincingly explains takes the next unclaimed question in order;
-    None only when that runs out too."""
-    question_words = [_words(q) for q in questions]
-    out: dict[str, int | None] = {}
-    claimed: set[int] = set()
-    unmatched: list[str] = []
-    for query_id, query in queries.items():
-        qw = _words(query)
-        scored = [(len(qw & words) / len(qw), i) for i, words in enumerate(question_words)] if qw else []
-        best_share, best = max(scored, default=(0.0, None), key=lambda si: (si[0], si[1] not in claimed))
-        if best is not None and best_share >= min_share:
-            out[query_id] = best
-            claimed.add(best)
-        else:
-            unmatched.append(query_id)
-    for query_id in unmatched:
-        nxt = next((i for i in range(len(questions)) if i not in claimed), None)
-        out[query_id] = nxt
-        if nxt is not None:
-            claimed.add(nxt)
-    return out
-
-
 def _norm_domain(raw: object) -> str:
     """A domain as the model wrote it ('www.Reddit.com', 'https://x.com/a') in
     the same form sq.host_of gives URLs, so the two always compare equal."""
@@ -247,8 +204,10 @@ async def _filter_relevant(
                 "These pages came back for buyer questions in a product category. Keep a page if it would "
                 "genuinely help someone answer one of these questions: reviews, comparisons, guides, forum "
                 "discussions, editorial. Drop pages that are off-topic, navigation or login pages, or about a "
-                "different industry. Judge only relevance to the category and questions. Do not consider which "
-                "brands or companies a page mentions."
+                "different industry. When a market is given, also drop pages written for buyers in a different "
+                "country (another country's prices, stores, tax rules or regulations), and keep pages that apply "
+                "anywhere, such as international reviews and global forums. Judge only relevance to the "
+                "category, market and questions. Do not consider which brands or companies a page mentions."
             ),
             user=(
                 f"Category: {industry}\nMarket: {market or 'n/a'}\n\nQuestions:\n"
@@ -508,22 +467,39 @@ def _questions_to_search(personas: list[PersonaIn], prompts: dict[str, list[str]
 
 
 def _screen_searches(
-    response, asked: list[tuple[str, str]], brand: str, competitors: list[Competitor], names: list[str]
+    responses: list, asked: list[tuple[str, str]], market: str | None,
+    brand: str, competitors: list[Competitor], names: list[str],
 ) -> tuple[list[dict], list[SourceQuery], dict[str, str], set[str]]:
     """Hits tagged with the questions (0-based) that surfaced them, minus
     results of any search that named the brand or a competitor, plus the
-    query log shown to the client."""
-    questions = [q for _, q in asked]
-    hits, queries, errored = _extract_search(response)
-    attribution = attribute_queries(queries, questions)
+    query log shown to the client. responses[i] is the call for asked[i]
+    (None when it failed), so every search is attributed to its question
+    exactly; search ids are prefixed with the call's index to stay unique."""
+    hits: list[dict] = []
+    queries: dict[str, str] = {}
+    errored: set[str] = set()
+    attribution: dict[str, int] = {}
+    for i, response in enumerate(responses):
+        if response is None:
+            qid = f"{i}:call"
+            queries[qid], attribution[qid] = search_query(asked[i][1], market), i
+            errored.add(qid)
+            continue
+        call_hits, call_queries, call_errored = _extract_search(response)
+        for qid, query in call_queries.items():
+            queries[f"{i}:{qid}"], attribution[f"{i}:{qid}"] = query, i
+        errored |= {f"{i}:{qid}" for qid in call_errored}
+        for hit in call_hits:
+            hit["query_ids"] = {f"{i}:{qid}" for qid in hit["query_ids"]}
+        hits += call_hits
 
     # The model was told never to add a brand. Enforce it: a search that names
     # the brand or a competitor is a brand lookup, and its results are dropped.
     leaked = {qid for qid, q in queries.items() if find_mentions(q, brand, competitors, names)}
     query_log = [
         SourceQuery(
-            persona=asked[attribution[qid]][0] if attribution.get(qid) is not None else None,
-            question=questions[attribution[qid]] if attribution.get(qid) is not None else None,
+            persona=asked[attribution[qid]][0],
+            question=asked[attribution[qid]][1],
             query=q,
             dropped=qid in leaked,
             failed=qid in errored,
@@ -539,9 +515,30 @@ def _screen_searches(
         ids = hit["query_ids"]
         if ids and ids <= leaked:
             continue
-        hit["questions"] = {attribution[i] for i in ids - leaked if attribution.get(i) is not None}
+        hit["questions"] = {attribution[i] for i in ids - leaked}
         kept_hits.append(hit)
     return kept_hits, query_log, queries, errored
+
+
+async def _search_each(questions: list[str], market: str | None, *, api_key: str, model: str) -> list:
+    """One call per question, run concurrently. Confirmed live: given several
+    questions in one call, the model trimmed them to keywords and dropped the
+    place (17 of 51 searches kept the market); given one, it ran it as written
+    (48 of 48 on the standard tier). A failed call is None, so the others still
+    count; only when every call fails does this raise."""
+    async def one(question: str):
+        return await call_web_search(
+            api_key=api_key, model=model, system=_SYSTEM, user=search_query(question, market),
+            max_tokens=1024, max_uses=1,
+        )
+
+    results = await asyncio.gather(*(one(q) for q in questions), return_exceptions=True)
+    failures = [r for r in results if isinstance(r, BaseException)]
+    for failure in failures:
+        logger.warning("one source search failed: %r", failure)
+    if failures and len(failures) == len(results):
+        raise failures[0]
+    return [None if isinstance(r, BaseException) else r for r in results]
 
 
 def _drop_entity_sites(hits: list[dict], entity_names: list[str]) -> list[dict]:
@@ -797,8 +794,11 @@ def _coverage_note(
     elif skipped:
         notes.append(f"No usable search ran for: {', '.join(skipped)}.")
     shown = len(source_intel)
-    if shown < 3 and not all_failed:
-        notes.append(f"Only {shown} independent sources came back for these buyer questions, so treat this list as thin.")
+    if shown == 0 and not all_failed:
+        notes.append("No independent sources came back for these buyer questions.")
+    elif shown < 3 and not all_failed:
+        notes.append(f"Only {shown} independent {'source' if shown == 1 else 'sources'} came back for these buyer "
+                     "questions, so treat this list as thin.")
     if unreadable:
         notes.append(
             f"{unreadable} more {'page' if unreadable == 1 else 'pages'} turned up but couldn't be read, so "
@@ -831,16 +831,13 @@ async def run_grounding(
     questions = [q for _, q in asked]
 
     try:
-        response = await call_web_search(
-            api_key=api_key,
-            # Fast tier: the model only runs given searches verbatim — the
-            # search engine, not the model, decides what comes back.
-            model=settings.anthropic_fast_model,
-            system=_SYSTEM,
-            user=_search_user(questions, market),
-            max_tokens=2048,
-            max_uses=len(questions),
-            user_location=_location_for(market),
+        responses = await _search_each(
+            questions, market, api_key=api_key,
+            # Standard tier: the fast tier rewrote even a single question into
+            # keywords and dropped the market in 8 of 48 live searches; the
+            # standard tier kept it in 48 of 48. About 2k tokens a search, a
+            # few cents a run; the per-search fee is the same on either tier.
+            model=settings.anthropic_model,
         )
     except Exception:
         logger.exception("grounding search failed, returning empty sources")
@@ -851,7 +848,7 @@ async def run_grounding(
     # the sentence, and a disney-named domain is about the brand.
     brand_names = [brand, *(brand_match_names or []), *(brand_context_names or [])]
     context = BrandContext.of(brand_context_names, category_terms)
-    hits, query_log, queries, errored = _screen_searches(response, asked, brand, competitors, brand_names)
+    hits, query_log, queries, errored = _screen_searches(responses, asked, market, brand, competitors, brand_names)
     entity_names = brand_names + [n for c in competitors for n in (c.name, *c.match_names)]
     hits = _drop_entity_sites(hits, entity_names)
     hits = await _filter_relevant(

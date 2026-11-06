@@ -67,6 +67,19 @@ def _fake_response(leak=False):
     ])
 
 
+def _response_for(query, leak=False):
+    """The fake response's blocks for the one question a call searched: s1
+    (and the summary citations) for the kids-club question, s2 (and the leaked
+    brand search) for the couples one."""
+    blocks = _fake_response(leak).content
+    ids = {"s1"} if "kids clubs" in query else {"s2", "s3"}
+    return SimpleNamespace(content=[
+        b for b in blocks
+        if getattr(b, "id", None) in ids or getattr(b, "tool_use_id", None) in ids
+        or (b.type == "text" and "s1" in ids)
+    ])
+
+
 ORIGINS = {"reddit.com": "independent", "momblog.example": "independent", "deadblog.example": "independent",
            "noevidence.example": "independent", "rivalblog.example": "independent",
            "cruisedeals.example": "affiliate", "brandlookup.example": "independent"}
@@ -79,7 +92,7 @@ def calls(monkeypatch):
     def install(leak=False):
         async def fake_web_search(**kw):
             seen["search"].append(kw)
-            return _fake_response(leak)
+            return _response_for(kw["user"], leak)
 
         async def fake_structured(*, tool_name, user, system, **_):
             if tool_name == grounding._FILTER_TOOL_NAME:
@@ -117,15 +130,53 @@ async def _run(market="Singapore"):
 
 async def test_search_sends_one_question_per_persona_and_never_the_brand(calls):
     await _run()
-    kw = calls["search"][0]
-    sent = (kw["system"] + kw["user"]).lower()
-    for name in ("disney", "dcl", "royal caribbean"):
-        assert name not in sent
-    assert "1. Which cruise lines from Singapore" in kw["user"] and "2. Any 3 night sailings" in kw["user"]
-    assert "second q" not in kw["user"]  # one question per persona
-    assert kw["max_uses"] == 2
-    # SG is rejected as a country code; city + timezone is accepted
-    assert kw["user_location"] == {"type": "approximate", "city": "Singapore", "timezone": "Asia/Singapore"}
+    # One call per persona's question, each limited to that one search.
+    assert [kw["user"] for kw in calls["search"]] == [PROMPTS["p1"][0], PROMPTS["p2"][0]]
+    assert all(kw["max_uses"] == 1 for kw in calls["search"])
+    for kw in calls["search"]:
+        sent = (kw["system"] + kw["user"]).lower()
+        for name in ("disney", "dcl", "royal caribbean"):
+            assert name not in sent
+        assert "user_location" not in kw  # it didn't localise anything (confirmed live)
+
+
+async def test_search_names_the_market_when_the_question_does_not(calls):
+    await _run(market="Makati, Philippines")
+    assert calls["search"][0]["user"] == (
+        "Which cruise lines from Singapore have proper kids clubs for a 5 and 8 year old in Philippines"
+    )
+
+
+def test_search_query_adds_the_country_only_when_no_part_of_the_market_is_named():
+    q = "Which cloud accounting app gives BIR-ready reports?"
+    assert grounding.search_query(q, "Makati, Philippines") == (
+        "Which cloud accounting app gives BIR-ready reports in Philippines")
+    assert grounding.search_query("Best app for a cafe in Makati?", "Makati, Philippines") == (
+        "Best app for a cafe in Makati?")
+    assert grounding.search_query("payroll add-ons in kenya?", "Nairobi, Kenya") == "payroll add-ons in kenya?"
+    assert grounding.search_query("cheap flights to Perugia", "Lima, Peru") == "cheap flights to Perugia in Peru"
+    assert grounding.search_query("Which option has CPF payroll built in?", "Singapore") == (
+        "Which option has CPF payroll built in Singapore")
+    assert grounding.search_query(q, None) == q and grounding.search_query(q, "") == q
+
+
+async def test_the_relevance_filter_is_told_to_drop_other_markets_pages(calls):
+    await _run()
+    assert "Market: Singapore" in calls["filter_user"]
+    assert "buyers in a different country" in calls["filter_system"]
+
+
+async def test_one_failed_search_keeps_the_others_and_is_logged(calls, monkeypatch):
+    async def first_fails(**kw):
+        if "kids clubs" in kw["user"]:
+            raise RuntimeError("down")
+        return _response_for(kw["user"])
+
+    monkeypatch.setattr(grounding, "call_web_search", first_fails)
+    sources, _ = await _run()
+    failed = [q for q in sources.queries if q.failed]
+    assert len(failed) == 1 and failed[0].persona == "School Holiday Parents"
+    assert {s.domain for s in sources.source_intel} == {"rivalblog.example"}
 
 
 async def test_relevance_filter_never_sees_brand_or_competitor_names(calls):
@@ -307,33 +358,6 @@ async def test_search_failure_is_an_explicit_note(calls, monkeypatch):
     assert sources.source_intel == [] and "failed" in sources.coverage_note
 
 
-def test_query_attribution_handles_trimmed_searches_and_falls_back_to_order():
-    # real questions + the trimmed searches the model ran for them (live run)
-    qs = [
-        "Which cruises from Marina Bay Cruise Centre have proper kids clubs for a 5 and 8 year old?",
-        "Planning a cruise for my parents in their 70s plus my siblings and their kids. Which ships from Singapore have connecting cabins?",
-        "2 night cruise from Singapore with a decent adults-only area so we can escape the kids?",
-        "Daughter turning 10 and I want one splurge cruise she'll remember. Which line does the best themed experiences for that age?",
-    ]
-    got = grounding.attribute_queries({
-        "a": "cruises from Marina Bay Cruise Centre kids clubs",
-        "b": "ships from Singapore connecting cabins family",
-        "c": "2 night cruise from Singapore adults-only area",
-        "d": "themed experiences for 10 year old cruise",
-    }, qs)
-    assert got == {"a": 0, "b": 1, "c": 2, "d": 3}
-    # nothing convincing -> next unclaimed question; nothing left -> None
-    assert grounding.attribute_queries({"a": "kids clubs cruises Marina Bay", "x": "weather today"}, qs[:2]) == {"a": 0, "x": 1}
-    assert grounding.attribute_queries({"a": "kids clubs cruises Marina Bay", "x": "weather today"}, qs[:1]) == {"a": 0, "x": None}
-
-
-def test_market_to_search_location():
-    assert grounding._location_for("Singapore")["city"] == "Singapore"
-    assert "country" not in grounding._location_for("SG")
-    assert grounding._location_for("Malaysia") == {"type": "approximate", "country": "MY"}
-    assert grounding._location_for("Atlantis") is None
-    assert grounding._location_for(None) is None
-
 
 def test_prompt_writer_receives_persona_description():
     persona = PersonaIn(id="p1", title="Budget Parent", desc="Planning a first family cruise", role="r", pains="x", criteria="y")
@@ -346,8 +370,7 @@ async def test_question_choice_rotates_so_later_categories_get_searched(calls):
     prompts = {"p1": ["cat A for p1", "cat B for p1"], "p2": ["cat A for p2", "cat B for p2"]}
     await grounding.run_grounding(api_key="k", brand=BRAND, industry="Cruises", competitors=COMPETITORS,
                                   brand_match_names=ALIASES, personas=PERSONAS, prompts=prompts)
-    user = calls["search"][-1]["user"]
-    assert "1. cat A for p1" in user and "2. cat B for p2" in user
+    assert [kw["user"] for kw in calls["search"]] == ["cat A for p1", "cat B for p2"]
 
 
 def test_reach_label_has_no_tier_with_a_single_question():
@@ -469,3 +492,12 @@ async def test_a_search_naming_the_parent_brand_is_dropped(calls):
         personas=PERSONAS, prompts=PROMPTS, market="Singapore", brand_context_names=["Disney"], category_terms=["cruise"],
     )
     assert any(q.dropped for q in sources.queries)
+
+
+def test_coverage_note_says_none_rather_than_only_zero():
+    asked = [("P", "q")]
+    log = [grounding.SourceQuery(persona="P", question="q", query="q")]
+    assert grounding._coverage_note(asked, log, {"0:a": "q"}, set(), []) == (
+        "No independent sources came back for these buyer questions.")
+    one = [SourceIntel.model_construct()]
+    assert grounding._coverage_note(asked, log, {"0:a": "q"}, set(), one).startswith("Only 1 independent source came")
