@@ -502,7 +502,8 @@ def _screen_searches(
 
     # The model was told never to add a brand. Enforce it: a search that names
     # the brand or a competitor is a brand lookup, and its results are dropped.
-    leaked = {qid for qid, q in queries.items() if find_mentions(q, brand, competitors, names)}
+    # Caseless: the model types searches in lowercase ("xero vs quickbooks").
+    leaked = {qid for qid, q in queries.items() if find_mentions(q, brand, competitors, names, caseless=True)}
     query_log = [
         SourceQuery(
             persona=asked[attribution[qid]][0],

@@ -19,7 +19,7 @@ from app.services import aggregation
 from app.services.grounding import empty_sources, run_grounding
 from app.services.insights_gen import generate_insights
 from app.services.pipeline import run_persona
-from app.services.scoring import BrandContext
+from app.services.scoring import BrandContext, without_names
 
 logger = logging.getLogger("hearsay.runner")
 
@@ -85,6 +85,15 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
     # Falls back to the bare brand name for callers that don't send aliases yet.
     brand_match_names = request.brand_match_names or [request.brand]
     context = BrandContext.of(request.brand_context_names, request.category_terms)
+    # The buyer context reaches the answer call, which must never see the
+    # brand (invariant 4). Confirmed live: detect wrote "Families, couples,
+    # and Disney fans choosing a cruise vacation" for Disney Cruise Line.
+    answer_context = request.buyer_context and without_names(
+        request.buyer_context, request.brand, request.competitors,
+        [request.brand, *brand_match_names, *request.brand_context_names],
+    )
+    if answer_context != request.buyer_context:
+        logger.warning("job %s: removed brand/competitor names from the buyer context", job_id)
 
     try:
         tasks = [
@@ -97,7 +106,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
                 brand=request.brand,
                 brand_match_names=brand_match_names,
                 competitors=request.competitors,
-                buyer_context=request.buyer_context,
+                buyer_context=answer_context,
                 market=request.market,
                 api_key=anthropic_api_key,
                 context=context,

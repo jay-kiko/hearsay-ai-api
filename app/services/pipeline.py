@@ -22,7 +22,7 @@ from app.config import get_settings
 from app.models import Competitor, PersonaExchange, PersonaIn, PersonaResult, Sentiment
 from app.services.anthropic_client import call_structured, call_text
 from app.services.common import DEFAULT_BUYER_CONTEXT
-from app.services.scoring import BrandContext, analyze_answer, name_matches, sentence_around
+from app.services.scoring import BrandContext, analyze_answer, name_matches, sentence_around, starts_sentence
 
 logger = logging.getLogger("hearsay.pipeline")
 
@@ -131,7 +131,6 @@ def _sentiment_system(brand: str, brand_match_names: list[str], competitors: lis
 
 _MIN_ALIAS_LEN = 3
 _ARTICLES = {"the", "a", "an"}
-_SENTENCE_BREAKS = ".!?:;\n-*•#>|"
 
 
 def _head_word(alias: str) -> str:
@@ -141,18 +140,13 @@ def _head_word(alias: str) -> str:
     return words[0] if words else ""
 
 
-def _starts_sentence(text: str, position: int) -> bool:
-    before = text[:position].rstrip(" \t")
-    return not before or before[-1] in _SENTENCE_BREAKS
-
-
 def _written_like_a_name(answer: str, position: int, occurrence: str) -> bool:
     """A digit, a capital past the first letter ('iPhone', 'Note 13'), or a
     leading capital where grammar doesn't force one. 'Cruise' opening a
     sentence or a bullet is just a word."""
     if any(ch.isdigit() for ch in occurrence) or any(ch.isupper() for ch in occurrence[1:]):
         return True
-    return occurrence[:1].isupper() and not _starts_sentence(answer, position)
+    return occurrence[:1].isupper() and not starts_sentence(answer, position)
 
 
 def _named_alongside(name: str, answer: str, own_names: list[str]) -> bool:
@@ -170,7 +164,8 @@ def _named_alongside(name: str, answer: str, own_names: list[str]) -> bool:
 
 
 def _overlaps(a: str, b: str) -> bool:
-    return bool(name_matches(a, b) or name_matches(b, a))
+    # Names compared with names: casing says nothing here.
+    return bool(name_matches(a, b, caseless=True) or name_matches(b, a, caseless=True))
 
 
 def verified_alias(candidate: object, answer: str, own_names: list[str], other_entities: list[str]) -> str | None:

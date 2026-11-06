@@ -113,7 +113,9 @@ _INPUT_SCHEMA = {
                 "(consumer packaged goods), 'Marketing teams choosing an agency or platform to run "
                 "campaigns' (services/agencies), 'Everyday consumers choosing a payment app for "
                 "daily transactions and remittances' (consumer fintech). Never default to a "
-                "software/vendor framing unless the brand genuinely is software."
+                "software/vendor framing unless the brand genuinely is software. Never name the "
+                "brand, its parent company, its products or any competitor here: this sentence is "
+                "shown to the AI whose answers are measured, and a name would steer them."
             ),
         },
         "brandSummary": {

@@ -74,3 +74,63 @@ def test_prompt_screen_treats_context_names_as_a_leak():
                           personas=[{"id": "p1", "title": "T", "role": "r", "pains": "p", "criteria": "c"}],
                           brandMatchNames=["Disney Cruise Line"], brandContextNames=["Disney"], categoryTerms=["cruise"])
     assert names_a_brand("Is Disney worth it for toddlers?", body.brand, [], _screen_names(body))
+
+
+# ── names that are also ordinary words ───────────────────────────────
+
+from app.models import Competitor as _Competitor
+from app.services.scoring import find_mentions as _find
+
+
+ON = _Competitor(name="On Running", match_names=["On Running", "On", "On Cloud"])
+
+
+def _rivals(text, caseless=False):
+    return [text[m.start:m.end] for m in _find(text, "Nike", [ON], ["Nike"], caseless=caseless) if m.kind == "competitor"]
+
+
+def test_a_function_word_name_is_not_the_word_in_passing():
+    # Confirmed live: "based on performance" counted as a mention of On Running.
+    assert _rivals("Pick shoes based on cushioning and fit.") == []
+    assert _rivals("On long runs, cushioning matters more than weight.") == []  # opens a sentence
+    assert _rivals("For long runs, try Nike or On, both cushioned.") == ["On"]
+    assert _rivals("The On Cloud is light, and On Running makes it.") == ["On Cloud", "On Running"]
+
+
+def test_a_capitalised_one_word_name_needs_the_capital_in_prose():
+    grab = ["Grab"]
+    assert _find("Grab is the default here.", "Grab", [], grab)  # opening a sentence still counts
+    assert _find("Riders mostly use Grab here.", "Grab", [], grab)
+    assert not _find("Riders grab whatever app is cheapest.", "Grab", [], grab)
+    # A name that isn't an English word counts lowercase too (confirmed live: "adidas").
+    assert _find("Try the adidas Adizero or a Hoka.", "Adidas", [], ["Adidas"])
+
+
+def test_text_without_casing_matches_in_any_case_but_never_function_words():
+    # URL slugs and searches typed in lowercase carry no casing.
+    assert _find("xero vs quickbooks review", "Xero", [], ["Xero"])
+    assert _rivals("best shoes on sale") == []
+    # Leak screening is caseless on purpose, even in mixed-case text.
+    assert _find("Best app like notion for my Cafe?", "Notion", [], ["Notion"], caseless=True)
+    assert not _find("Best app like notion for my Cafe?", "Notion", [], ["Notion"])  # the word, in prose
+
+
+
+# ── text that must not name the brand ────────────────────────────────
+
+from app.services.scoring import without_names
+
+
+def test_buyer_context_loses_brand_parent_and_rival_names():
+    rc = _Competitor(name="Royal Caribbean", match_names=["Royal Caribbean"])
+    names = ["Disney Cruise Line", "Disney"]
+    # Confirmed live for Disney Cruise Line.
+    assert without_names("Families, couples, and Disney fans choosing a cruise vacation.", "Disney Cruise Line",
+                         [rc], names) == "Families, couples, and fans choosing a cruise vacation."
+    assert without_names("Disney's fans and Royal Caribbean regulars comparing ships", "Disney Cruise Line",
+                         [rc], names) == "fans and regulars comparing ships"
+    plain = "Families choosing a cruise holiday"
+    assert without_names(plain, "Disney Cruise Line", [rc], names) is plain
+    # "on" in passing is not On Running (the function-word rule applies here too).
+    assert without_names("Runners choosing shoes based on fit", "Nike", [ON], ["Nike"]) == (
+        "Runners choosing shoes based on fit")

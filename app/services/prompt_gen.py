@@ -125,7 +125,8 @@ def names_a_brand(
     """Whether a generated prompt names the brand or a known competitor. The
     instructions forbid it; this enforces it, because a prompt that names the
     brand measures nothing (invariant 5)."""
-    return bool(find_mentions(text, brand, competitors, brand_match_names or [brand]))
+    # Caseless: a prompt typed "best app like xero" still names the brand.
+    return bool(find_mentions(text, brand, competitors, brand_match_names or [brand], caseless=True))
 
 
 def _fallback_prompt(industry: str, market: str | None) -> str:

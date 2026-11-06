@@ -7,8 +7,11 @@ mention/rank/sentiment into a single 0-100 visibility score.
 """
 from __future__ import annotations
 
+import gzip
 import re
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 
 from app.models import Competitor, ResponsePart, Sentiment
 
@@ -49,6 +52,63 @@ def _pattern_for(name: str) -> re.Pattern[str] | None:
     if not words:
         return None
     return re.compile(rf"\b{r'\s+'.join(words)}\b", re.IGNORECASE)
+
+
+# Names that are also English function words. Confirmed live: detect gave the
+# rival On Running the alias "On", and "based on performance" counted as a
+# mention of it in every answer.
+_FUNCTION_WORDS = frozenset(
+    "a about all an and any are as at be best but by can do for from get go he her his how i if in into is it "
+    "its just me more my new no not now of on one or our out over so than that the their them then there these "
+    "they this to too up us was we what when which who why will with you your".split()
+)
+SENTENCE_BREAKS = ".!?:;\n-*•#>|"
+# Lowercase entries of Webster's 2nd (public domain): whether a name is also
+# an ordinary word ("grab", "notion"), unlike names styled in lowercase
+# ("adidas", "xero"), which must still count when written that way.
+_WORDS_PATH = Path(__file__).resolve().parent.parent / "data" / "english_words.txt.gz"
+
+
+@lru_cache(maxsize=1)
+def _english_words() -> frozenset[str]:
+    try:
+        with gzip.open(_WORDS_PATH, "rt", encoding="utf-8") as f:
+            return frozenset(line.strip() for line in f if line.strip())
+    except OSError:
+        return frozenset()  # missing file: every lowercase name counts, as before
+
+
+def starts_sentence(text: str, position: int) -> bool:
+    before = text[:position].rstrip(" \t")
+    return not before or before[-1] in SENTENCE_BREAKS
+
+
+def _counts(name: str, text: str, start: int, occurrence: str, caseless: bool) -> bool:
+    """Whether a match of `name` is the name, not the same word in passing.
+
+    A one-word name given with a capital that is also an English word
+    ("Grab", "Notion") counts only when the text capitalises it: "grab a
+    coffee" isn't Grab. A name that isn't a word counts however it's written
+    (confirmed live: an answer wrote "adidas"). One that is also a function
+    word ("On", "One") must be written exactly as given and not open a
+    sentence, where every word is capitalised. Multi-word names count in any
+    case. `caseless` is for text that carries no casing (URL slugs,
+    searches typed in lowercase): any case counts there, except function-word
+    names, which never do."""
+    core = _core_name(name.strip())
+    if " " in core:
+        return True
+    if core.lower() in _FUNCTION_WORDS:
+        return not caseless and occurrence == core and not starts_sentence(text, start)
+    if caseless or not any(ch.isupper() for ch in core) or occurrence != occurrence.lower():
+        return True
+    return occurrence not in _english_words()
+
+
+def _caseless(text: str, caseless: bool) -> bool:
+    # Text with no capital letter at all (a URL slug, a lowercase search) has
+    # no casing to go by.
+    return caseless or not any(ch.isupper() for ch in text)
 
 
 @dataclass
@@ -102,8 +162,13 @@ def find_mentions(
     brand_match_names: list[str] | None = None,
     *,
     context: BrandContext | None = None,
+    caseless: bool = False,
 ) -> list[Mention]:
+    """Every brand and competitor mention in `text`, earliest first. Pass
+    `caseless` where a miss matters more than a false hit (screening searches
+    and prompts for the brand), or for text without casing; see _counts."""
     candidates: list[Mention] = []
+    caseless = _caseless(text, caseless)
 
     # Try every brand alias (sub-brand, product line, short form) — same
     # rationale as competitor aliases below — but record matches under the
@@ -115,7 +180,7 @@ def find_mentions(
             continue
         for m in pattern.finditer(text):
             span = (m.start(), m.end())
-            if span in seen_brand_spans:
+            if span in seen_brand_spans or not _counts(alias, text, m.start(), m.group(0), caseless):
                 continue
             seen_brand_spans.add(span)
             candidates.append(Mention(m.start(), m.end(), "brand", brand))
@@ -130,7 +195,11 @@ def find_mentions(
                 continue
             for m in pattern.finditer(text):
                 span = (m.start(), m.end())
-                if span in seen_brand_spans or not terms.search(sentence_around(text, *span)):
+                if (
+                    span in seen_brand_spans
+                    or not _counts(name, text, m.start(), m.group(0), caseless)
+                    or not terms.search(sentence_around(text, *span))
+                ):
                     continue
                 seen_brand_spans.add(span)
                 candidates.append(Mention(m.start(), m.end(), "brand", brand))
@@ -148,12 +217,14 @@ def find_mentions(
                 continue
             for m in pattern.finditer(text):
                 span = (m.start(), m.end())
-                if span in seen_spans:
-                    continue  # two aliases matching the identical span
+                if span in seen_spans or not _counts(alias, text, m.start(), m.group(0), caseless):
+                    continue  # two aliases on the identical span, or the word in passing
                 seen_spans.add(span)
                 candidates.append(Mention(m.start(), m.end(), "competitor", competitor.name))
 
-    candidates.sort(key=lambda m: m.start)
+    # Longest first among matches starting at the same place, so "On Cloud"
+    # beats its own alias "On" (the merge below keeps the first).
+    candidates.sort(key=lambda m: (m.start, -(m.end - m.start)))
 
     # Drop mentions that overlap an earlier (longer/first) match.
     merged: list[Mention] = []
@@ -166,11 +237,36 @@ def find_mentions(
     return merged
 
 
-def name_matches(name: str, text: str) -> list[tuple[int, str]]:
+def without_names(text: str, brand: str, competitors: list[Competitor], names: list[str]) -> str:
+    """`text` with every brand and competitor name taken out ("Disney fans
+    choosing a cruise" -> "fans choosing a cruise"), for text that must not
+    name them. `names` should include context names ("Disney"): here they are
+    removed in any sentence, not only next to a category word."""
+    spans = [(m.start, m.end) for m in find_mentions(text, brand, competitors, names)]
+    if not spans:
+        return text
+    out, cursor = [], 0
+    for start, end in spans:
+        out.append(text[cursor:start])
+        cursor = end
+        # The possessive goes with the name ("Disney's fans" -> "fans").
+        if text[cursor:cursor + 2] in ("'s", "’s"):
+            cursor += 2
+    out.append(text[cursor:])
+    cleaned = " ".join("".join(out).split())
+    cleaned = re.sub(r"\s+([,.;:])", r"\1", cleaned)
+    cleaned = re.sub(r"([,;:])(?:\s*[,;:])+", r"\1", cleaned)
+    return cleaned.strip(" ,;:")
+
+
+def name_matches(name: str, text: str, *, caseless: bool = False) -> list[tuple[int, str]]:
     """(position, text as written) for every place the matcher would count
     `name` in `text` — the same rule find_mentions applies."""
     pattern = _pattern_for(name)
-    return [(m.start(), m.group(0)) for m in pattern.finditer(text)] if pattern else []
+    if not pattern:
+        return []
+    caseless = _caseless(text, caseless)
+    return [(m.start(), m.group(0)) for m in pattern.finditer(text) if _counts(name, text, m.start(), m.group(0), caseless)]
 
 
 def count_brand_mentions(

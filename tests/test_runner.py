@@ -132,3 +132,32 @@ async def test_grounding_past_its_deadline_completes_without_sources(monkeypatch
     assert done.status.value == "complete"
     assert "took too long" in done.result.sources.coverage_note
     assert store.finished == [job.job_id] and not store.refunded
+
+
+
+async def test_the_answer_calls_never_see_the_brand_in_the_buyer_context(monkeypatch, store):
+    seen = []
+
+    async def persona(**kw):
+        seen.append(kw["buyer_context"])
+        return PersonaResult(prompt="q", mentioned=False, sentiment=Sentiment.neutral, vis=0, rank=None, quote="",
+                             parts=[], exchanges=[], opportunity="Critical Gap")
+
+    async def grounding(**_):
+        return runner.empty_sources("none")
+
+    async def insights(**_):
+        from app.models import CompetitorDiagnosis
+        return CompetitorDiagnosis(rival_wins=[], brand_wins=[], gaps=[]), [], []
+
+    monkeypatch.setattr(runner, "run_persona", persona)
+    monkeypatch.setattr(runner, "run_grounding", grounding)
+    monkeypatch.setattr(runner, "generate_insights", insights)
+    request = _request().model_copy(update={
+        "brand": "Disney Cruise Line", "brand_context_names": ["Disney"],
+        "buyer_context": "Families and Disney fans choosing a cruise",
+    })
+    jobs = JobStore(ttl_seconds=60)
+    job = jobs.create_job(["p1"])
+    await runner.run_job(job.job_id, request, jobs, "k")
+    assert seen == ["Families and fans choosing a cruise"]
