@@ -15,13 +15,30 @@ def _bad_request():
     )
 
 
+class _Stream:
+    """messages.stream(...) as the SDK gives it: an async context manager whose
+    get_final_message() is the finished reply."""
+
+    def __init__(self, reply):
+        self._reply = reply
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_):
+        return False
+
+    async def get_final_message(self):
+        return await self._reply
+
+
 class _FakeClient:
     """Rejects forced tool_choice like the quality-tier model does."""
 
     calls: list[dict] = []
 
     def __init__(self, **_):
-        self.messages = SimpleNamespace(create=self._create)
+        self.messages = SimpleNamespace(create=self._create, stream=lambda **kw: _Stream(self._create(**kw)))
 
     async def _create(self, **kwargs):
         _FakeClient.calls.append(kwargs)
@@ -259,19 +276,34 @@ def test_decodes_list_items_sent_as_json_strings():
 
 
 
-async def test_a_reply_cut_off_at_max_tokens_is_asked_for_again_with_more_room(monkeypatch):
-    # Confirmed live: thinking used all 2048 tokens and the tool call came back empty.
+async def test_every_structured_call_streams_under_one_generous_ceiling(monkeypatch):
+    # Confirmed live: per-call limits sized for the output alone cut replies
+    # off, since thinking counts against max_tokens. A reply that still hits the
+    # ceiling ran away: the attempt fails and a fresh one is made.
     seen = []
 
     class _CutOff(_FakeClient):
         async def _create(self, **kwargs):
             seen.append(kwargs["max_tokens"])
-            if len(seen) == 1:
-                return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name="t", input={})], stop_reason="max_tokens")
-            return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name="t", input={"x": "ok"})], stop_reason="tool_use")
+            stop = "max_tokens" if len(seen) == 1 else "tool_use"
+            return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name="t", input={"x": "ok"})], stop_reason=stop)
 
     monkeypatch.setattr(ac, "AsyncAnthropic", _CutOff)
+    monkeypatch.setattr(ac.asyncio, "sleep", _no_sleep)
     ac._NO_FORCED_TOOL_CHOICE.add("m")
     out = await ac.call_structured(api_key="k", model="m", system="s", user="u", tool_name="t", tool_description="d",
-                                   input_schema={"type": "object", "properties": {}}, max_tokens=2048)
-    assert out == {"x": "ok"} and seen == [2048, 4096]
+                                   input_schema={"type": "object", "properties": {}})
+    assert out == {"x": "ok"} and seen == [32_000, 32_000]
+
+
+async def test_an_answer_cut_off_at_its_ceiling_is_a_failure_not_a_scored_answer(monkeypatch):
+    replies = [SimpleNamespace(content=[SimpleNamespace(type="text", text="Try Royal")], stop_reason="max_tokens"),
+               SimpleNamespace(content=[SimpleNamespace(type="text", text="Try Royal Caribbean.")], stop_reason="end_turn")]
+
+    class _Answers(_FakeClient):
+        async def _create(self, **kwargs):
+            return replies.pop(0)
+
+    monkeypatch.setattr(ac, "AsyncAnthropic", _Answers)
+    monkeypatch.setattr(ac.asyncio, "sleep", _no_sleep)
+    assert await ac.call_text(api_key="k", model="m", system="s", user="u") == "Try Royal Caribbean."

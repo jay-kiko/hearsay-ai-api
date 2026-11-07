@@ -241,11 +241,6 @@ async def generate_prompts(
             tool_name=_TOOL_NAME,
             tool_description="Return the written prompts for every persona.",
             input_schema=_INPUT_SCHEMA,
-            # Sized to the output plus the quality tier's thinking, which counts
-            # against max_tokens: 2048 for 6 personas x 3 prompts went to thinking,
-            # the tool call came back empty and every persona got the fallback
-            # question (confirmed live). ~100 tokens per prompt, 4096 to think.
-            max_tokens=min(16_000, 4096 + 100 * count * len(personas)),
         )
 
         # Tool output isn't a hard type guarantee: skip malformed entries rather
@@ -369,8 +364,6 @@ async def adapt_seed_prompt(
         tool_name=_SEED_TOOL_NAME,
         tool_description="Return the adapted prompt for every persona.",
         input_schema=_SEED_INPUT_SCHEMA,
-        # Room for the quality tier's thinking, which counts against max_tokens.
-        max_tokens=4096,
     )
 
     by_persona = {

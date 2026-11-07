@@ -144,8 +144,6 @@ async def generate_categories(
         tool_name=_TOOL_NAME,
         tool_description="Return the candidate product-category facets.",
         input_schema=_INPUT_SCHEMA,
-        # Room for the quality tier's thinking, which counts against max_tokens.
-        max_tokens=4096,
     )
 
     known = {n.strip().lower() for c in competitors for n in (c.name, *c.match_names) if n.strip()}

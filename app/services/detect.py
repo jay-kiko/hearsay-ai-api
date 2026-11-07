@@ -283,10 +283,11 @@ async def _research_brand(*, api_key: str, model: str, query: str, market: str |
         model=model,
         system=_RESEARCH_SYSTEM,
         user=_with_market(query, market),
-        # Several search rounds plus extended thinking easily exceed a small
-        # cap, truncating mid-synthesis before the summary is even written
-        # (same failure mode fixed in grounding.py).
-        max_tokens=4096,
+        # Several search rounds plus thinking easily exceed a small cap,
+        # truncating mid-synthesis before the summary is even written. A fixed,
+        # roomy ceiling (only tokens used are billed), under the SDK's limit
+        # for a non-streaming request.
+        max_tokens=8000,
     )
     return "".join(
         block.text for block in response.content if getattr(block, "type", None) == "text"
@@ -315,7 +316,6 @@ async def detect_brand(*, api_key: str, query: str, market: str | None = None) -
         tool_name=_TOOL_NAME,
         tool_description="Return the detected brand, industry, competitors, buyer context, and brand summary.",
         input_schema=_INPUT_SCHEMA,
-        max_tokens=768,
     )
 
     # Every field is sent back in later requests, so each is fitted to its

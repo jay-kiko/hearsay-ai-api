@@ -213,21 +213,17 @@ async def test_category_suggestions_are_fitted(monkeypatch):
     assert len(suggestion.name) <= 120 and len(suggestion.buyer_context) <= 2000
 
 
-async def test_prompt_output_budget_scales_and_extra_prompts_are_cut(monkeypatch):
+async def test_extra_prompts_are_cut_to_the_requested_count(monkeypatch):
     from app.models import PersonaIn
     from app.services import prompt_gen
 
-    seen = {}
-
-    async def fake_structured(*, max_tokens, **_):
-        seen["max_tokens"] = max_tokens
+    async def fake_structured(**_):
         return {"personas": [{"personaId": f"p{i}", "prompts": [f"q{i}-{j}" for j in range(12)]} for i in range(10)]}
 
     monkeypatch.setattr(prompt_gen, "call_structured", fake_structured)
     personas = [PersonaIn(id=f"p{i}", title="T", role="r", pains="p", criteria="c") for i in range(10)]
     out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="i", buyer_context=None,
                                             personas=personas, prompts_per_persona=10)
-    assert seen["max_tokens"] > 2048
     assert all(len(p) == 10 for p in out.values())
 
 

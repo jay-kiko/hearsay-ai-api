@@ -123,8 +123,10 @@ Promoting a high-fan-out call needs a cost estimate first.
   nothing; a delivered job is marked `complete` so it never is.
 - Thinking counts against `max_tokens`, and the quality and standard tiers think by default: prompt
   generation for 6 personas spent all of a 2048 limit thinking, the tool call came back empty, and every
-  persona got the fallback question. Size a structured call's limit for thinking plus output; `call_structured`
-  asks once more with double the room when a reply stops at `max_tokens`.
+  persona got the fallback question. So structured calls don't guess a reply's size: they stream under one
+  ceiling (`anthropic_client._STRUCTURED_MAX_TOKENS`, 32k; the largest real reply, 10 personas x 10 prompts,
+  used ~9k), and answers and web searches have a fixed 8k. Only tokens used are billed. A reply that still
+  hits its ceiling ran away and counts as a failed attempt, never as a result.
 - The quality-tier model rejects a forced `tool_choice` (400). `call_structured`
   falls back to `tool_choice=auto` and remembers the model; don't remove that.
 - Search snippets alone are too thin to judge brand visibility (an obviously

@@ -141,7 +141,11 @@ async def _with_retry(fn, *, retries: int, label: str, retry_timeouts: bool = Tr
             await asyncio.sleep(1.0 * attempt)
 
 
-async def call_text(*, api_key: str, model: str, system: str, user: str, max_tokens: int = 1024) -> str:
+async def call_text(*, api_key: str, model: str, system: str, user: str, max_tokens: int = 8000) -> str:
+    """The measured answer. A roomy, fixed ceiling: the standard tier thinks,
+    and thinking counts against max_tokens (answers measured ~370 tokens with
+    it). A reply cut off at the ceiling is a failed attempt, never scored: a
+    truncated answer would read as "brand not mentioned"."""
     settings = get_settings()
     client = _client(api_key)
 
@@ -152,6 +156,9 @@ async def call_text(*, api_key: str, model: str, system: str, user: str, max_tok
             system=_cacheable_system(system),
             messages=[{"role": "user", "content": user}],
         )
+        if getattr(response, "stop_reason", None) == "max_tokens":
+            logger.warning("call_text stopped at the %d-token ceiling; treating it as a failed call", max_tokens)
+            raise ValueError(f"answer stopped at max_tokens={max_tokens}")
         return "".join(block.text for block in response.content if block.type == "text").strip()
 
     return await _with_retry(_do, retries=settings.anthropic_max_retries, label="call_text")
@@ -168,9 +175,13 @@ _AUTO_TOOL_NUDGE = (
 )
 
 
-# The SDK refuses non-streaming requests whose max_tokens implies more than
-# ten minutes of output; this stays well inside it.
-_MAX_STRUCTURED_TOKENS = 16_000
+# One ceiling for every structured call, not a per-call guess at the reply's
+# size: thinking counts against max_tokens, and tight per-call limits cut
+# replies off (6 personas x 3 prompts spent all of 2048 thinking, and every
+# persona got the fallback question). Only tokens used are billed. Measured
+# live, the largest reply the app can ask for (10 personas x 10 prompts) used
+# 7.9-9.1k; 32k leaves ~3.5x, and caps a runaway reply at ~$0.64 on Opus.
+_STRUCTURED_MAX_TOKENS = 32_000
 
 
 def _rejects_forced_tool_choice(exc: BadRequestError) -> bool:
@@ -248,7 +259,7 @@ async def call_structured(
     tool_name: str,
     tool_description: str,
     input_schema: dict[str, Any],
-    max_tokens: int = 1536,
+    max_tokens: int | None = None,
     retry_malformed: bool = False,
 ) -> dict[str, Any]:
     """Return a tool call's input as guaranteed-shape JSON.
@@ -257,42 +268,46 @@ async def call_structured(
     forced tool_choice, falls back to tool_choice=auto plus an instruction to
     call the tool, and raises if the model still doesn't.
 
+    The reply is streamed so its ceiling can sit above the SDK's limit for a
+    non-streaming request (~21k tokens); callers get the finished reply as
+    before. `max_tokens` defaults to one generous ceiling, not a guess at the
+    reply's size (see _STRUCTURED_MAX_TOKENS).
+
     `retry_malformed` retries a reply whose required array/object fields are
     still the wrong shape after decoding. Opt-in: detect parses comma-joined
     strings for its list fields itself, and would fail where it now recovers.
     """
     settings = get_settings()
     client = _client(api_key)
+    budget = max_tokens or _STRUCTURED_MAX_TOKENS
 
-    async def _request(forced: bool, budget: int):
-        return await client.messages.create(
+    async def _request(forced: bool):
+        async with client.messages.stream(
             model=model,
             max_tokens=budget,
             system=_cacheable_system(system if forced else system + _AUTO_TOOL_NUDGE),
             messages=[{"role": "user", "content": user}],
             tools=[{"name": tool_name, "description": tool_description, "input_schema": input_schema}],
             tool_choice={"type": "tool", "name": tool_name} if forced else {"type": "auto"},
-        )
+        ) as stream:
+            return await stream.get_final_message()
 
     async def _do() -> dict[str, Any]:
         forced = model not in _NO_FORCED_TOOL_CHOICE
         try:
-            response = await _request(forced, max_tokens)
+            response = await _request(forced)
         except BadRequestError as exc:
             if not forced or not _rejects_forced_tool_choice(exc):
                 raise
             logger.info("%s rejects forced tool_choice, falling back to auto", model)
             _NO_FORCED_TOOL_CHOICE.add(model)
-            forced = False
-            response = await _request(False, max_tokens)
-        if getattr(response, "stop_reason", None) == "max_tokens" and max_tokens < _MAX_STRUCTURED_TOKENS:
-            # Confirmed live: thinking counts against max_tokens, and prompt
-            # generation for 6 personas spent all 2048 before writing the tool
-            # call, which came back empty; every persona got the fallback
-            # question. A cut-off reply is asked for once more with room.
-            budget = min(max_tokens * 2, _MAX_STRUCTURED_TOKENS)
-            logger.warning("%s ran out of room at max_tokens=%d; asking again with %d", tool_name, max_tokens, budget)
-            response = await _request(forced, budget)
+            response = await _request(False)
+        if getattr(response, "stop_reason", None) == "max_tokens":
+            # Far past any real reply (the largest measured, 100 prompts with
+            # thinking, used ~9k): the model ran away, so this attempt failed
+            # and _with_retry makes a fresh one.
+            logger.warning("%s stopped at the %d-token ceiling; treating it as a failed call", tool_name, budget)
+            raise ValueError(f"{tool_name} reply stopped at max_tokens={budget}")
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
                 value = _decode_stringified(block.input, input_schema, tool_name)

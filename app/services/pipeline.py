@@ -302,7 +302,6 @@ async def _analyze_one_prompt(
         tool_name=_SENTIMENT_TOOL_NAME,
         tool_description="Classify sentiment toward the brand and extract a supporting quote.",
         input_schema=_SENTIMENT_INPUT_SCHEMA,
-        max_tokens=768,
     )
     # An off-enum value ("positive") would raise and fail the prompt; read it
     # as Neutral instead.
