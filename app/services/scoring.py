@@ -16,11 +16,20 @@ from pathlib import Path
 from app.models import Competitor, ResponsePart, Sentiment
 
 _RANK_STEP = 20  # each rank position back costs 20 points, floor 0
-# Also the Sentiment sub-score's weights (aggregation.py): one definition.
+# How much an answer's tone keeps of its position score in that answer's
+# visibility: a neutral mention at #1 is still good visibility.
 SENTIMENT_MULTIPLIER = {
     Sentiment.positive: 1.0,
     Sentiment.neutral: 0.7,
     Sentiment.negative: 0.35,
+}
+# The Sentiment sub-score: how positive the answers naming the brand are. Not
+# the multiplier above: scored with it, 11 negative answers of 43 still read 79
+# and showed green. A negative answer is worth nothing here, a neutral one half.
+SENTIMENT_POINTS = {
+    Sentiment.positive: 100,
+    Sentiment.neutral: 50,
+    Sentiment.negative: 0,
 }
 
 # Stripped before matching so a formal/legal name still matches a plain

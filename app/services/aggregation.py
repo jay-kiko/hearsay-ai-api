@@ -23,7 +23,7 @@ from app.models import (
     Sources,
 )
 from app.services.source_quality import UNVERIFIED
-from app.services.scoring import SENTIMENT_MULTIPLIER, name_matches, rank_score
+from app.services.scoring import SENTIMENT_POINTS, name_matches, rank_score
 
 
 
@@ -168,9 +168,11 @@ def build_score_breakdown(
     # mentioned exchanges Presence counts, so the card shares one denominator.
     rec_strength = round(sum(ex.vis for ex in mentioned_exchanges) / mentioned_prompts) if mentioned_prompts else 0
 
+    # Each answer's own position score, averaged. Rounding the average
+    # position first moved the score in steps of 20: #1.4 read 100, #1.6 80.
     ranked = [ex.rank for ex in mentioned_exchanges if ex.rank is not None]
-    avg_rank = round(sum(ranked) / len(ranked)) if ranked else None
-    ranking_score = rank_score(avg_rank) if avg_rank else 0
+    avg_rank = sum(ranked) / len(ranked) if ranked else None
+    ranking_score = round(sum(rank_score(r) for r in ranked) / len(ranked)) if ranked else 0
 
     sentiment_counts = Counter(ex.sentiment for ex in mentioned_exchanges)
     pos, neu, neg = (
@@ -179,7 +181,7 @@ def build_score_breakdown(
         sentiment_counts.get(Sentiment.negative, 0),
     )
     sentiment_score = (
-        round(sum(SENTIMENT_MULTIPLIER[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts * 100)
+        round(sum(SENTIMENT_POINTS[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts)
         if mentioned_prompts
         else 0
     )
@@ -218,7 +220,7 @@ def build_score_breakdown(
         ScoreComponent(
             name="Ranking",
             score=ranking_score,
-            note=f"Average position #{avg_rank} among every brand named" if avg_rank else "Not ranked in any answer",
+            note=f"Average position #{avg_rank:.1f} among every brand named" if avg_rank else "Not ranked in any answer",
         ),
         ScoreComponent(
             name="Sentiment", score=sentiment_score, note=f"{pos} positive · {neu} neutral · {neg} negative"

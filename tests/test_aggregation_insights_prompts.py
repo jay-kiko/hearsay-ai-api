@@ -469,3 +469,27 @@ async def test_a_persona_entry_that_is_not_an_object_is_skipped_not_a_crash(monk
     out = await persona_gen.generate_personas(api_key="k", industry="Cruises", competitors=[], buyer_context=None,
                                               persona_count=2)
     assert [p.title for p in out] == ["Planner"]
+
+
+# ── sentiment and ranking scores ─────────────────────────────────────
+
+def _breakdown_for(answers):
+    results = _results([_prompt(*answers)])
+    products = aggregation.build_products(results, "Nike", [])
+    return {c.name: c for c in aggregation.build_score_breakdown(
+        results, products, "Nike", Sources(citations=[], publishers=[], communities=[]))}
+
+
+def test_negative_answers_pull_the_sentiment_score_down():
+    # Confirmed live: 26 positive, 6 neutral, 11 negative scored 79 and showed green.
+    answers = ([_answer(["Nike"], 1, Sentiment.positive)] * 26 + [_answer(["Nike"], 1, Sentiment.neutral)] * 6
+               + [_answer(["Nike"], 1, Sentiment.negative)] * 11)
+    assert _breakdown_for(answers)["Sentiment"].score == 67  # (26x100 + 6x50 + 11x0) / 43
+
+
+def test_ranking_averages_each_answers_position_score():
+    # Rounding the average position first moved in steps of 20: #1.3 read 100.
+    answers = [_answer(["Nike"], 1)] * 2 + [_answer(["Hoka", "Nike"], 2)]
+    ranking = _breakdown_for(answers)["Ranking"]
+    assert ranking.score == 93  # (100 + 100 + 80) / 3
+    assert "#1.3" in ranking.note
