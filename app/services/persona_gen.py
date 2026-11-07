@@ -139,7 +139,8 @@ async def generate_personas(
         tool_name=_TOOL_NAME,
         tool_description="Return the written buyer personas.",
         input_schema=_INPUT_SCHEMA,
-        max_tokens=3072,
+        # Room for the quality tier's thinking, which counts against max_tokens.
+        max_tokens=8192,
     )
 
     personas: list[GeneratedPersona] = []
@@ -243,7 +244,7 @@ async def expand_custom_persona(
         tool_name=_EXPAND_TOOL_NAME,
         tool_description="Return the written persona.",
         input_schema=_EXPAND_INPUT_SCHEMA,
-        max_tokens=1024,
+        max_tokens=4096,
     )
 
     title = result.get("title") or "Custom Persona"

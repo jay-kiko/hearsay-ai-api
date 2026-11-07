@@ -74,16 +74,31 @@ async def test_generated_prompts_naming_a_brand_or_rival_are_dropped(monkeypatch
     assert out == {"p1": ["best kids club cruise from SG"]}
 
 
-async def test_malformed_output_falls_back_to_a_neutral_question_not_a_500(monkeypatch):
+async def test_a_persona_left_without_prompts_gets_a_neutral_question(monkeypatch):
+    other = PersonaIn(id="p2", title="Couple", role="r", pains="p", criteria="c")
+
     async def fake(**_):
-        return {"personas": [{"prompts": ["no id"]}, "junk", {"personaId": "p1", "prompts": "not a list"}]}
+        return {"personas": [{"prompts": ["no id"]}, "junk", {"personaId": "p1", "prompts": "not a list"},
+                             {"personaId": "p2", "prompts": ["3 night cruise from SG for two under $1k?"]}]}
 
     monkeypatch.setattr(prompt_gen, "call_structured", fake)
     out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Travel — Cruises", buyer_context=None,
-                                            market="Singapore", personas=[PERSONA], prompts_per_persona=3)
+                                            market="Singapore", personas=[PERSONA, other], prompts_per_persona=3)
     [question] = out["p1"]
     assert question == "Which cruises do people in Singapore actually recommend, and why?"
     assert "Parent" not in question and "—" not in question
+    assert out["p2"] == ["3 night cruise from SG for two under $1k?"]
+
+
+async def test_no_usable_prompts_for_anyone_is_an_error_not_a_set_of_fallbacks(monkeypatch):
+    # Confirmed live: a cut-off reply gave all 6 personas the same fallback question.
+    async def fake(**_):
+        return {}
+
+    monkeypatch.setattr(prompt_gen, "call_structured", fake)
+    with pytest.raises(ValueError):
+        await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Cruises", buyer_context=None,
+                                          personas=[PERSONA], prompts_per_persona=3)
 
 
 async def test_seed_adaptation_that_adds_a_brand_falls_back_to_the_seed(monkeypatch):

@@ -241,10 +241,11 @@ async def generate_prompts(
             tool_name=_TOOL_NAME,
             tool_description="Return the written prompts for every persona.",
             input_schema=_INPUT_SCHEMA,
-            # Sized to the output: a fixed 2048 cut off at 10 personas x 10 prompts,
-            # the truncated tool call came back empty and every persona silently
-            # got the fallback prompt. ~60 tokens per prompt plus JSON overhead.
-            max_tokens=max(2048, 60 * count * len(personas) + 512),
+            # Sized to the output plus the quality tier's thinking, which counts
+            # against max_tokens: 2048 for 6 personas x 3 prompts went to thinking,
+            # the tool call came back empty and every persona got the fallback
+            # question (confirmed live). ~100 tokens per prompt, 4096 to think.
+            max_tokens=min(16_000, 4096 + 100 * count * len(personas)),
         )
 
         # Tool output isn't a hard type guarantee: skip malformed entries rather
@@ -266,6 +267,10 @@ async def generate_prompts(
         return out
 
     output = await attempt(None)
+    if not any(output.values()):
+        # Nothing usable for anyone is a failed call, not a set of prompts: the
+        # fallback question for every persona read as a real result.
+        raise ValueError("prompt generation returned no usable prompts")
     repeated = [p for p in personas if near_duplicate_pairs(output[p.id])]
     if repeated:
         logger.warning("prompts repeated one question for %d persona(s); asking once more", len(repeated))
@@ -364,7 +369,8 @@ async def adapt_seed_prompt(
         tool_name=_SEED_TOOL_NAME,
         tool_description="Return the adapted prompt for every persona.",
         input_schema=_SEED_INPUT_SCHEMA,
-        max_tokens=1024,
+        # Room for the quality tier's thinking, which counts against max_tokens.
+        max_tokens=4096,
     )
 
     by_persona = {

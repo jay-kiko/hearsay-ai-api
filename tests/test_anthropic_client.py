@@ -256,3 +256,22 @@ def test_decodes_list_items_sent_as_json_strings():
     schema = {"type": "object", "properties": {"personas": {"type": "array", "items": {"type": "object"}}}}
     value = {"personas": ['{"title": "Planner"}', {"title": "Parent"}, "not json"]}
     assert ac._decode_stringified(value, schema, "t") == {"personas": [{"title": "Planner"}, {"title": "Parent"}, "not json"]}
+
+
+
+async def test_a_reply_cut_off_at_max_tokens_is_asked_for_again_with_more_room(monkeypatch):
+    # Confirmed live: thinking used all 2048 tokens and the tool call came back empty.
+    seen = []
+
+    class _CutOff(_FakeClient):
+        async def _create(self, **kwargs):
+            seen.append(kwargs["max_tokens"])
+            if len(seen) == 1:
+                return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name="t", input={})], stop_reason="max_tokens")
+            return SimpleNamespace(content=[SimpleNamespace(type="tool_use", name="t", input={"x": "ok"})], stop_reason="tool_use")
+
+    monkeypatch.setattr(ac, "AsyncAnthropic", _CutOff)
+    ac._NO_FORCED_TOOL_CHOICE.add("m")
+    out = await ac.call_structured(api_key="k", model="m", system="s", user="u", tool_name="t", tool_description="d",
+                                   input_schema={"type": "object", "properties": {}}, max_tokens=2048)
+    assert out == {"x": "ok"} and seen == [2048, 4096]

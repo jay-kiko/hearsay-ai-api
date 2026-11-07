@@ -168,6 +168,11 @@ _AUTO_TOOL_NUDGE = (
 )
 
 
+# The SDK refuses non-streaming requests whose max_tokens implies more than
+# ten minutes of output; this stays well inside it.
+_MAX_STRUCTURED_TOKENS = 16_000
+
+
 def _rejects_forced_tool_choice(exc: BadRequestError) -> bool:
     return "tool_choice" in str(exc)
 
@@ -259,10 +264,10 @@ async def call_structured(
     settings = get_settings()
     client = _client(api_key)
 
-    async def _request(forced: bool):
+    async def _request(forced: bool, budget: int):
         return await client.messages.create(
             model=model,
-            max_tokens=max_tokens,
+            max_tokens=budget,
             system=_cacheable_system(system if forced else system + _AUTO_TOOL_NUDGE),
             messages=[{"role": "user", "content": user}],
             tools=[{"name": tool_name, "description": tool_description, "input_schema": input_schema}],
@@ -272,13 +277,22 @@ async def call_structured(
     async def _do() -> dict[str, Any]:
         forced = model not in _NO_FORCED_TOOL_CHOICE
         try:
-            response = await _request(forced)
+            response = await _request(forced, max_tokens)
         except BadRequestError as exc:
             if not forced or not _rejects_forced_tool_choice(exc):
                 raise
             logger.info("%s rejects forced tool_choice, falling back to auto", model)
             _NO_FORCED_TOOL_CHOICE.add(model)
-            response = await _request(False)
+            forced = False
+            response = await _request(False, max_tokens)
+        if getattr(response, "stop_reason", None) == "max_tokens" and max_tokens < _MAX_STRUCTURED_TOKENS:
+            # Confirmed live: thinking counts against max_tokens, and prompt
+            # generation for 6 personas spent all 2048 before writing the tool
+            # call, which came back empty; every persona got the fallback
+            # question. A cut-off reply is asked for once more with room.
+            budget = min(max_tokens * 2, _MAX_STRUCTURED_TOKENS)
+            logger.warning("%s ran out of room at max_tokens=%d; asking again with %d", tool_name, max_tokens, budget)
+            response = await _request(forced, budget)
         for block in response.content:
             if block.type == "tool_use" and block.name == tool_name:
                 value = _decode_stringified(block.input, input_schema, tool_name)

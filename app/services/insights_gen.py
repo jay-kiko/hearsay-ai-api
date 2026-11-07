@@ -261,7 +261,8 @@ async def generate_insights(
             # 2048 tokens for a verbose run (several detailed opportunities
             # alone can approach it), and radarCategories — last in the
             # schema — is exactly what gets cut when that happens.
-            max_tokens=4096,
+            # Room for the quality tier's thinking, which counts against max_tokens.
+            max_tokens=8192,
         )
         # Tool output isn't a hard type guarantee; anything unparseable falls
         # through to the same fail-open empty result as a call failure.
