@@ -81,7 +81,13 @@ _FILTER_INPUT_SCHEMA = {
         "relevantDomains": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "The domains from the candidate list that would genuinely help answer these buyer questions.",
+            # No product names here: the filter never sees a brand (invariant 7).
+            # Confirmed live: a "why <editor> may be crashing, and how to fix
+            # it" article was shown as a source.
+            "description": (
+                "The domains from the candidate list whose page helps a buyer choose between options. Never a "
+                "tutorial, troubleshooting or support page for one product."
+            ),
         }
     },
     "required": ["relevantDomains"],
@@ -201,10 +207,12 @@ async def _filter_relevant(
             api_key=api_key,
             model=model,
             system=(
-                "These pages came back for buyer questions in a product category. Keep a page if it would "
-                "genuinely help someone answer one of these questions: reviews, comparisons, guides, forum "
-                "discussions, editorial. Drop pages that are off-topic, navigation or login pages, or about a "
-                "different industry. When a market is given, also drop pages written for buyers in a different "
+                "These pages came back for buyer questions in a product category. Keep a page only if it helps "
+                "someone choose between options: reviews, comparisons, 'best of' lists, buying guides, editorial "
+                "on which to pick, and forum discussions about what to buy. Drop pages for people who already use "
+                "one product (tutorials, troubleshooting, how-to and support pages, documentation, release notes), "
+                "and pages that are off-topic, navigation or login pages, or about a different industry. When a "
+                "market is given, also drop pages written for buyers in a different "
                 "country (another country's prices, stores, tax rules or regulations), and keep pages that apply "
                 "anywhere, such as international reviews and global forums. Judge only relevance to the "
                 "category, market and questions. Do not consider which brands or companies a page mentions."

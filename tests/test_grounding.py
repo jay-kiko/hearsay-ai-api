@@ -193,6 +193,16 @@ async def test_relevance_filter_never_sees_brand_or_competitor_names(calls):
         assert name not in context.lower()
 
 
+def test_the_relevance_filter_keeps_choosing_pages_and_drops_how_to_pages():
+    # Confirmed live: a troubleshooting article for one editor was shown as a source.
+    import json
+    schema = json.dumps(grounding._FILTER_INPUT_SCHEMA).lower()
+    assert "troubleshooting" in schema and "choose between options" in schema
+    # The schema is sent to the model too: it names no product (invariant 7).
+    for product in ("final cut", "premiere", "davinci", "disney"):
+        assert product not in schema
+
+
 async def test_a_search_that_names_the_brand_is_dropped_and_logged(calls):
     calls["install"](leak=True)
     sources, _ = await _run()
