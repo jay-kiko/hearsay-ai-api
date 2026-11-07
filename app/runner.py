@@ -161,12 +161,14 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             sources, sitelist = empty_sources("Sources couldn't be researched this run, so none are shown.")
 
         products = aggregation.build_products(results, request.brand, request.competitors)
-        score_breakdown = aggregation.build_score_breakdown(results, products, request.brand, sources)
-        visibility_score = aggregation.compute_composite_score(
+        score_breakdown = aggregation.build_score_breakdown(
+            results, products, request.brand, sources, personas=request.personas
+        )
+        headline = aggregation.headline_breakdown(
             score_breakdown, has_sources=bool(aggregation.measured_sources(sources))
         )
 
-        overview = aggregation.build_overview(results, visibility_score)
+        overview = aggregation.build_overview(results, headline.score)
         overview.failed_count = len(tasks) - len(results)
         overview.top_competitor = aggregation.top_competitor(products, request.brand)
 
@@ -193,6 +195,7 @@ async def run_job(job_id: str, request: AnalysisRequest, job_store: JobStore, an
             competitor_diagnosis=competitor_diagnosis,
             opportunities=opportunities,
             radar=radar,
+            headline=headline,
         )
         job_store.complete(job_id, complete)
         try:

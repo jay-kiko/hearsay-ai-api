@@ -8,16 +8,22 @@ across every persona's response rather than just the brand's own.
 """
 from __future__ import annotations
 
+import math
 from collections import Counter
 
 from app.models import (
     AnswerSample,
     Competitor,
+    DetailRow,
+    HeadlineBreakdown,
+    HeadlineRow,
     Overview,
     PersonaExchange,
+    PersonaIn,
     PersonaResult,
     Product,
     ScoreComponent,
+    ScoreDetail,
     Sentiment,
     SourceIntel,
     Sources,
@@ -140,39 +146,42 @@ def share_of_voice(products: list[Product]) -> tuple[int, str]:
     if brand is None or brand.count == 0:
         return 0, f"Not named in any answer; {len(named)} other brand{'s' if len(named) != 1 else ''} were"
     leader = max(named, key=lambda p: p.count)
-    score = round(brand.count / leader.count * 100)
+    score = score_round(brand.count / leader.count * 100)
     rank = 1 + sum(1 for p in named if p.count > brand.count)
-    note = f"{round(brand.share * 100)}% of all product mentions · #{rank} of {len(named)} brands named"
+    note = f"{score_round(brand.share * 100)}% of all product mentions · #{rank} of {len(named)} brands named"
     if rank > 1:
         note += f" (leader: {leader.name}, {leader.count} mentions to your {brand.count})"
     return score, note
 
 
 def build_score_breakdown(
-    results: dict[str, PersonaResult], products: list[Product], brand: str, sources: Sources
+    results: dict[str, PersonaResult], products: list[Product], brand: str, sources: Sources,
+    personas: list[PersonaIn] | None = None,
 ) -> list[ScoreComponent]:
     """Six deterministic sub-scores behind the single visibilityScore — no
     extra AI call, everything here is math over data the pipeline/grounding
-    already produced."""
+    already produced. Each carries its working (`details`), built from the
+    same variables as its score, so what a client reads can't disagree with
+    the number. `personas` only names them in Presence's rows."""
     answers = all_answers(results)
     mentioned_exchanges = [a for a in answers if a.mentioned]
     mentioned_prompts = len(mentioned_exchanges)
     total_prompts = len(answers)
     per_prompt = answers_per_prompt(results)
 
-    presence = round(mentioned_prompts / total_prompts * 100) if total_prompts else 0
+    presence = score_round(mentioned_prompts / total_prompts * 100) if total_prompts else 0
 
     sov, sov_note = share_of_voice(products)
 
     # Recommendation Strength / Ranking / Sentiment average over the same
     # mentioned exchanges Presence counts, so the card shares one denominator.
-    rec_strength = round(sum(ex.vis for ex in mentioned_exchanges) / mentioned_prompts) if mentioned_prompts else 0
+    rec_strength = score_round(sum(ex.vis for ex in mentioned_exchanges) / mentioned_prompts) if mentioned_prompts else 0
 
     # Each answer's own position score, averaged. Rounding the average
     # position first moved the score in steps of 20: #1.4 read 100, #1.6 80.
     ranked = [ex.rank for ex in mentioned_exchanges if ex.rank is not None]
     avg_rank = sum(ranked) / len(ranked) if ranked else None
-    ranking_score = round(sum(rank_score(r) for r in ranked) / len(ranked)) if ranked else 0
+    ranking_score = score_round(sum(rank_score(r) for r in ranked) / len(ranked)) if ranked else 0
 
     sentiment_counts = Counter(ex.sentiment for ex in mentioned_exchanges)
     pos, neu, neg = (
@@ -181,7 +190,7 @@ def build_score_breakdown(
         sentiment_counts.get(Sentiment.negative, 0),
     )
     sentiment_score = (
-        round(sum(SENTIMENT_POINTS[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts)
+        score_round(sum(SENTIMENT_POINTS[s] * c for s, c in sentiment_counts.items()) / mentioned_prompts)
         if mentioned_prompts
         else 0
     )
@@ -193,7 +202,13 @@ def build_score_breakdown(
     readable = measured_sources(sources)
     named_sources = sum(1 for s in readable if s.mentions > 0)
     unverified = total_sources - len(readable)
-    source_authority = round(named_sources / len(readable) * 100) if readable else 0
+    source_authority = score_round(named_sources / len(readable) * 100) if readable else 0
+
+    titles = {p.id: p.title for p in personas or []}
+    persona_rows = []
+    for pid, result in results.items():
+        m, t = mention_counts({pid: result})
+        persona_rows.append(DetailRow(label=titles.get(pid, pid), value=f"{m} of {t} answers"))
 
     return [
         ScoreComponent(
@@ -204,9 +219,18 @@ def build_score_breakdown(
             note=f"Mentioned in {mentioned_prompts} of {total_prompts} "
             + (f"answers (each query asked {per_prompt} times)" if per_prompt > 1 else "persona queries")
             + (f" ({failed} more couldn't be answered this run)" if (failed := _failed_prompts(results)) else ""),
+            details=ScoreDetail(
+                measures="How often AI answers name your brand when buyers ask. Each buyer question is asked "
+                         f"{per_prompt} time{'s' if per_prompt != 1 else ''}, since answers vary, and every answer counts.",
+                calculation=[f"{mentioned_prompts} of {total_prompts} answers named your brand",
+                             f"{mentioned_prompts} ÷ {total_prompts} = {presence}%"] if total_prompts else ["No answers to count"],
+                rows_title="By persona",
+                rows=persona_rows,
+            ),
         ),
         ScoreComponent(
-            name="Share of Voice", score=sov, note=sov_note
+            name="Share of Voice", score=sov, note=sov_note,
+            details=_share_of_voice_detail(products, sov),
         ),
         ScoreComponent(
             name="Recommendation Strength",
@@ -216,21 +240,115 @@ def build_score_breakdown(
                 if mentioned_prompts
                 else "Never mentioned, so no recommendation strength to measure"
             ),
+            details=ScoreDetail(
+                measures="How strongly the answers that name you put you forward: each answer's position score "
+                         "(#1 = 100, 20 less per place), kept in full when the tone is positive, 70% when neutral and "
+                         "35% when negative. Not part of the Visibility Score, which counts position and tone "
+                         "separately.",
+                calculation=(
+                    [f"Average over the {mentioned_prompts} answers that named you = {rec_strength}"]
+                    if mentioned_prompts else ["No answers named your brand, so there is nothing to average"]
+                ),
+                rows_title="Answers by score",
+                rows=[DetailRow(label=f"Scored {vis}", value=_answers(n))
+                      for vis, n in sorted(Counter(ex.vis for ex in mentioned_exchanges).items(), reverse=True)],
+            ),
         ),
         ScoreComponent(
             name="Ranking",
             score=ranking_score,
             note=f"Average position #{avg_rank:.1f} among every brand named" if avg_rank else "Not ranked in any answer",
+            details=ScoreDetail(
+                measures="Where you appear among the brands each answer names, including brands not on your list. "
+                         "#1 scores 100, and each place lower 20 less.",
+                calculation=(
+                    ["(" + " + ".join(f"{n} × {rank_score(r)}" for r, n in sorted(Counter(ranked).items()))
+                     + f") ÷ {len(ranked)} = {ranking_score}",
+                     f"Average position: #{avg_rank:.1f}"]
+                    if ranked else ["Your brand wasn't ranked in any answer"]
+                ),
+                rows_title="Answers by position",
+                rows=[DetailRow(label=f"#{r}", value=f"{_answers(n)} ({rank_score(r)} points)")
+                      for r, n in sorted(Counter(ranked).items())],
+            ),
         ),
         ScoreComponent(
-            name="Sentiment", score=sentiment_score, note=f"{pos} positive · {neu} neutral · {neg} negative"
+            name="Sentiment", score=sentiment_score, note=f"{pos} positive · {neu} neutral · {neg} negative",
+            details=ScoreDetail(
+                measures="How positively the answers that name you talk about you. A positive answer is worth "
+                         f"{SENTIMENT_POINTS[Sentiment.positive]}, a neutral one {SENTIMENT_POINTS[Sentiment.neutral]} "
+                         f"and a negative one {SENTIMENT_POINTS[Sentiment.negative]}.",
+                calculation=(
+                    [f"({pos} × {SENTIMENT_POINTS[Sentiment.positive]} + {neu} × {SENTIMENT_POINTS[Sentiment.neutral]}"
+                     f" + {neg} × {SENTIMENT_POINTS[Sentiment.negative]}) ÷ {mentioned_prompts} = {sentiment_score}"]
+                    if mentioned_prompts else ["No answers named your brand, so there is no tone to score"]
+                ),
+                rows_title="Answers naming you",
+                rows=[DetailRow(label="Positive", value=_answers(pos)), DetailRow(label="Neutral", value=_answers(neu)),
+                      DetailRow(label="Negative", value=_answers(neg))],
+            ),
         ),
         ScoreComponent(
             name="Source Authority",
             score=source_authority,
             note=_source_authority_note(named_sources, len(readable), unverified),
+            details=ScoreDetail(
+                measures="How many of the independent pages buyers' own searches turn up name you, counted on "
+                         "the page itself. Pages we couldn't read are left out rather than counted against you.",
+                calculation=(
+                    [f"{named_sources} of {len(readable)} readable sources name you",
+                     f"{named_sources} ÷ {len(readable)} = {source_authority}%"]
+                    if readable else ["No readable sources, so this is left out of the Visibility Score"]
+                ),
+                rows_title="Sources",
+                rows=[DetailRow(label=s.domain, value="Names you" if s.mentions > 0 else "Doesn't name you")
+                      for s in readable]
+                + [DetailRow(label=s.domain, value="Couldn't be read")
+                   for s in sources.source_intel if s.visibility == UNVERIFIED],
+            ),
         ),
     ]
+
+
+def score_round(value: float) -> int:
+    """Half up, as a client checking the working would round: Python's round()
+    sends halves to the even number, so (100 + 3 x 50) / 4 = 62.5 read 62."""
+    return int(math.floor(value + 0.5))
+
+
+def _possessive(name: str) -> str:
+    return f"{name}'" if name.endswith("s") else f"{name}'s"
+
+
+def _answers(n: int) -> str:
+    return f"{n} answer{'s' if n != 1 else ''}"
+
+
+def _share_of_voice_detail(products: list[Product], score: int) -> ScoreDetail:
+    brand = next((p for p in products if p.is_brand), None)
+    named = [p for p in products if p.count > 0]
+    measures = ("Your share of brand mentions, compared with the most-mentioned brand: the leader scores 100. "
+                "Brands not on your competitor list count too.")
+    listed = [p for p in products if p.listed is not False and p.count > 0]
+    others = [p for p in products if p.listed is False and p.count > 0]
+    rows = [DetailRow(label=p.name, value=f"{_answers(p.count)} · {score_round(p.share * 100)}% of mentions") for p in listed]
+    if others:
+        rows.append(DetailRow(
+            label=f"{len(others)} brand{'s' if len(others) != 1 else ''} not on your list",
+            value=f"{_answers(sum(p.count for p in others))} in total · "
+                  f"{score_round(sum(p.share for p in others) * 100)}% of mentions",
+        ))
+    if brand is None or brand.count == 0:
+        return ScoreDetail(measures=measures, calculation=["No answer named your brand, so 0"],
+                           rows_title="Answers naming each brand", rows=rows)
+    leader = max(named, key=lambda p: p.count)
+    calculation = (
+        [f"You are the most-named brand ({_answers(brand.count)}), so {score}"]
+        if leader.count == brand.count else
+        [f"Your {_answers(brand.count)} ÷ {_possessive(leader.name)} {leader.count} × 100 = {score}"]
+    )
+    calculation.append(f"Your share of all brand mentions: {score_round(brand.share * 100)}%")
+    return ScoreDetail(measures=measures, calculation=calculation, rows_title="Answers naming each brand", rows=rows)
 
 
 def measured_sources(sources: Sources) -> list[SourceIntel]:
@@ -273,18 +391,39 @@ _COMPOSITE_WEIGHTS = {
 _SCALED_BY_PRESENCE = ("Ranking", "Sentiment")
 
 
-def compute_composite_score(score_breakdown: list[ScoreComponent], *, has_sources: bool = True) -> int:
-    """With no sources there is nothing to measure Source Authority on, so it is
-    left out and the other weights re-normalised — scoring it 0 would cut the
-    headline by up to 10 points over a search that came back empty."""
+def headline_breakdown(score_breakdown: list[ScoreComponent], *, has_sources: bool = True) -> HeadlineBreakdown:
+    """The Visibility Score and the points each part contributes: the one
+    definition the score comes from, so the table a client reads always adds
+    up to it. With no sources there is nothing to measure Source Authority on,
+    so it is left out and the other weights re-normalised — scoring it 0 would
+    cut the headline by up to 10 points over a search that came back empty."""
     weights = {k: w for k, w in _COMPOSITE_WEIGHTS.items() if has_sources or k != "Source Authority"}
     total = sum(weights.values())
     presence = next((c.score for c in score_breakdown if c.name == "Presence"), 0) / 100
-    weighted = sum(
-        weights.get(c.name, 0.0) * c.score * (presence if c.name in _SCALED_BY_PRESENCE else 1.0)
-        for c in score_breakdown
-    )
-    return round(weighted / total) if total else 0
+    rows = []
+    for c in score_breakdown:
+        if c.name not in weights:
+            continue
+        factor = presence if c.name in _SCALED_BY_PRESENCE else 1.0
+        weight = weights[c.name] / total if total else 0.0
+        rows.append(HeadlineRow(name=c.name, score=c.score, weight=round(weight, 4), factor=round(factor, 4),
+                                points=round(weight * c.score * factor, 2)))
+    score = score_round(sum(weights[c.name] * c.score * (presence if c.name in _SCALED_BY_PRESENCE else 1.0)
+                      for c in score_breakdown if c.name in weights) / total) if total else 0
+    notes = [
+        "Ranking and Sentiment count in proportion to Presence: they describe how you do when you're named, "
+        "so a brand named rarely can't score high on them alone.",
+        "Recommendation Strength isn't added on top: it combines position and tone, which Ranking and "
+        "Sentiment already count.",
+    ]
+    if not has_sources:
+        notes.append("Source Authority is left out because no source could be measured, and the other weights "
+                     "are scaled up to fill its share.")
+    return HeadlineBreakdown(score=score, rows=rows, notes=notes)
+
+
+def compute_composite_score(score_breakdown: list[ScoreComponent], *, has_sources: bool = True) -> int:
+    return headline_breakdown(score_breakdown, has_sources=has_sources).score
 
 
 def top_competitor(products: list[Product], brand: str) -> str | None:

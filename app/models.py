@@ -417,10 +417,45 @@ class Product(CamelModel):
     listed: bool = True
 
 
+class DetailRow(CamelModel):
+    label: str
+    value: str
+
+
+class ScoreDetail(CamelModel):
+    """How one score was worked out, from the same numbers that produced it
+    (aggregation.build_score_breakdown), so the explanation can't drift from
+    the score. Shown to clients when they expand a score."""
+
+    measures: str
+    calculation: list[str] = Field(default_factory=list)
+    rows_title: str = ""
+    rows: list[DetailRow] = Field(default_factory=list)
+
+
 class ScoreComponent(CamelModel):
     name: str
     score: int
     note: str
+    details: ScoreDetail | None = None
+
+
+class HeadlineRow(CamelModel):
+    name: str
+    score: int
+    weight: float
+    # 1.0, or Presence / 100 for the scores that count at Presence's strength.
+    factor: float
+    points: float
+
+
+class HeadlineBreakdown(CamelModel):
+    """The Visibility Score as the sum of its parts (aggregation.headline_breakdown,
+    the one definition the score itself comes from)."""
+
+    score: int
+    rows: list[HeadlineRow]
+    notes: list[str] = Field(default_factory=list)
 
 
 class CompetitorDiagnosis(CamelModel):
@@ -551,6 +586,7 @@ class AnalysisComplete(CamelModel):
     competitor_diagnosis: CompetitorDiagnosis
     opportunities: list[Opportunity]
     radar: list[RadarCategory]
+    headline: HeadlineBreakdown | None = None
 
 
 class JobStatus(str, Enum):

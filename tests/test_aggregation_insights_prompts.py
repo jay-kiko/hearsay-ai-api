@@ -493,3 +493,40 @@ def test_ranking_averages_each_answers_position_score():
     ranking = _breakdown_for(answers)["Ranking"]
     assert ranking.score == 93  # (100 + 100 + 80) / 3
     assert "#1.3" in ranking.note
+
+
+# ── the working behind each score ────────────────────────────────────
+
+def test_every_score_carries_working_that_ends_in_that_score():
+    answers = ([_answer(["Nike", "Hoka"], 1, Sentiment.positive)] * 3 + [_answer(["Hoka", "Nike"], 2, Sentiment.neutral)]
+               + [_answer(["Hoka"])] * 2)
+    results = _results([_prompt(*answers)])
+    products = aggregation.build_products(results, "Nike", [Competitor(name="Hoka", match_names=["Hoka"])])
+    breakdown = aggregation.build_score_breakdown(results, products, "Nike", Sources(citations=[], publishers=[], communities=[]),
+                                                  personas=[PersonaIn(id="p", title="Weekend Runner", role="r", pains="p", criteria="c")])
+    by = {c.name: c for c in breakdown}
+    for c in breakdown:
+        assert c.details and c.details.measures
+    assert by["Presence"].details.calculation[-1] == f"4 ÷ 6 = {by['Presence'].score}%"
+    assert by["Presence"].details.rows[0].label == "Weekend Runner"
+    assert by["Ranking"].details.calculation[0] == f"(3 × 100 + 1 × 80) ÷ 4 = {by['Ranking'].score}"
+    assert by["Sentiment"].details.calculation[0].endswith(f"= {by['Sentiment'].score}")
+    assert "Hoka" in by["Share of Voice"].details.calculation[0]
+
+
+def test_the_headline_table_adds_up_to_the_headline():
+    answers = [_answer(["Nike", "Hoka"], 1)] * 2 + [_answer(["Hoka"])] * 4
+    results = _results([_prompt(*answers)])
+    products = aggregation.build_products(results, "Nike", [Competitor(name="Hoka", match_names=["Hoka"])])
+    breakdown = aggregation.build_score_breakdown(results, products, "Nike", Sources(citations=[], publishers=[], communities=[]))
+    headline = aggregation.headline_breakdown(breakdown, has_sources=False)
+    assert headline.score == aggregation.compute_composite_score(breakdown, has_sources=False)
+    assert round(sum(r.points for r in headline.rows)) == headline.score
+    assert {r.name for r in headline.rows} == {"Presence", "Share of Voice", "Ranking", "Sentiment"}
+    assert any("Source Authority is left out" in n for n in headline.notes)
+
+
+def test_scores_round_halves_up_as_a_reader_would():
+    # (1 x 100 + 3 x 50) / 4 = 62.5: round() made it 62, the working says 63.
+    answers = [_answer(["Nike"], 1, Sentiment.positive)] + [_answer(["Nike"], 1, Sentiment.neutral)] * 3
+    assert _breakdown_for(answers)["Sentiment"].score == 63
