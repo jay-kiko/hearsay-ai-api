@@ -600,7 +600,7 @@ async def _read_blocked_pages(
         if isinstance(result, BaseException):
             logger.warning("web_fetch failed for %s: %r", url, result)
         elif result is not None:
-            checks[url] = sq.PageCheck(alive=True, text=result.text, retrieved_at=result.retrieved_at)
+            checks[url] = sq.PageCheck(alive=True, text=sq.strip_link_lists(result.text), retrieved_at=result.retrieved_at)
     read = sum(1 for url in targets if checks[url].readable)
     logger.info("web_fetch read %d of %d pages our fetcher couldn't", read, len(targets))
 

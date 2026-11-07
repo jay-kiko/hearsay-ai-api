@@ -325,6 +325,11 @@ class PageCheck:
 
 _MAX_BODY_BYTES = 200_000
 _SKIP_ELEMENTS = frozenset({"script", "style", "noscript", "template"})
+# Site menus, page chrome and sidebars: not what the page says. Confirmed live:
+# pages read "Visible" only because their menu listed the brand ("Destinations
+# … Disney Universal Cruises"). Unlike a script, one left unclosed skips only
+# its own tag, so a stray <nav> can't drop the article after it.
+_SKIP_LAYOUT = frozenset({"nav", "header", "footer", "aside"})
 _TAG_NAME_RE = re.compile(r"/?([a-zA-Z][a-zA-Z0-9-]*)")
 _ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz")
 
@@ -360,12 +365,29 @@ def html_to_text(raw: str) -> str:
             break
         i = gt + 1
         tag = _TAG_NAME_RE.match(raw, lt + 1)
-        if tag and not tag.group(0).startswith("/") and tag.group(1).lower() in _SKIP_ELEMENTS:
-            close = lowered.find("</" + tag.group(1).lower(), i)
+        name = tag.group(1).lower() if tag and not tag.group(0).startswith("/") else ""
+        if name in _SKIP_ELEMENTS or name in _SKIP_LAYOUT:
+            close = lowered.find("</" + name, i)
             close_gt = raw.find(">", close) if close != -1 else -1
-            i = n if close_gt == -1 else close_gt + 1
+            if close_gt != -1:
+                i = close_gt + 1
+            elif name in _SKIP_ELEMENTS:
+                i = n
         out.append(" ")
     return " ".join(html.unescape("".join(out)).split())
+
+
+# Three or more Markdown links in a row, with only spaces, bullets or
+# separators between them: a menu or a link list in web_fetch's Markdown copy
+# of a page (confirmed live: cruisecritic.com read "Visible" from
+# "[Cunard Reviews](…)[Disney Reviews](…)[Holland Reviews](…)").
+_LINK_RUN = re.compile(r"(?:\[[^\]\n]{0,120}\]\([^)\s]{1,500}\)[\s|•·,/*>-]*){3,}")
+
+
+def strip_link_lists(text: str) -> str:
+    """Markdown text without its menus and link lists; a link inside a
+    sentence stays."""
+    return _LINK_RUN.sub(" ", text)
 
 
 async def check_pages(

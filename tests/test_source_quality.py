@@ -207,3 +207,35 @@ async def test_a_page_that_drips_bytes_is_cut_off_by_the_page_deadline(monkeypat
     out = await sq.check_pages(["https://slow.example/post"], page_deadline=0.2)
     assert time.monotonic() - started < 2
     assert out["https://slow.example/post"].alive is None  # unknown, not dead
+
+
+# ── menus and page chrome are not what a page says ───────────────────
+
+def test_menus_header_footer_and_sidebars_are_not_page_text():
+    # Confirmed live: travelingears.com read "Visible" from its menu alone.
+    raw = ("<header><a>Home</a></header><nav><a>Destinations</a><a>Disney</a><a>Universal Cruises</a></nav>"
+           "<article><p>Mariner of the Seas kids club guide.</p></article>"
+           "<aside>Also read: Disney Cruise Line tips</aside><footer>Disney Cruise Line partner</footer>")
+    text = sq.html_to_text(raw)
+    assert text == "Mariner of the Seas kids club guide."
+    assert count_brand_mentions(text, "Disney Cruise Line", ["Disney Cruise Line"]) == 0
+
+
+def test_an_unclosed_menu_does_not_swallow_the_article():
+    raw = "<nav><a>Home</a> <p>We sailed on Disney Cruise Line last June.</p>"
+    assert "Disney Cruise Line last June" in sq.html_to_text(raw)
+    # An unclosed script still ends the parse: its contents are never text.
+    assert sq.html_to_text("<p>Hi</p><script>var x = '<p>secret</p>'") == "Hi"
+
+
+def test_link_lists_in_fetched_markdown_are_dropped_but_inline_links_stay():
+    # Confirmed live: cruisecritic.com's web_fetch copy named Disney only in a link list.
+    menu = ("[Celebrity Reviews](https://www.cruisecritic.com/cruise/celebrity/reviews)"
+            "[Cunard Reviews](https://www.cruisecritic.com/cruise/cunard/reviews)"
+            "[Disney Reviews](https://www.cruisecritic.com/cruise/disney/reviews)")
+    text = f"{menu}\nRoyal Caribbean has a nursery. We loved [Disney Cruise Line](https://x.example/dcl) too."
+    stripped = sq.strip_link_lists(text)
+    assert "Disney Reviews" not in stripped and "Celebrity Reviews" not in stripped
+    assert "[Disney Cruise Line](https://x.example/dcl)" in stripped
+    bulleted = sq.strip_link_lists("- [A](https://a.x)\n- [B](https://b.x)\n- [C](https://c.x)\nBody")
+    assert "[A]" not in bulleted and "[C]" not in bulleted and "Body" in bulleted
