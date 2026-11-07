@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.models import Competitor, GeneratedPersona
 from app.services.anthropic_client import call_structured
 from app.services.common import DEFAULT_BUYER_CONTEXT
+from app.services.scoring import without_names
 
 _TOOL_NAME = "write_buyer_personas"
 
@@ -77,7 +78,10 @@ _BREVITY_RULES = (
 _NO_BRANDS_RULE = (
     " Never name any specific brand, product, ship or company in any field — not the brand being "
     "researched (a summary of it may be given as background) and not its competitors. Describe the "
-    "situation and what the person cares about, not which options they are choosing between."
+    "situation and what the person cares about, not which options they are choosing between. Each "
+    "persona is a buyer weighing the market's options, never a fan or existing customer of one brand, "
+    "and never built around something only one brand offers (its characters, licensed content or "
+    "signature features): their questions would then point at that brand."
 )
 
 def _user_prompt(
@@ -111,8 +115,18 @@ async def generate_personas(
     brand_summary: str | None = None,
     market: str | None = None,
     persona_count: int | None,
+    brand: str | None = None,
+    brand_names: list[str] | None = None,
 ) -> list[GeneratedPersona]:
+    """`brand` and `brand_names` (aliases and parent names such as "Disney")
+    are only screened out: persona text feeds prompt generation, and a name
+    left in it leaks into the prompts (confirmed live: "Adult Disney
+    Superfan")."""
     settings = get_settings()
+    names = [brand, *(brand_names or [])] if brand else []
+
+    def neutral(text: str) -> str:
+        return without_names(text, brand or "", competitors, names)
     count = persona_count or settings.persona_count
 
     result = await call_structured(
@@ -129,17 +143,23 @@ async def generate_personas(
     )
 
     personas: list[GeneratedPersona] = []
-    for i, entry in enumerate(result.get("personas", []), start=1):
-        title = entry.get("title") or f"Persona {i}"
+    # Tool output isn't a hard type guarantee: an entry that isn't an object
+    # is skipped (confirmed live: one crashed persona generation outright).
+    entries = result.get("personas") if isinstance(result.get("personas"), list) else []
+    for i, entry in enumerate((e for e in entries if isinstance(e, dict)), start=1):
+        raw_title = entry.get("title") or ""
+        title = neutral(raw_title) or f"Persona {i}"
+        # Initials follow the title when a name was taken out of it.
+        initials = entry.get("initials") if title == raw_title else None
         personas.append(
             GeneratedPersona(
                 id=f"p{i}",
                 title=title,
-                initials=(entry.get("initials") or "".join(w[0] for w in title.split()[:2])).upper()[:3],
-                desc=entry.get("desc", ""),
-                role=entry.get("role", ""),
-                pains=entry.get("pains", ""),
-                criteria=entry.get("criteria", ""),
+                initials=(initials or "".join(w[0] for w in title.split()[:2])).upper()[:3],
+                desc=neutral(entry.get("desc", "")),
+                role=neutral(entry.get("role", "")),
+                pains=neutral(entry.get("pains", "")),
+                criteria=neutral(entry.get("criteria", "")),
             )
         )
     return personas

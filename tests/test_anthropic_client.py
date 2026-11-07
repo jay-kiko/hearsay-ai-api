@@ -249,3 +249,10 @@ async def test_web_fetch_error_or_empty_page_is_none(monkeypatch):
     _SearchFake.seen, _SearchFake.script = [], [_fetch_response(error), _fetch_response(empty), _resp([])]
     for _ in range(3):
         assert await ac.call_web_fetch(api_key="k", model="m", url="https://a.example/p", max_content_tokens=500) is None
+
+
+def test_decodes_list_items_sent_as_json_strings():
+    # Confirmed live: persona generation got each persona as a JSON string.
+    schema = {"type": "object", "properties": {"personas": {"type": "array", "items": {"type": "object"}}}}
+    value = {"personas": ['{"title": "Planner"}', {"title": "Parent"}, "not json"]}
+    assert ac._decode_stringified(value, schema, "t") == {"personas": [{"title": "Planner"}, {"title": "Parent"}, "not json"]}

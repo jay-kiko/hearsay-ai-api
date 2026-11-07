@@ -406,3 +406,55 @@ async def test_a_retry_that_is_no_better_keeps_the_first_set(monkeypatch):
     out = await prompt_gen.generate_prompts(api_key="k", brand="B", industry="Cruises", buyer_context=None,
                                             personas=[PERSONA], prompts_per_persona=3)
     assert out == {"p1": REWORDED} and len(calls) == 2  # asked once more, never in a loop
+
+
+# ── categories and personas built around one brand ───────────────────
+
+async def test_categories_only_the_brand_fills_or_that_name_a_company_are_dropped(monkeypatch):
+    from app.services import category_gen
+
+    async def fake(**_):
+        return {"categories": [
+            # Confirmed live for Disney: a facet only it fills.
+            {"name": "Premium Themed Entertainment Cruises", "buyerContext": "Families paying more for branded characters",
+             "competitorsHere": []},
+            {"name": "Disney Character Sailings", "buyerContext": "Fans of the characters", "competitorsHere": ["Royal Caribbean"]},
+            {"name": "Kids Club Cruises", "buyerContext": "Parents comparing Royal Caribbean and others", "competitorsHere": ["Royal Caribbean"]},
+            {"name": "Short Family Cruises", "buyerContext": "Parents picking a 3-night family sailing",
+             "competitorsHere": ["royal caribbean"]},
+        ]}
+
+    monkeypatch.setattr(category_gen, "call_structured", fake)
+    out = await category_gen.generate_categories(
+        api_key="k", brand="Disney Cruise Line", industry="Cruises", competitors=COMPS, buyer_context=None,
+        brand_summary=None, brand_names=["Disney Cruise Line", "Disney"],
+    )
+    assert [c.name for c in out] == ["Short Family Cruises"]
+
+
+async def test_persona_text_never_names_the_brand(monkeypatch):
+    from app.services import persona_gen
+
+    async def fake(**_):
+        return {"personas": [{"title": "Adult Disney Superfan", "initials": "ADS", "desc": "Loves Disney shows at sea",
+                              "role": "Planner", "pains": "Royal Caribbean felt crowded", "criteria": "Shows"}]}
+
+    monkeypatch.setattr(persona_gen, "call_structured", fake)
+    [p] = await persona_gen.generate_personas(
+        api_key="k", industry="Cruises", competitors=COMPS, buyer_context=None, persona_count=1,
+        brand="Disney Cruise Line", brand_names=["Disney Cruise Line", "Disney"],
+    )
+    assert p.title == "Adult Superfan" and p.initials == "AS"
+    assert "Disney" not in p.desc and "Royal Caribbean" not in p.pains
+
+
+async def test_a_persona_entry_that_is_not_an_object_is_skipped_not_a_crash(monkeypatch):
+    from app.services import persona_gen
+
+    async def fake(**_):
+        return {"personas": ["junk", {"title": "Planner", "desc": "d", "role": "r", "pains": "p", "criteria": "c"}]}
+
+    monkeypatch.setattr(persona_gen, "call_structured", fake)
+    out = await persona_gen.generate_personas(api_key="k", industry="Cruises", competitors=[], buyer_context=None,
+                                              persona_count=2)
+    assert [p.title for p in out] == ["Planner"]

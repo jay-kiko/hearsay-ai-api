@@ -150,6 +150,9 @@ class CategoriesRequest(CamelModel):
     brand: Name
     industry: Line
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    # From detect: categories naming any of these are dropped.
+    brand_match_names: Aliases = Field(default_factory=list)
+    brand_context_names: Aliases = Field(default_factory=list)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
     access_code: AccessCode
@@ -175,6 +178,9 @@ class GeneratePersonasRequest(CamelModel):
     brand: Name
     industry: Line
     competitors: list[Competitor] = Field(default_factory=list, max_length=MAX_COMPETITORS)
+    # From detect: taken out of persona text, which feeds prompt generation.
+    brand_match_names: Aliases = Field(default_factory=list)
+    brand_context_names: Aliases = Field(default_factory=list)
     buyer_context: Paragraph | None = None
     brand_summary: Paragraph | None = None
     market: OptionalName = None

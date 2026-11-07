@@ -25,6 +25,8 @@ async def create_personas(body: GeneratePersonasRequest, request: Request) -> Ge
             brand_summary=body.brand_summary,
             market=body.market,
             persona_count=body.persona_count,
+            brand=body.brand,
+            brand_names=[*body.brand_match_names, *body.brand_context_names],
         )
     return GeneratePersonasResponse(personas=personas)
 

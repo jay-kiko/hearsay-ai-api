@@ -139,5 +139,10 @@ Promoting a high-fan-out call needs a cost estimate first.
   category, and every persona got one scenario reworded three times (9 reworded pairs in 4 personas). They are
   one call now (`prompt_gen.CategoryPlan`), and a persona whose prompts still reword one question
   (`prompt_gen.near_duplicate_pairs`) is asked for once more. Never split a persona's prompts across calls.
+- Categories are facets of the market, never ones only the brand fills: asked for facets "specific to this
+  brand", the category step proposed "Premium Themed Entertainment Cruises" for Disney, and all 8 of its
+  mentions came from that facet's prompts (Presence 22%; 11% with neutral facets). Each facet must name a
+  given competitor that also serves it (`competitorsHere`), and one naming the brand or a competitor is
+  dropped (`category_gen.generate_categories`). Persona text has the brand's names taken out the same way.
 - Persona text feeds prompt generation, so a brand or competitor named in a
   persona leaks into the prompts. Generated personas/prompts must stay neutral.

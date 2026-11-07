@@ -19,5 +19,6 @@ async def create_categories(body: CategoriesRequest, request: Request) -> Catego
             competitors=body.competitors,
             buyer_context=body.buyer_context,
             brand_summary=body.brand_summary,
+            brand_names=[*body.brand_match_names, *body.brand_context_names],
         )
     return CategoriesResponse(categories=categories)

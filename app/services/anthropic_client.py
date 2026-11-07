@@ -184,18 +184,43 @@ def _decode_stringified(value: dict[str, Any], input_schema: dict[str, Any], too
     decoded = dict(value)
     for key, raw in value.items():
         expected = properties.get(key, {}).get("type")
-        if expected not in ("array", "object") or not isinstance(raw, str):
+        if expected not in ("array", "object"):
             continue
-        try:
-            parsed = json.loads(raw)
-        except ValueError:
-            continue
-        if expected == "array" and isinstance(parsed, dict) and isinstance(parsed.get(key), list):
-            parsed = parsed[key]
-        if isinstance(parsed, list if expected == "array" else dict):
+        if isinstance(raw, str):
+            try:
+                parsed = json.loads(raw)
+            except ValueError:
+                continue
+            if expected == "array" and isinstance(parsed, dict) and isinstance(parsed.get(key), list):
+                parsed = parsed[key]
+            if not isinstance(parsed, list if expected == "array" else dict):
+                continue
             logger.info("decoded %s.%s, sent as a JSON string", tool_name, key)
-            decoded[key] = parsed
+            raw = parsed
+        if expected == "array" and properties[key].get("items", {}).get("type") == "object":
+            raw = _decode_items(raw, tool_name, key)
+        decoded[key] = raw
     return decoded
+
+
+def _decode_items(items: list, tool_name: str, key: str) -> list:
+    """Confirmed live (quality tier, persona generation): the array arrived
+    fine but each object in it was a JSON-encoded string, and the caller's
+    `entry.get` crashed the request. Items that decode to an object are
+    replaced; any other item is left for the caller's own checks."""
+    out, fixed = [], 0
+    for item in items:
+        if isinstance(item, str):
+            try:
+                parsed = json.loads(item)
+            except ValueError:
+                parsed = None
+            if isinstance(parsed, dict):
+                item, fixed = parsed, fixed + 1
+        out.append(item)
+    if fixed:
+        logger.info("decoded %d item(s) of %s.%s, sent as JSON strings", fixed, tool_name, key)
+    return out
 
 
 def _check_required_shapes(value: dict[str, Any], input_schema: dict[str, Any], tool_name: str) -> None:
